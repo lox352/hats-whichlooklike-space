@@ -3,6 +3,7 @@ import { GlobalCoordinates } from "../types/GlobalCoordinates";
 import { getClosestColor, Palette } from "./raster-colouring";
 import { type RGB } from "../types/RGB";
 import { OrientationParameters } from "../types/OrientationParameters";
+import colourSpace from "./star-colouring";
 
 function rotateAboutAxis(
   coord: GlobalCoordinates,
@@ -86,24 +87,33 @@ function rotateToDestination(
   return result;
 }
 
+const colourNodes = async (
+  positions: Point[],
+  orientationParameters: OrientationParameters
+): Promise<[RGB[], Set<[number, number]>]> => {
+  const maxY = positions.reduce((max, position) => Math.max(max, position.y), -Infinity);
+  const allCoordinates = 
+    positions
+      .map(position => getGlobalCoordinates(position, maxY))
+      .map(coordinates => rotateToDestination(coordinates, orientationParameters));
+  const spaceColourings = colourSpace(allCoordinates);
+
+  //const colours = await Promise.all(allCoordinates.map(coordinates => colourNode(coordinates, orientationParameters)));
+  return [spaceColourings.colours, spaceColourings.connections];
+};
+
 const colourNode = async (
-  position: Point,
-  maxY: number,
+  coordinates: GlobalCoordinates,
   orientationParameters: OrientationParameters,
   palette: RGB[] = Object.values(Palette)
 ): Promise<RGB> => {
-  const coordinates = getGlobalCoordinates(position, maxY);
-  const rotatedCoordinates = rotateToDestination(
-    coordinates,
-    orientationParameters
-  );
   if (
     !orientationParameters.displayNewZealand &&
-    isNewZealand(rotatedCoordinates)
+    isNewZealand(coordinates)
   ) {
     return Palette.Blue;
   }
-  const colour = await getClosestColor(rotatedCoordinates, palette);
+  const colour = await getClosestColor(coordinates, palette);
 
   if (!colour) {
     console.error("Failed to get colour for node");
@@ -144,13 +154,13 @@ const getGlobalCoordinates = (
   }
 };
 
-export { colourNode };
-
-function isNewZealand(coordinates: GlobalCoordinates) {
+const isNewZealand = (coordinates: GlobalCoordinates) => {
   return (
     coordinates.latitude > -50 &&
     coordinates.latitude < -34 &&
     coordinates.longitude > 165 &&
     coordinates.longitude < 180
   );
-}
+};
+
+export { colourNodes };

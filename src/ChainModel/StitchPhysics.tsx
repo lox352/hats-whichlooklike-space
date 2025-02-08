@@ -3,11 +3,12 @@ import PointMass from "./PointMass";
 import Link from "./Link";
 import { RapierRigidBody } from "@react-three/rapier";
 import { Stitch } from "../types/Stitch";
-import { colourNode } from "../helpers/node-colouring";
+import { colourNodes } from "../helpers/node-colouring";
 import * as THREE from "three";
 import { adjacentStitchDistance, verticalStitchDistance } from "../constants";
 import { useFrame } from "@react-three/fiber";
 import { OrientationParameters } from "../types/OrientationParameters";
+import { Line } from "@react-three/drei";
 
 function createChevronTexture() {
   const size = 256; // Texture resolution
@@ -59,6 +60,9 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
   onAnyStitchRendered,
 }) => {
   const setRefsVersion = useState(0)[1];
+  const [connections, setConections] = useState<Set<[number, number]> | null>(
+    null
+  );
   const frameNumber = useRef(0);
   const stitches = stitchesRef.current;
 
@@ -109,28 +113,27 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
 
     setSimulationActive(false);
     (async () => {
-      const maxY = stitchRefs.current.reduce((max, ref) => {
-        const y = ref.current?.translation().y || 0;
-        return y > max ? y : max;
-      }, 0);
+      const positions = stitchRefs.current.map((stitchRef) =>
+        stitchRef.current!.translation()
+      );
+      const [colours, connections] = await colourNodes(
+        positions,
+        orientationParameters
+      );
+      setConections(connections);
 
-      for (let i = 1; i < stitchRefs.current.length; i++) {
-        const stitchRef = stitchRefs.current[i];
-        if (!stitchRef.current) continue;
-        const colourRef = colourRefs.current[i];
-        if (!colourRef.current) continue;
+      colourRefs.current.forEach((colourRef, i) => {
+        colourRef.current.set(colours[i]!.map((c) => c / 255));
+      });
 
-        const position = stitchRef.current.translation();
-        const colour = await colourNode(position, maxY, orientationParameters);
-        setStitches((stitches) =>
-          stitches.map((stitch) =>
-            stitch.id === i ? { ...stitch, colour, position } : stitch
-          )
-        );
-        colourRef.current[0] = colour[0] / 255;
-        colourRef.current[1] = colour[1] / 255;
-        colourRef.current[2] = colour[2] / 255;
-      }
+      setStitches((stitches) =>
+        stitches.map((stitch, i) => ({
+          ...stitch,
+          colour: colours[i]!,
+          position: positions[i]!,
+        }))
+      );
+
       console.log("Colouring finished");
     })();
   });
@@ -206,6 +209,36 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
           );
         })
       )}
+      {connections &&
+        Array.from(connections).map(([a, b]) => {
+          if (a == b) {
+            return null;
+          }
+          const stitchRef = stitchRefs.current[a];
+          const linkedStitchRef = stitchRefs.current[b];
+
+          if (!stitchRef || !linkedStitchRef) return null;
+          const { x: x1, y: y1, z: z1 } = stitchRef.current!.translation();
+          const {
+            x: x2,
+            y: y2,
+            z: z2,
+          } = linkedStitchRef.current!.translation();
+          console.log(
+            `Line between stitch ${a} at (${x1}, ${y1}, ${z1}) and stitch ${b} at (${x2}, ${y2}, ${z2})`
+          );
+          return (
+            <Line
+              key={`constellation-${a}-${b}`}
+              points={[
+                [x1, y1, z1],
+                [x2, y2, z2],
+              ]}
+              color="floralwhite"
+              lineWidth={1}
+            />
+          );
+        })}
     </React.Fragment>
   );
 };
