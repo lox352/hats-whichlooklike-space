@@ -98,28 +98,7 @@ const colourNodes = async (
       .map(coordinates => rotateToDestination(coordinates, orientationParameters));
   const spaceColourings = colourSpace(allCoordinates);
 
-  //const colours = await Promise.all(allCoordinates.map(coordinates => colourNode(coordinates, orientationParameters)));
   return [spaceColourings.colours, spaceColourings.connections];
-};
-
-const colourNode = async (
-  coordinates: GlobalCoordinates,
-  orientationParameters: OrientationParameters,
-  palette: RGB[] = Object.values(Palette)
-): Promise<RGB> => {
-  if (
-    !orientationParameters.displayNewZealand &&
-    isNewZealand(coordinates)
-  ) {
-    return Palette.Blue;
-  }
-  const colour = await getClosestColor(coordinates, palette);
-
-  if (!colour) {
-    console.error("Failed to get colour for node");
-    return [0, 0, 0];
-  }
-  return colour;
 };
 
 const getGlobalCoordinates = (
