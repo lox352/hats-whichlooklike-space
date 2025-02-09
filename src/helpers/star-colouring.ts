@@ -66,9 +66,8 @@ const parseConstellations = (): ParsedConstellations => {
 
 const colourSpace = (
   allCoordinates: GlobalCoordinates[]
-): { colours: RGB[]; connections: Set<[number, number]> } => {
+): { colours: RGB[]; connections: number[][] } => {
   const colours = allCoordinates.map((coordinate) => {
-    console.log(coordinate);
     const { latitude, longitude } = coordinate;
     const pt = point([longitude, latitude]);
 
@@ -91,7 +90,7 @@ const colourSpace = (
     }
     return [0, 0, 50] as RGB;
   });
-  const connections = new Set<[number, number]>();
+  const connections = allCoordinates.map(() => [] as number[]);
   const starIndexMap = new Map<string, number>();
 
   const constellationData = parseConstellations();
@@ -128,7 +127,7 @@ const colourSpace = (
       const star2 = starIndexMap.get(JSON.stringify(line[1]));
 
       if (star1 !== undefined && star2 !== undefined) {
-        connections.add([star1, star2]);
+        connections[star1].push(star2);
       }
     }
   }

@@ -59,10 +59,10 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
   setSimulationActive,
   onAnyStitchRendered,
 }) => {
-  const setRefsVersion = useState(0)[1];
-  const [connections, setConections] = useState<Set<[number, number]> | null>(
+  const [connections, setConnections] = useState<Set<[number, number]> | null>(
     null
   );
+  const setRefsVersion = useState(0)[1];
   const frameNumber = useRef(0);
   const stitches = stitchesRef.current;
 
@@ -116,21 +116,28 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
       const positions = stitchRefs.current.map((stitchRef) =>
         stitchRef.current!.translation()
       );
+
       const [colours, connections] = await colourNodes(
         positions,
         orientationParameters
       );
-      setConections(connections);
 
       colourRefs.current.forEach((colourRef, i) => {
         colourRef.current.set(colours[i]!.map((c) => c / 255));
       });
+
+      const connectionsSet = new Set(
+        connections.flatMap((c, i) => c.map((d) => [i, d] as [number, number]))
+      );
+
+      setConnections(connectionsSet);
 
       setStitches((stitches) =>
         stitches.map((stitch, i) => ({
           ...stitch,
           colour: colours[i]!,
           position: positions[i]!,
+          connections: connections[i]!,
         }))
       );
 
@@ -210,26 +217,21 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
         })
       )}
       {connections &&
-        Array.from(connections).map(([a, b]) => {
-          if (a == b) {
-            return null;
-          }
-          const stitchRef = stitchRefs.current[a];
-          const linkedStitchRef = stitchRefs.current[b];
-
+        Array.from(connections).map(([source, target]) => {
+          if (source === target) return null;
+          const stitchRef = stitchRefs.current[source];
+          const linkedStitchRef = stitchRefs.current[target];
           if (!stitchRef || !linkedStitchRef) return null;
+          console.log("Rendering connection", source, target);
           const { x: x1, y: y1, z: z1 } = stitchRef.current!.translation();
           const {
             x: x2,
             y: y2,
             z: z2,
           } = linkedStitchRef.current!.translation();
-          console.log(
-            `Line between stitch ${a} at (${x1}, ${y1}, ${z1}) and stitch ${b} at (${x2}, ${y2}, ${z2})`
-          );
           return (
             <Line
-              key={`constellation-${a}-${b}`}
+              key={`connection-${source}-${target}`}
               points={[
                 [x1, y1, z1],
                 [x2, y2, z2],

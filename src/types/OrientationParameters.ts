@@ -4,7 +4,6 @@ import { GlobalCoordinates } from "./GlobalCoordinates";
 type OrientationParameters = {
   coordinates: GlobalCoordinates;
   targetDestination: DestinationType;
-  displayNewZealand: boolean;
 };
 
 const defaultOrientationParameters: OrientationParameters = {
@@ -13,7 +12,6 @@ const defaultOrientationParameters: OrientationParameters = {
     longitude: 0,
   },
   targetDestination: "crown",
-  displayNewZealand: true,
 };
 
 export { defaultOrientationParameters };

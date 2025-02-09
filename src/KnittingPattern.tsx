@@ -72,7 +72,7 @@ const StitchBox: React.FC<{
       gridRow: numRows + position.row,
       gridColumn: numCols + position.col,
       backgroundColor: `rgb(${stitch.colour.join(",")})`,
-      border: "1px solid black",
+      border: "1px solid rgb(20, 50, 50)",
       borderLeftWidth: (position.col - 1) % 5 === 0 ? "2px" : "1px",
       borderTopWidth: (position.row - 1) % 5 === 0 ? "2px" : "1px",
       textAlign: "center",
@@ -192,6 +192,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
           overflowX: "auto",
           overflowY: "hidden",
           marginBottom: "10px",
+          position: "relative",
         }}
       >
         {filteredStitches.map((stitch) => {
@@ -233,6 +234,77 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
             );
           }
         })}
+        {stitches.flatMap((stitch) =>
+          stitch.connections.map((targetIndex) => {
+            const pos1 = stitchPositions[stitch.id];
+            const pos2 = stitchPositions[targetIndex];
+            if (!pos1 || !pos2) return null;
+
+            let x1 = (numCols + pos1.col - 1) * 10 + 5;
+            const y1 = (numRows + pos1.row - 1) * 10 + 5;
+            let x2 = (numCols + pos2.col - 1) * 10 + 5;
+            const y2 = (numRows + pos2.row - 1) * 10 + 5;
+
+            const totalWidth = (numCols + 1) * 10;
+            const halfWidth = totalWidth / 2;
+
+            if (Math.abs(x2 - x1) > halfWidth) {
+              if (x1 < x2) {
+                x1 += totalWidth;
+              } else {
+                x2 += totalWidth;
+              }
+            }
+
+            return (
+              <svg
+                key={`connection-${stitch.id}-${targetIndex}`}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: `${(numCols + 1) * 10}px`,
+                  height: `${(numRows + 1) * 10}px`,
+                  pointerEvents: "none",
+                }}
+              >
+                <line
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={`rgb(${stitch.colour.join(",")})`}
+                  strokeWidth="3"
+                />
+                <line
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke="white"
+                  strokeWidth="1"
+                />
+
+                <line
+                  x1={x1 - totalWidth}
+                  y1={y1}
+                  x2={x2 - totalWidth}
+                  y2={y2}
+                  stroke={`rgb(${stitch.colour.join(",")})`}
+                  strokeWidth="3"
+                />
+                <line
+                  x1={x1 - totalWidth}
+                  y1={y1}
+                  x2={x2 - totalWidth}
+                  y2={y2}
+                  stroke="white"
+                  strokeWidth="1"
+                />
+              </svg>
+            );
+          })
+        )}
       </div>
     </div>
   );

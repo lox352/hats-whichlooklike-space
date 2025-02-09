@@ -62,10 +62,10 @@ const CoordinatesInput: React.FC<CoordinatesInputProps> = ({
       ...orientationParameters,
       coordinates: { ...coordinates, latitude },
     });
-  const setLongitude = (longitude: number) =>
+  const setLongitude = (rightAssention: number) =>
     setOrientationParameters({
       ...orientationParameters,
-      coordinates: { ...coordinates, longitude },
+      coordinates: { ...coordinates, longitude: rightAssention * 15 - 180 },
     });
   return (
     <div
@@ -84,7 +84,7 @@ const CoordinatesInput: React.FC<CoordinatesInputProps> = ({
           alignItems: "flex-start",
         }}
       >
-        Latitude
+        Declension (degrees)
         <input
           type="number"
           value={coordinates.latitude}
@@ -103,12 +103,12 @@ const CoordinatesInput: React.FC<CoordinatesInputProps> = ({
           alignItems: "flex-start",
         }}
       >
-        Longitude
+        Right assention (hours)
         <input
           type="number"
-          value={coordinates.longitude}
-          min="-180"
-          max="180"
+          value={(coordinates.longitude + 180) / 15}
+          min="0"
+          max="24"
           step="0.1"
           onChange={(e) => setLongitude(Number(e.target.value))}
           style={{ marginTop: "5px" }}
@@ -120,8 +120,8 @@ const CoordinatesInput: React.FC<CoordinatesInputProps> = ({
 };
 
 type LocationType =
-  | "North Pole"
-  | "South Pole"
+  | "North Star"
+  | "Southern Cross"
   | "Current Location"
   | "Custom Location";
 
@@ -188,7 +188,7 @@ const Design: React.FC<PatternProps> = ({
 
   const [stitchesPerRow, setStitchesPerRow] = useState(defaultStitchesPerRow);
   const [numberOfRows, setNumberOfRows] = useState(defaultNumberOfRows);
-  const [locationType, setLocationType] = useState<LocationType>("North Pole");
+  const [locationType, setLocationType] = useState<LocationType>("North Star");
   const [decreaseMethod, setDecreaseMethod] = useState<
     "Hemispherical" | "Pyramidal"
   >("Pyramidal");
@@ -207,13 +207,13 @@ const Design: React.FC<PatternProps> = ({
     setLocationType(selectedLocation as LocationType);
 
     switch (selectedLocation) {
-      case "North Pole":
+      case "North Star":
         setOrientationParameters({
           ...orientationParameters,
           coordinates: northPole,
         });
         break;
-      case "South Pole":
+      case "Southern Cross":
         setOrientationParameters({
           ...orientationParameters,
           coordinates: southPole,
@@ -288,12 +288,12 @@ const Design: React.FC<PatternProps> = ({
             <option value="Pyramidal">Pyramidal</option>
           </select>
         </div>
-        <h2 style={h2Style}>Orient Your Earth</h2>
+        <h2 style={h2Style}>Orient Your Night Sky</h2>
         <h3 style={h3Style}>Choose a Location</h3>
         <div style={{ marginBottom: "10px" }}>
           <select value={locationType} onChange={handleLocationChange}>
-            <option value="North Pole">North Pole</option>
-            <option value="South Pole">South Pole</option>
+            <option value="North Star">North Star (Polaris)</option>
+            <option value="Southern Cross">Southern Cros (Crux)</option>
             <option value="Current Location">Current Location</option>
             <option value="Custom Location">Custom Location</option>
           </select>
@@ -314,22 +314,6 @@ const Design: React.FC<PatternProps> = ({
             <option value="rim">The rim (bottom) of your hat</option>
           </select>
         </div>
-        <h2 style={h2Style}>Final Touches</h2>
-        <h3 style={h3Style}>Display New Zealand?</h3>
-        <label>
-          <input
-            type="checkbox"
-            checked={orientationParameters.displayNewZealand}
-            onChange={(e) =>
-              setOrientationParameters({
-                ...orientationParameters,
-                displayNewZealand: e.target.checked,
-              })
-            }
-            style={{ marginRight: "5px" }}
-          />
-          Yes, display New Zealand
-        </label>
       </div>
       <ToggleAdvancedOptions
         showAdvancedOptions={showAdvancedOptions}

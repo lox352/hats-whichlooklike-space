@@ -89,7 +89,7 @@ function rotateToDestination(
 const colourNodes = async (
   positions: Point[],
   orientationParameters: OrientationParameters
-): Promise<[RGB[], Set<[number, number]>]> => {
+): Promise<[RGB[], number[][]]> => {
   const maxY = positions.reduce((max, position) => Math.max(max, position.y), -Infinity);
   const allCoordinates = 
     positions

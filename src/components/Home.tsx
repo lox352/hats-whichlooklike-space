@@ -158,10 +158,10 @@ const Home: React.FC = () => {
   return (
     <div style={{ textAlign: "left", padding: "20px" }}>
       <h1 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>
-        Hats Which Look Like Earth
+        Hats Which Look Like Space
       </h1>
       <p style={{ fontSize: "1rem", marginBottom: "20px" }}>
-        Knit a hat which looks like Earth. Begin by designing your hat, then
+        Knit a hat which looks like the night sky. Begin by designing your hat, then
         render it, and finally generate the pattern.
       </p>
       <button

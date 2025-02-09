@@ -6,6 +6,7 @@ export interface Stitch {
   id: number;
   position: Point;
   links: number[];
+  connections: number[];
   fixed: boolean;
   type: StitchType
   colour: RGB;
