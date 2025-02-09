@@ -1,6 +1,5 @@
 import { Point } from "../types/Point";
 import { GlobalCoordinates } from "../types/GlobalCoordinates";
-import { getClosestColor, Palette } from "./raster-colouring";
 import { type RGB } from "../types/RGB";
 import { OrientationParameters } from "../types/OrientationParameters";
 import colourSpace from "./star-colouring";
@@ -131,15 +130,6 @@ const getGlobalCoordinates = (
     const cylindricalLatitude = angle * (180 / Math.PI);
     return { latitude: cylindricalLatitude, longitude: longitudeDegrees };
   }
-};
-
-const isNewZealand = (coordinates: GlobalCoordinates) => {
-  return (
-    coordinates.latitude > -50 &&
-    coordinates.latitude < -34 &&
-    coordinates.longitude > 165 &&
-    coordinates.longitude < 180
-  );
 };
 
 export { colourNodes };
