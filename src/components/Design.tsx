@@ -36,7 +36,7 @@ const InputField: React.FC<InputFieldProps> = ({
       <br />
       <input
         type="number"
-        value={value}
+        value={value === 0 ? "" : value}
         onChange={(e) => valueSetter(Number(e.target.value))}
       />
     </label>
