@@ -111,20 +111,24 @@ function rotateFromDestination(
 
 const colourNodes = async (
   positions: Point[],
-  orientationParameters: OrientationParameters
+  orientationParameters: OrientationParameters,
+  pureSpherical = true
 ): Promise<[RGB[], StarInformation[]]> => {
   const maxY = positions.reduce(
     (max, position) => Math.max(max, position.y),
     -Infinity
   );
   const allCoordinatesUnrotated = positions.map((position) =>
-    getGlobalCoordinates(position, maxY)
+    getGlobalCoordinates(position, maxY, pureSpherical)
   );
   const allCoordinates = allCoordinatesUnrotated.map((coordinates) =>
     rotateToDestination(coordinates, orientationParameters)
   );
 
   const ignorePointPredicate = (point: GlobalCoordinates) => {
+    if (!pureSpherical) {
+      return false;
+    }
     const unrotated = rotateFromDestination(point, orientationParameters);
     if (unrotated.latitude < allCoordinatesUnrotated[0].latitude) {
       return true;
