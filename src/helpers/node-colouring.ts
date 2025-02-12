@@ -2,7 +2,7 @@ import { Point } from "../types/Point";
 import { GlobalCoordinates } from "../types/GlobalCoordinates";
 import { type RGB } from "../types/RGB";
 import { OrientationParameters } from "../types/OrientationParameters";
-import colourSpace from "./star-colouring";
+import colourSpace, { StarInformation } from "./star-colouring";
 
 function rotateAboutAxis(
   coord: GlobalCoordinates,
@@ -89,7 +89,7 @@ function rotateToDestination(
 const colourNodes = async (
   positions: Point[],
   orientationParameters: OrientationParameters
-): Promise<[RGB[], number[][]]> => {
+): Promise<[RGB[], StarInformation[]]> => {
   const maxY = positions.reduce((max, position) => Math.max(max, position.y), -Infinity);
   const allCoordinates = 
     positions
@@ -97,12 +97,13 @@ const colourNodes = async (
       .map(coordinates => rotateToDestination(coordinates, orientationParameters));
   const spaceColourings = colourSpace(allCoordinates);
 
-  return [spaceColourings.colours, spaceColourings.connections];
+  return [spaceColourings.colours, spaceColourings.starInformation];
 };
 
 const getGlobalCoordinates = (
   position: Point,
-  maxY: number
+  maxY: number,
+  pureSpherical = true
 ): GlobalCoordinates => {
   const { x, y, z } = position;
   // Given Cartesian coordinates (x, y, z)
@@ -122,7 +123,7 @@ const getGlobalCoordinates = (
   const longitudeDegrees = longitude * (180 / Math.PI);
   const latitudeDegrees = latitude * (180 / Math.PI);
 
-  if (y > maxY / 2) {
+  if (pureSpherical || y > maxY / 2) {
     return { latitude: latitudeDegrees, longitude: longitudeDegrees };
   } else {
     const normalisedVerticalDistance = (y - maxY / 2) / (maxY / 2);

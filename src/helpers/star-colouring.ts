@@ -5,11 +5,19 @@ import { GlobalCoordinates } from "../types/GlobalCoordinates";
 import { RGB } from "../types/RGB";
 import { point, polygon } from "@turf/helpers";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
+import stars from "../assets/stars.6.json";
 
 export interface ConstellationData {
   id: string;
   points: Position[]; // Unique star coordinates
   lines: Position[][]; // Line segments between stars
+}
+
+export interface StarInformation {
+  constellation: string | null;
+  bvIndex: number | null;
+  magnitude: number | null;
+  connectedStars: number[];
 }
 
 export interface ProcessedConstellationData {
@@ -65,13 +73,16 @@ const parseConstellations = (): ParsedConstellations => {
 };
 
 const colourSpace = (
-  allCoordinates: GlobalCoordinates[]
-): { colours: RGB[]; connections: number[][] } => {
+  allCoordinates: GlobalCoordinates[],
+  colourConstellation = false,
+  colourMilkyWay = 1, // Max value is 5
+  showStarsUpToMagnitude = 4
+): { colours: RGB[]; starInformation: StarInformation[] } => {
   const colours = allCoordinates.map((coordinate) => {
     const { latitude, longitude } = coordinate;
     const pt = point([longitude, latitude]);
 
-    for (let i = 5; i >= 0; i--) {
+    for (let i = colourMilkyWay; i >= 0; i--) {
       const feature = milkyway.features.find(
         (f) => f.properties.id === `ol${i}`
       );
@@ -90,17 +101,47 @@ const colourSpace = (
     }
     return [0, 0, 50] as RGB;
   });
-  const connections = allCoordinates.map(() => [] as number[]);
-  const starIndexMap = new Map<string, number>();
+
+  const starInformation = allCoordinates.map(() => {
+    return { connectedStars: [] as number[] } as StarInformation;
+  });
+  const starIndexMap = new Map<string, number>(); // Map from coordinates (stringified) to index
+
+  for (const star of stars.features) {
+    const point = star.geometry.coordinates as [number, number] as Position;
+
+    let closestIndex = -1;
+    let closestDistance = Infinity;
+
+    for (let i = 0; i < allCoordinates.length; i++) {
+      const [x1, y1] = point;
+      const { latitude: y2, longitude: x2 } = allCoordinates[i];
+
+      const distance = Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = i;
+      }
+    }
+
+    if (closestDistance < 3 && closestIndex !== -1) {
+      starInformation[closestIndex].bvIndex = parseFloat(star.properties.bv);
+      starInformation[closestIndex].magnitude = star.properties.mag;
+      if (star.properties.mag < showStarsUpToMagnitude) {
+        colours[closestIndex] = [255, 255, 255] as RGB;
+      }
+    }
+  }
 
   const constellationData = parseConstellations();
   for (const constellation of Object.values(constellationData)) {
-    // const colour = [255, 255, 255] as RGB;
     const colour = [
       Math.random() * 200 + 50,
       Math.random() * 200 + 50,
       Math.random() * 50 + 50,
     ] as RGB;
+
     for (const point of constellation.points) {
       let closestIndex = -1;
       let closestDistance = Infinity;
@@ -117,21 +158,27 @@ const colourSpace = (
         }
       }
 
-      if (closestIndex !== -1) {
+      if (closestDistance < 3 && closestIndex !== -1) {
+        if (colourConstellation) {
+          colours[closestIndex] = colour;
+        }
         starIndexMap.set(JSON.stringify(point), closestIndex);
-        colours[closestIndex] = colour;
       }
     }
+
     for (const line of constellation.lines) {
       const star1 = starIndexMap.get(JSON.stringify(line[0]));
       const star2 = starIndexMap.get(JSON.stringify(line[1]));
 
       if (star1 !== undefined && star2 !== undefined) {
-        connections[star1].push(star2);
+        starInformation[star1].constellation = constellation.id;
+        starInformation[star2].constellation = constellation.id;
+        starInformation[star1].connectedStars.push(star2);
       }
     }
   }
-  return { colours, connections };
+
+  return { colours, starInformation };
 };
 
 export default colourSpace;

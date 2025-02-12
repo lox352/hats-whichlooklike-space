@@ -117,7 +117,7 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
         stitchRef.current!.translation()
       );
 
-      const [colours, connections] = await colourNodes(
+      const [colours, starInformation] = await colourNodes(
         positions,
         orientationParameters
       );
@@ -127,7 +127,7 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
       });
 
       const connectionsSet = new Set(
-        connections.flatMap((c, i) => c.map((d) => [i, d] as [number, number]))
+          starInformation.flatMap((starInfo, i) => starInfo.connectedStars.map((d) => [i, d] as [number, number]))
       );
 
       setConnections(connectionsSet);
@@ -137,7 +137,7 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
           ...stitch,
           colour: colours[i]!,
           position: positions[i]!,
-          connections: connections[i]!,
+          starInfo: starInformation[i]!,
         }))
       );
 

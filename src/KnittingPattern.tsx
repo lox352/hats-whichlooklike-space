@@ -88,7 +88,7 @@ const StitchBox: React.FC<{
           left: "15%",
           width: "100%",
           height: "100%",
-          borderTop: "1px solid black",
+          borderTop: "1px solid grey",
           transform: "rotate(45deg)",
           transformOrigin: "-0.5px 0",
         }}
@@ -103,7 +103,7 @@ const StitchBox: React.FC<{
             top: "calc(10%)",
             width: "100%",
             height: "85%",
-            borderRight: "1px solid black",
+            borderRight: "1px solid grey",
             transformOrigin: "top right",
             transform: "rotate(20deg)",
           }}
@@ -115,7 +115,7 @@ const StitchBox: React.FC<{
             top: "calc(10%)",
             width: "100%",
             height: "80%",
-            borderRight: "1px solid black",
+            borderRight: "1px solid grey",
           }}
         />
         <div
@@ -125,7 +125,7 @@ const StitchBox: React.FC<{
             top: "calc(10%)",
             width: "100%",
             height: "85%",
-            borderRight: "1px solid black",
+            borderRight: "1px solid grey",
             transformOrigin: "top right",
             transform: "rotate(-20deg)",
           }}
@@ -235,7 +235,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
           }
         })}
         {stitches.flatMap((stitch) =>
-          stitch.connections.map((targetIndex) => {
+          stitch.starInfo.connectedStars.map((targetIndex) => {
             const pos1 = stitchPositions[stitch.id];
             const pos2 = stitchPositions[targetIndex];
             if (!pos1 || !pos2) return null;
@@ -273,7 +273,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
                   y1={y1}
                   x2={x2}
                   y2={y2}
-                  stroke={`rgb(${stitch.colour.join(",")})`}
+                  stroke="black"
                   strokeWidth="3"
                 />
                 <line
@@ -290,7 +290,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
                   y1={y1}
                   x2={x2 - totalWidth}
                   y2={y2}
-                  stroke={`rgb(${stitch.colour.join(",")})`}
+                  stroke="black"
                   strokeWidth="3"
                 />
                 <line

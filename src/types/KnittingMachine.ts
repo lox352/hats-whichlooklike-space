@@ -4,6 +4,7 @@ import { StitchType } from "./StitchType";
 import { RGB } from "../types/RGB";
 import { adjacentStitchDistance, verticalStitchDistance } from "../constants";
 import seedrandom from "seedrandom";
+import { StarInformation } from "../helpers/star-colouring";
 
 const defaultColour: RGB = [255, 255, 255];
 
@@ -27,7 +28,7 @@ class KnittingMachine {
         id: i,
         position: getStitchPosition(i),
         links,
-        connections: [],
+        starInfo: {connectedStars: [] as number[]} as StarInformation,
         fixed: true,
         colour: defaultColour,
         type: "k1",
@@ -106,7 +107,7 @@ class KnittingMachine {
       id: lastStitch.id + 1,
       position: newPosition,
       links: links,
-      connections: [],
+      starInfo: {connectedStars: [] as number[]} as StarInformation,
       type: "k1",
       fixed: false,
       colour: defaultColour,
@@ -143,7 +144,7 @@ class KnittingMachine {
       id: lastStitch.id + 1,
       position: newPosition,
       links: links,
-      connections: [],
+      starInfo: {connectedStars: [] as number[]} as StarInformation,
       type: "k2tog",
       fixed: false,
       colour: defaultColour,
@@ -181,7 +182,7 @@ class KnittingMachine {
       id: lastStitch.id + 1,
       position: newPosition,
       links: links,
-      connections: [],
+      starInfo: {connectedStars: [] as number[]} as StarInformation,
       type: "k3tog",
       fixed: false,
       colour: defaultColour,
@@ -198,7 +199,7 @@ class KnittingMachine {
       id: lastStitch.id + 1,
       position: lastStitch.position,
       links: [0, lastStitch.id],
-      connections: [],
+      starInfo: {connectedStars: [] as number[]} as StarInformation,
       type: "join",
       fixed: true,
       colour: defaultColour,
