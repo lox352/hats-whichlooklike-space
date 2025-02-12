@@ -74,6 +74,7 @@ const parseConstellations = (): ParsedConstellations => {
 
 const colourSpace = (
   allCoordinates: GlobalCoordinates[],
+  ignorePointPredicate: (coordinate: GlobalCoordinates) => boolean,
   colourConstellation = false,
   colourMilkyWay = 1, // Max value is 5
   showStarsUpToMagnitude = 4
@@ -109,7 +110,9 @@ const colourSpace = (
 
   for (const star of stars.features) {
     const point = star.geometry.coordinates as [number, number] as Position;
-
+    if (ignorePointPredicate({ latitude: point[1], longitude: point[0] })) {
+      continue;
+    }
     let closestIndex = -1;
     let closestDistance = Infinity;
 
@@ -125,7 +128,7 @@ const colourSpace = (
       }
     }
 
-    if (closestDistance < 3 && closestIndex !== -1) {
+    if (closestIndex !== -1) {
       starInformation[closestIndex].bvIndex = parseFloat(star.properties.bv);
       starInformation[closestIndex].magnitude = star.properties.mag;
       if (star.properties.mag < showStarsUpToMagnitude) {
@@ -143,6 +146,10 @@ const colourSpace = (
     ] as RGB;
 
     for (const point of constellation.points) {
+      if (ignorePointPredicate({ latitude: point[1], longitude: point[0] })) {
+        continue;
+      }
+
       let closestIndex = -1;
       let closestDistance = Infinity;
 
@@ -158,7 +165,7 @@ const colourSpace = (
         }
       }
 
-      if (closestDistance < 3 && closestIndex !== -1) {
+      if (closestIndex !== -1) {
         if (colourConstellation) {
           colours[closestIndex] = colour;
         }

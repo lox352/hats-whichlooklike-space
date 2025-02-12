@@ -86,16 +86,53 @@ function rotateToDestination(
   return result;
 }
 
+function rotateFromDestination(
+  coord: GlobalCoordinates,
+  orientationParameters: OrientationParameters
+): GlobalCoordinates {
+  const { latitude: targetLatitude, longitude: targetLongitude } =
+    orientationParameters.coordinates;
+  const rotatedCoord = rotateAboutAxis(coord, -targetLongitude);
+
+  let result;
+  if (orientationParameters.targetDestination === "front") {
+    result = rotateVertically(rotatedCoord, -targetLatitude);
+  } else if (orientationParameters.targetDestination === "crown") {
+    result = rotateVertically(rotatedCoord, -targetLatitude + 90);
+  } else if (orientationParameters.targetDestination === "rim") {
+    result = rotateVertically(rotatedCoord, -targetLatitude - 90);
+  } else {
+    throw new Error(
+      `Invalid target destination: ${orientationParameters.targetDestination}`
+    );
+  }
+  return result;
+}
+
 const colourNodes = async (
   positions: Point[],
   orientationParameters: OrientationParameters
 ): Promise<[RGB[], StarInformation[]]> => {
-  const maxY = positions.reduce((max, position) => Math.max(max, position.y), -Infinity);
-  const allCoordinates = 
-    positions
-      .map(position => getGlobalCoordinates(position, maxY))
-      .map(coordinates => rotateToDestination(coordinates, orientationParameters));
-  const spaceColourings = colourSpace(allCoordinates);
+  const maxY = positions.reduce(
+    (max, position) => Math.max(max, position.y),
+    -Infinity
+  );
+  const allCoordinatesUnrotated = positions.map((position) =>
+    getGlobalCoordinates(position, maxY)
+  );
+  const allCoordinates = allCoordinatesUnrotated.map((coordinates) =>
+    rotateToDestination(coordinates, orientationParameters)
+  );
+
+  const ignorePointPredicate = (point: GlobalCoordinates) => {
+    const unrotated = rotateFromDestination(point, orientationParameters);
+    if (unrotated.latitude < allCoordinatesUnrotated[0].latitude) {
+      return true;
+    }
+    return false;
+  };
+
+  const spaceColourings = colourSpace(allCoordinates, ignorePointPredicate);
 
   return [spaceColourings.colours, spaceColourings.starInformation];
 };
