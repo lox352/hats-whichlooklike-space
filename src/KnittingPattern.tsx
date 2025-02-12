@@ -273,15 +273,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
                   y1={y1}
                   x2={x2}
                   y2={y2}
-                  stroke="black"
-                  strokeWidth="3"
-                />
-                <line
-                  x1={x1}
-                  y1={y1}
-                  x2={x2}
-                  y2={y2}
-                  stroke="white"
+                  stroke="lightblue"
                   strokeWidth="1"
                 />
 
@@ -290,15 +282,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
                   y1={y1}
                   x2={x2 - totalWidth}
                   y2={y2}
-                  stroke="black"
-                  strokeWidth="3"
-                />
-                <line
-                  x1={x1 - totalWidth}
-                  y1={y1}
-                  x2={x2 - totalWidth}
-                  y2={y2}
-                  stroke="white"
+                  stroke="lightblue"
                   strokeWidth="1"
                 />
               </svg>
