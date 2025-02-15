@@ -14,10 +14,9 @@ export interface ConstellationData {
 }
 
 export interface StarInformation {
-  constellation: string | null;
   bvIndex: number | null;
   magnitude: number | null;
-  connectedStars: number[];
+  connectedStars: Map<string, number[]>;
 }
 
 export interface ProcessedConstellationData {
@@ -72,9 +71,33 @@ const parseConstellations = (): ParsedConstellations => {
   return dataByConstellation;
 };
 
+const findClosestIndex = (
+  targetPoint: Position,
+  allCoordinates: GlobalCoordinates[]
+): number | null => {
+  let closestIndex = null;
+  let closestDistance = Infinity;
+
+  for (let i = 0; i < allCoordinates.length; i++) {
+    const [x1, y1] = targetPoint;
+    const { latitude: y2, longitude: x2 } = allCoordinates[i];
+
+    const distance = Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+
+    if (distance < closestDistance) {
+      closestDistance = distance;
+      closestIndex = i;
+    }
+  }
+
+  return closestIndex;
+};
+
 const colourSpace = (
   allCoordinates: GlobalCoordinates[],
-  ignorePointPredicate: (coordinate: GlobalCoordinates) => boolean,
+  allCoordinatesUnrotated: GlobalCoordinates[],
+  unrotatePoint: (coordinate: GlobalCoordinates) => GlobalCoordinates,
+  rotatePoint: (coordinate: GlobalCoordinates) => GlobalCoordinates,
   colourConstellation = false,
   colourMilkyWay = 1, // Max value is 5
   showStarsUpToMagnitude = 4
@@ -104,36 +127,30 @@ const colourSpace = (
   });
 
   const starInformation = allCoordinates.map(() => {
-    return { connectedStars: [] as number[] } as StarInformation;
+    return { connectedStars: new Map<string, number[]>() } as StarInformation;
   });
+
   const starIndexMap = new Map<string, number>(); // Map from coordinates (stringified) to index
 
   for (const star of stars.features) {
     const point = star.geometry.coordinates as [number, number] as Position;
-    if (ignorePointPredicate({ latitude: point[1], longitude: point[0] })) {
+    if (
+      unrotatePoint({ latitude: point[1], longitude: point[0] }).latitude <
+      allCoordinatesUnrotated[0].latitude
+    ) {
       continue;
     }
-    let closestIndex = -1;
-    let closestDistance = Infinity;
 
-    for (let i = 0; i < allCoordinates.length; i++) {
-      const [x1, y1] = point;
-      const { latitude: y2, longitude: x2 } = allCoordinates[i];
+    const closestIndex = findClosestIndex(point, allCoordinates);
 
-      const distance = Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
-
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestIndex = i;
-      }
+    if (!closestIndex) {
+      continue;
     }
 
-    if (closestIndex !== -1) {
-      starInformation[closestIndex].bvIndex = parseFloat(star.properties.bv);
-      starInformation[closestIndex].magnitude = star.properties.mag;
-      if (star.properties.mag < showStarsUpToMagnitude) {
-        colours[closestIndex] = [255, 255, 255] as RGB;
-      }
+    starInformation[closestIndex].bvIndex = parseFloat(star.properties.bv);
+    starInformation[closestIndex].magnitude = star.properties.mag;
+    if (star.properties.mag < showStarsUpToMagnitude) {
+      colours[closestIndex] = [255, 255, 255] as RGB;
     }
   }
 
@@ -146,31 +163,21 @@ const colourSpace = (
     ] as RGB;
 
     for (const point of constellation.points) {
-      if (ignorePointPredicate({ latitude: point[1], longitude: point[0] })) {
+      if (
+        unrotatePoint({ latitude: point[1], longitude: point[0] }).latitude <
+        allCoordinatesUnrotated[0].latitude
+      ) {
         continue;
       }
 
-      let closestIndex = -1;
-      let closestDistance = Infinity;
-
-      for (let i = 0; i < allCoordinates.length; i++) {
-        const [x1, y1] = point;
-        const { latitude: y2, longitude: x2 } = allCoordinates[i];
-
-        const distance = Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
-
-        if (distance < closestDistance) {
-          closestDistance = distance;
-          closestIndex = i;
-        }
+      const closestIndex = findClosestIndex(point, allCoordinates);
+      if (!closestIndex) {
+        continue;
       }
-
-      if (closestIndex !== -1) {
-        if (colourConstellation) {
-          colours[closestIndex] = colour;
-        }
-        starIndexMap.set(JSON.stringify(point), closestIndex);
+      if (colourConstellation) {
+        colours[closestIndex] = colour;
       }
+      starIndexMap.set(JSON.stringify(point), closestIndex);
     }
 
     for (const line of constellation.lines) {
@@ -178,9 +185,71 @@ const colourSpace = (
       const star2 = starIndexMap.get(JSON.stringify(line[1]));
 
       if (star1 !== undefined && star2 !== undefined) {
-        starInformation[star1].constellation = constellation.id;
-        starInformation[star2].constellation = constellation.id;
-        starInformation[star1].connectedStars.push(star2);
+        if (!starInformation[star1].connectedStars.has(constellation.id)) {
+          starInformation[star1].connectedStars.set(constellation.id, [star2]);
+        } else {
+          starInformation[star1].connectedStars
+            .get(constellation.id)!
+            .push(star2);
+        }
+
+        if (!starInformation[star2].connectedStars.has(constellation.id)) {
+          starInformation[star2].connectedStars.set(constellation.id, [star1]);
+        } else {
+          starInformation[star2].connectedStars
+            .get(constellation.id)!
+            .push(star1);
+        }
+        continue;
+      }
+
+      if (star1 === 3172 || star2 === 3172) {
+        console.log(constellation);
+        console.log(line);
+      }
+
+      if (star1) {
+        const star2 = { latitude: line[1][1], longitude: line[1][0] };
+        const unrotatedStar2 = unrotatePoint(star2);
+        const reflectedUnrotatedStar2 = {
+          ...unrotatedStar2,
+          latitude: 2 * allCoordinatesUnrotated[0].latitude - unrotatedStar2.latitude,
+        };
+        const phantomStar2 = rotatePoint(reflectedUnrotatedStar2);
+        const phantomStar2Index = findClosestIndex(
+          [phantomStar2.longitude, phantomStar2.latitude],
+          allCoordinates
+        );
+
+        if (!starInformation[star1].connectedStars.has(constellation.id)) {
+          starInformation[star1].connectedStars.set(constellation.id, [-phantomStar2Index!]);
+        } else {
+          starInformation[star1].connectedStars
+            .get(constellation.id)!
+            .push(-phantomStar2Index!);
+        }
+      }
+
+      if (star2) {
+        const star1 = { latitude: line[0][1], longitude: line[0][0] };
+        const unrotatedStar1 = unrotatePoint(star1);
+        const reflectedUnrotatedStar1 = {
+          ...unrotatedStar1,
+          latitude: 2 * allCoordinatesUnrotated[0].latitude - unrotatedStar1.latitude,
+        };
+        const phantomStar1 = rotatePoint(reflectedUnrotatedStar1);
+        const phantomStar1Index = findClosestIndex(
+          [phantomStar1.longitude, phantomStar1.latitude],
+          allCoordinates
+        );
+
+        if (!starInformation[star2].connectedStars.has(constellation.id)) {
+          starInformation[star2].connectedStars.set(constellation.id, [-phantomStar1Index!]);
+        } else {
+          starInformation[star2].connectedStars
+            .get(constellation.id)!
+            .push(-phantomStar1Index!);
+        }
       }
     }
   }

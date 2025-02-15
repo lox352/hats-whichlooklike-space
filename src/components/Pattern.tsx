@@ -1,5 +1,5 @@
 import React from "react";
-import { Stitch } from "../types/Stitch";
+import { Stitch, stringify } from "../types/Stitch";
 import KnittingPattern from "../KnittingPattern";
 import { SavedPattern } from "../types/SavedPattern";
 
@@ -7,41 +7,44 @@ interface PatternProps {
   stitches: Stitch[];
 }
 
+const saveToLocalStorage = (
+  stitches: Stitch[],
+  setPatternSaved: React.Dispatch<boolean>
+) => {
+  const patternName = prompt("Please enter a name for your pattern:");
+  if (patternName === null) {
+    return;
+  }
+  const patternId = Date.now().toString();
+  const storageKey = `pattern-${patternId}`;
+  const savedPattern: SavedPattern = {
+    id: storageKey,
+    name: patternName ?? undefined,
+    savedAt: new Date(),
+    stitches: stitches.map(stringify),
+    progress: 0,
+  };
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(savedPattern));
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "QuotaExceededError") {
+      alert(
+        "Local storage is full. Please delete a pattern from the home page and try again."
+      );
+      return;
+    } else {
+      throw e;
+    }
+  }
+  window.location.hash = `#/pattern/${patternId}`;
+  setPatternSaved(true);
+  alert(
+    "Stitches saved to local storage! This pattern may be accessed at any time from the homepage."
+  );
+};
+
 const Pattern: React.FC<PatternProps> = ({ stitches }) => {
   const [patternSaved, setPatternSaved] = React.useState(false);
-  const saveToLocalStorage = () => {
-    const patternName = prompt("Please enter a name for your pattern:");
-    if (patternName === null) {
-      return;
-    }
-
-    const patternId = Date.now().toString();
-    const storageKey = `pattern-${patternId}`;
-    const savedPattern: SavedPattern = {
-      id: storageKey,
-      name: patternName ?? undefined,
-      savedAt: new Date(),
-      stitches,
-      progress: 0,
-    };
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(savedPattern));
-    } catch (e) {
-      if (e instanceof DOMException && e.name === "QuotaExceededError") {
-        alert(
-          "Local storage is full. Please delete a pattern from the home page and try again."
-        );
-        return;
-      } else {
-        throw e;
-      }
-    }
-    window.location.hash = `#/pattern/${patternId}`;
-    setPatternSaved(true);
-    alert(
-      "Stitches saved to local storage! This pattern may be accessed at any time from the homepage."
-    );
-  };
 
   return (
     <div style={{ textAlign: "left", padding: "20px" }}>
@@ -76,7 +79,7 @@ const Pattern: React.FC<PatternProps> = ({ stitches }) => {
               borderRadius: "4px",
               cursor: "pointer",
             }}
-            onClick={saveToLocalStorage}
+            onClick={() => saveToLocalStorage(stitches, setPatternSaved)}
           >
             Save Pattern
           </button>

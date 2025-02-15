@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { SavedPattern as Pattern } from "../types/SavedPattern";
 import ChainModel from "../ChainModel/ChainModel";
+import { destringify } from "../types/Stitch";
 
 const SavedRender: React.FC = () => {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const SavedRender: React.FC = () => {
       <h1 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>Pre-dyed Hat</h1>
       <div style={{ height: "350px" }}>
         <ChainModel
-          stitches={pattern.stitches}
+          stitches={pattern.stitches.map(destringify)}
           simulationActive={false}
           onAnyStitchRendered={() => {
             setAnyStitchRendered(true);

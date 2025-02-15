@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SavedPattern as Pattern } from "../types/SavedPattern";
 import KnittingPattern from "../KnittingPattern";
+import { destringify } from "../types/Stitch";
 
 const getPattern = (patternId: string | undefined) => {
   const savedPattern = patternId
@@ -32,6 +33,7 @@ const minusButtonStyle = {
   ...buttonStyle,
   backgroundColor: "#f44336", // red color for minus buttons
 };
+
 const RecordingProgress: React.FC<RecordingProgressProps> = ({
   recordStitches,
   setRecordingProgress,
@@ -132,7 +134,7 @@ const SavedPattern: React.FC = () => {
     const progress = savedPattern.progress;
     let newProgress = progress;
     if (delta === "addRow") {
-      const nextRowStitch = savedPattern.stitches
+      const nextRowStitch = savedPattern.stitches.map(destringify)
         .slice(progress)
         .find((stitch) => stitch.links.slice(0, -1).includes(progress))?.id;
       if (!nextRowStitch) {
@@ -141,7 +143,7 @@ const SavedPattern: React.FC = () => {
       }
       newProgress = nextRowStitch;
     } else if (delta === "takeRow") {
-      const currentStitch = savedPattern.stitches[progress];
+      const currentStitch = destringify(savedPattern.stitches[progress]);
       newProgress = currentStitch.links.slice(-2, -1)[0];
     } else {
       newProgress += delta;
@@ -166,7 +168,7 @@ const SavedPattern: React.FC = () => {
       </h1>
 
       <KnittingPattern
-        stitches={savedPattern.stitches}
+        stitches={savedPattern.stitches.map(destringify)}
         progress={savedPattern.progress}
       />
       {!recordingProgress && (

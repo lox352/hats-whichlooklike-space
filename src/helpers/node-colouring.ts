@@ -64,79 +64,71 @@ function rotateVertically(
  * @param destination - The destination pole to align to (either the north pole or { lat: 0, lon: 0 }).
  * @returns The rotated coordinate { lat, lon }.
  */
-function rotateToDestination(
-  coord: GlobalCoordinates,
-  orientationParameters: OrientationParameters
-): GlobalCoordinates {
-  const { latitude: targetLatitude, longitude: targetLongitude } =
-    orientationParameters.coordinates;
-  let rotatedCoord;
-  if (orientationParameters.targetDestination === "front") {
-    rotatedCoord = rotateVertically(coord, targetLatitude);
-  } else if (orientationParameters.targetDestination === "crown") {
-    rotatedCoord = rotateVertically(coord, targetLatitude - 90);
-  } else if (orientationParameters.targetDestination === "rim") {
-    rotatedCoord = rotateVertically(coord, targetLatitude + 90);
-  } else {
-    throw new Error(
-      `Invalid target destination: ${orientationParameters.targetDestination}`
-    );
-  }
-  const result = rotateAboutAxis(rotatedCoord, targetLongitude);
-  return result;
-}
+const rotateToDestination =
+  (orientationParameters: OrientationParameters) =>
+  (coord: GlobalCoordinates): GlobalCoordinates => {
+    const { latitude: targetLatitude, longitude: targetLongitude } =
+      orientationParameters.coordinates;
+    let rotatedCoord;
+    if (orientationParameters.targetDestination === "front") {
+      rotatedCoord = rotateVertically(coord, targetLatitude);
+    } else if (orientationParameters.targetDestination === "crown") {
+      rotatedCoord = rotateVertically(coord, targetLatitude - 90);
+    } else if (orientationParameters.targetDestination === "rim") {
+      rotatedCoord = rotateVertically(coord, targetLatitude + 90);
+    } else {
+      throw new Error(
+        `Invalid target destination: ${orientationParameters.targetDestination}`
+      );
+    }
+    const result = rotateAboutAxis(rotatedCoord, targetLongitude);
+    return result;
+  };
 
-function rotateFromDestination(
-  coord: GlobalCoordinates,
-  orientationParameters: OrientationParameters
-): GlobalCoordinates {
-  const { latitude: targetLatitude, longitude: targetLongitude } =
-    orientationParameters.coordinates;
-  const rotatedCoord = rotateAboutAxis(coord, -targetLongitude);
+const rotateFromDestination =
+  (orientationParameters: OrientationParameters) =>
+  (coord: GlobalCoordinates): GlobalCoordinates => {
+    const { latitude: targetLatitude, longitude: targetLongitude } =
+      orientationParameters.coordinates;
+    const rotatedCoord = rotateAboutAxis(coord, -targetLongitude);
 
-  let result;
-  if (orientationParameters.targetDestination === "front") {
-    result = rotateVertically(rotatedCoord, -targetLatitude);
-  } else if (orientationParameters.targetDestination === "crown") {
-    result = rotateVertically(rotatedCoord, -targetLatitude + 90);
-  } else if (orientationParameters.targetDestination === "rim") {
-    result = rotateVertically(rotatedCoord, -targetLatitude - 90);
-  } else {
-    throw new Error(
-      `Invalid target destination: ${orientationParameters.targetDestination}`
-    );
-  }
-  return result;
-}
+    let result;
+    if (orientationParameters.targetDestination === "front") {
+      result = rotateVertically(rotatedCoord, -targetLatitude);
+    } else if (orientationParameters.targetDestination === "crown") {
+      result = rotateVertically(rotatedCoord, -targetLatitude + 90);
+    } else if (orientationParameters.targetDestination === "rim") {
+      result = rotateVertically(rotatedCoord, -targetLatitude - 90);
+    } else {
+      throw new Error(
+        `Invalid target destination: ${orientationParameters.targetDestination}`
+      );
+    }
+    return result;
+  };
 
 const colourNodes = async (
   positions: Point[],
   orientationParameters: OrientationParameters,
-  pureSpherical = true
+  showWholeSky = false
 ): Promise<[RGB[], StarInformation[]]> => {
   const maxY = positions.reduce(
     (max, position) => Math.max(max, position.y),
     -Infinity
   );
   const allCoordinatesUnrotated = positions.map((position) =>
-    getGlobalCoordinates(position, maxY, pureSpherical)
+    getGlobalCoordinates(position, maxY, showWholeSky)
   );
   const allCoordinates = allCoordinatesUnrotated.map((coordinates) =>
-    rotateToDestination(coordinates, orientationParameters)
+    rotateToDestination(orientationParameters)(coordinates)
   );
 
-  const ignorePointPredicate = (point: GlobalCoordinates) => {
-    if (!pureSpherical) {
-      return false;
-    }
-    const unrotated = rotateFromDestination(point, orientationParameters);
-    if (unrotated.latitude < allCoordinatesUnrotated[0].latitude) {
-      return true;
-    }
-    return false;
-  };
-
-  const spaceColourings = colourSpace(allCoordinates, ignorePointPredicate);
+  const spaceColourings = colourSpace(
+    allCoordinates,
+    allCoordinatesUnrotated,
+    rotateFromDestination(orientationParameters),
+    rotateToDestination(orientationParameters)
+  );
 
   return [spaceColourings.colours, spaceColourings.starInformation];
 };
@@ -144,7 +136,7 @@ const colourNodes = async (
 const getGlobalCoordinates = (
   position: Point,
   maxY: number,
-  pureSpherical = true
+  showWholeSky: boolean
 ): GlobalCoordinates => {
   const { x, y, z } = position;
   // Given Cartesian coordinates (x, y, z)
@@ -164,7 +156,7 @@ const getGlobalCoordinates = (
   const longitudeDegrees = longitude * (180 / Math.PI);
   const latitudeDegrees = latitude * (180 / Math.PI);
 
-  if (pureSpherical || y > maxY / 2) {
+  if (!showWholeSky || y > maxY / 2) {
     return { latitude: latitudeDegrees, longitude: longitudeDegrees };
   } else {
     const normalisedVerticalDistance = (y - maxY / 2) / (maxY / 2);
