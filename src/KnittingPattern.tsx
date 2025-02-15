@@ -305,8 +305,8 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
                 position: "absolute",
                 top: 0,
                 left: 0,
-                width: `${(numCols + 1) * 10}px`,
-                height: `${(numRows + 1) * 10}px`,
+                width: `${(numCols) * 10}px`,
+                height: `${(numRows) * 10}px`,
                 pointerEvents: "none",
               }}
             >
