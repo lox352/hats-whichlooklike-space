@@ -99,8 +99,8 @@ const colourSpace = (
   unrotatePoint: (coordinate: GlobalCoordinates) => GlobalCoordinates,
   rotatePoint: (coordinate: GlobalCoordinates) => GlobalCoordinates,
   colourConstellation = false,
-  colourMilkyWay = 1, // Max value is 5
-  showStarsUpToMagnitude = 4
+  colourMilkyWay = 5, // Max value is 5
+  showStarsUpToMagnitude = 5 // Max value is 6
 ): { colours: RGB[]; starInformation: StarInformation[] } => {
   const colours = allCoordinates.map((coordinate) => {
     const { latitude, longitude } = coordinate;

@@ -4,6 +4,8 @@ import { GlobalCoordinates } from "./GlobalCoordinates";
 type OrientationParameters = {
   coordinates: GlobalCoordinates;
   targetDestination: DestinationType;
+  maximumMagnitude: number;
+  milkyWayResolution: 1 | 2 | 3 | 4 | 5; 
 };
 
 const defaultOrientationParameters: OrientationParameters = {
@@ -12,6 +14,8 @@ const defaultOrientationParameters: OrientationParameters = {
     longitude: 0,
   },
   targetDestination: "crown",
+  maximumMagnitude: 4,
+  milkyWayResolution: 1,
 };
 
 export { defaultOrientationParameters };

@@ -127,7 +127,10 @@ const colourNodes = async (
     allCoordinates,
     allCoordinatesUnrotated,
     rotateFromDestination(orientationParameters),
-    rotateToDestination(orientationParameters)
+    rotateToDestination(orientationParameters),
+    false,
+    orientationParameters.milkyWayResolution,
+    orientationParameters.maximumMagnitude
   );
 
   return [spaceColourings.colours, spaceColourings.starInformation];
