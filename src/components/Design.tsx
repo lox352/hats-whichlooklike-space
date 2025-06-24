@@ -348,6 +348,7 @@ const Design: React.FC<PatternProps> = ({
       {locationType === "Derived" && (
         <>
           <h2 style={h2Style}>Customise Your Night Sky</h2>
+          Knit a the night sky above your head at a specific time and place.
           <h3 style={h3Style}>Choose a Date</h3>
           <div style={{ marginBottom: "10px" }}>
             <label>
