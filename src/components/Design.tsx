@@ -13,6 +13,10 @@ import { OrientationParameters } from "../types/OrientationParameters";
 import { calculateUtc, DateTime } from "../helpers/time-zone-helper";
 import { GlobalCoordinates } from "../types/GlobalCoordinates";
 import { calculateRightAscensionAndDeclension } from "../helpers/celestial-coordinates";
+import InputField from "./InputField";
+import CoordinatesInput from "./CoordinatesInput";
+import ToggleAdvancedOptions from "./ToggleAdvancedOptions";
+import "./Design.css";
 
 interface PatternProps {
   setStitches: React.Dispatch<React.SetStateAction<Stitch[]>>;
@@ -22,166 +26,12 @@ interface PatternProps {
   >;
 }
 
-interface InputFieldProps {
-  label: string;
-  value: number;
-  valueSetter: React.Dispatch<React.SetStateAction<number>>;
-}
-
-const InputField: React.FC<InputFieldProps> = ({
-  label,
-  value,
-  valueSetter,
-}) => (
-  <div style={{ marginBottom: "15px" }}>
-    <label>
-      {label}
-      <br />
-      <input
-        type="number"
-        value={value === 0 ? "" : value}
-        onChange={(e) => valueSetter(Number(e.target.value))}
-      />
-    </label>
-  </div>
-);
-
-interface CoordinatesInputProps {
-  orientationParameters: OrientationParameters;
-  setOrientationParameters: React.Dispatch<
-    React.SetStateAction<OrientationParameters>
-  >;
-  disabled: boolean;
-}
-
-const CoordinatesInput: React.FC<CoordinatesInputProps> = ({
-  orientationParameters,
-  setOrientationParameters,
-  disabled,
-}) => {
-  const { coordinates } = orientationParameters;
-  const setLatitude = (latitude: number) =>
-    setOrientationParameters({
-      ...orientationParameters,
-      coordinates: { ...coordinates, latitude },
-    });
-  const setLongitude = (rightAssention: number) =>
-    setOrientationParameters({
-      ...orientationParameters,
-      coordinates: { ...coordinates, longitude: rightAssention * 15 - 180 },
-    });
-  return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "flex-start",
-        alignItems: "baseline",
-        marginBottom: "20px",
-      }}
-    >
-      <label
-        style={{
-          marginRight: "20px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-        }}
-      >
-        Declension (degrees)
-        <input
-          type="number"
-          value={coordinates.latitude}
-          min="-90"
-          max="90"
-          step="0.1"
-          onChange={(e) => setLatitude(Number(e.target.value))}
-          style={{ marginTop: "5px" }}
-          disabled={disabled}
-        />
-      </label>
-      <label
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-start",
-        }}
-      >
-        Right assention (hours)
-        <input
-          type="number"
-          value={(coordinates.longitude + 180) / 15}
-          min="0"
-          max="24"
-          step="0.1"
-          onChange={(e) => setLongitude(Number(e.target.value))}
-          style={{ marginTop: "5px" }}
-          disabled={disabled}
-        />
-      </label>
-    </div>
-  );
-};
-
 type LocationType =
   | "Derived"
   | "North Star"
   | "Southern Cross"
   | "Current Location"
   | "Custom Location";
-
-const h1Style = {
-  fontSize: "2.5rem",
-  marginBottom: "10px",
-};
-
-const h2Style = {
-  fontSize: "1.5rem",
-  marginTop: "5px",
-  marginBottom: "5px",
-};
-
-const h3Style = {
-  fontSize: "1rem",
-  marginTop: "5px",
-  marginBottom: "5px",
-};
-interface ToggleAdvancedOptionsProps {
-  showAdvancedOptions: boolean;
-  setShowAdvancedOptions: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-const ToggleAdvancedOptions: React.FC<ToggleAdvancedOptionsProps> = ({
-  showAdvancedOptions,
-  setShowAdvancedOptions,
-}) => (
-  <h1
-    style={{
-      backgroundColor: "transparent",
-      color: "white",
-      padding: "10px 0",
-      border: "none",
-      cursor: "pointer",
-      marginTop: "5px",
-      marginBottom: "0px",
-      display: "flex",
-      alignItems: "center",
-      fontSize: "1.25rem",
-      borderBottom: showAdvancedOptions ? "1px solid white" : "none",
-    }}
-    onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
-  >
-    {showAdvancedOptions ? "Hide Advanced Options" : "Show Advanced Options"}
-    <span
-      style={{
-        marginLeft: "10px",
-        transform: showAdvancedOptions ? "rotate(180deg)" : "rotate(0deg)",
-        transition: "transform 0.3s",
-      }}
-    >
-      ▼
-    </span>
-  </h1>
-);
 
 const Design: React.FC<PatternProps> = ({
   setStitches,
@@ -216,7 +66,7 @@ const Design: React.FC<PatternProps> = ({
         latitude,
         longitude,
       } as GlobalCoordinates);
-      setOrientationParameters(prev => ({
+      setOrientationParameters((prev) => ({
         ...prev,
         coordinates: {
           latitude: dec,
@@ -332,9 +182,9 @@ const Design: React.FC<PatternProps> = ({
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   return (
-    <div style={{ textAlign: "left", padding: "20px" }}>
-      <h1 style={h1Style}>Design</h1>
-      <h2 style={h2Style}>Set Up Your Stitches</h2>
+    <div className="design-container">
+      <h1 className="design-h1">Design</h1>
+      <h2 className="design-h2">Set Up Your Stitches</h2>
       <InputField
         label="Stitches per row"
         value={stitchesPerRow}
@@ -347,10 +197,10 @@ const Design: React.FC<PatternProps> = ({
       />
       {locationType === "Derived" && (
         <>
-          <h2 style={h2Style}>Customise Your Night Sky</h2>
+          <h2 className="design-h2">Customise Your Night Sky</h2>
           Knit a the night sky above your head at a specific time and place.
-          <h3 style={h3Style}>Choose a Date</h3>
-          <div style={{ marginBottom: "10px" }}>
+          <h3 className="design-h3">Choose a Date</h3>
+          <div className="design-input-group">
             <label>
               Day
               <input
@@ -364,7 +214,7 @@ const Design: React.FC<PatternProps> = ({
                     e.target.value ? Number(e.target.value) : null
                   )
                 }
-                style={{ marginLeft: "10px", marginRight: "20px" }}
+                className="design-input-number"
               />
             </label>
             <label>
@@ -372,7 +222,7 @@ const Design: React.FC<PatternProps> = ({
               <select
                 value={month ?? ""}
                 onChange={(e) => handleMonthChange(Number(e.target.value))}
-                style={{ marginLeft: "10px" }}
+                className="design-select"
               >
                 <option value={1}>January</option>
                 <option value={2}>February</option>
@@ -389,8 +239,8 @@ const Design: React.FC<PatternProps> = ({
               </select>
             </label>
           </div>
-          <h3 style={h3Style}>Choose a Time</h3>
-          <div style={{ marginBottom: "10px" }}>
+          <h3 className="design-h3">Choose a Time</h3>
+          <div className="design-input-group">
             <label>
               Hour
               <input
@@ -404,7 +254,7 @@ const Design: React.FC<PatternProps> = ({
                     e.target.value ? Number(e.target.value) : null
                   )
                 }
-                style={{ marginLeft: "10px", marginRight: "20px" }}
+                className="design-input-number"
               />
             </label>
             <label>
@@ -420,11 +270,12 @@ const Design: React.FC<PatternProps> = ({
                     e.target.value ? Number(e.target.value) : null
                   )
                 }
+                className="design-input-number"
                 style={{ marginLeft: "10px" }}
               />
             </label>
           </div>
-          <h3 style={h3Style}>Choose a Location</h3>
+          <h3 className="design-h3">Choose a Location</h3>
           <div style={{ marginBottom: "5px" }}>
             <label>
               Latitude
@@ -439,7 +290,7 @@ const Design: React.FC<PatternProps> = ({
                     e.target.value ? Number(e.target.value) : null
                   )
                 }
-                style={{ marginLeft: "10px", marginRight: "20px" }}
+                className="design-input-number"
               />
             </label>
             <label>
@@ -455,6 +306,7 @@ const Design: React.FC<PatternProps> = ({
                     e.target.value ? Number(e.target.value) : null
                   )
                 }
+                className="design-input-number"
                 style={{ marginLeft: "10px" }}
               />
             </label>
@@ -468,11 +320,7 @@ const Design: React.FC<PatternProps> = ({
                 setLongitude(Number(position.coords.longitude.toFixed(1)));
               });
             }}
-            style={{
-              cursor: "pointer",
-              color: "lightblue",
-              fontSize: "0.9rem",
-            }}
+            className="design-link"
           >
             Use current location
           </a>
@@ -480,24 +328,22 @@ const Design: React.FC<PatternProps> = ({
       )}
 
       <div
-        style={{
-          overflow: "hidden",
-          maxHeight: showAdvancedOptions ? "1000px" : "0",
-          opacity: showAdvancedOptions ? 1 : 0,
-          transition: "max-height 0.5s ease-in-out, opacity 0.5s ease-in-out",
-        }}
+        className={`advanced-options-container ${showAdvancedOptions
+            ? "advanced-options-visible"
+            : "advanced-options-hidden"
+          }`}
       >
-        <h2 style={h2Style}>Decrease Method</h2>
-        <h3 style={h3Style}>Choose a Decrease Method</h3>
-        <div style={{ marginBottom: "10px" }}>
+        <h2 className="design-h2">Decrease Method</h2>
+        <h3 className="design-h3">Choose a Decrease Method</h3>
+        <div className="design-input-group">
           <select value={decreaseMethod} onChange={handleDecreaseMethodChange}>
             <option value="Hemispherical">Hemispherical</option>
             <option value="Pyramidal">Pyramidal</option>
           </select>
         </div>
-        <h2 style={h2Style}>Orient Your Night Sky</h2>
-        <h3 style={h3Style}>Choose a Location</h3>
-        <div style={{ marginBottom: "10px" }}>
+        <h2 className="design-h2">Orient Your Night Sky</h2>
+        <h3 className="design-h3">Choose a Location</h3>
+        <div className="design-input-group">
           <select value={locationType} onChange={handleLocationChange}>
             <option value="Derived">Derived From Place and Time</option>
             <option value="North Star">North Star (Polaris)</option>
@@ -513,8 +359,8 @@ const Design: React.FC<PatternProps> = ({
         />
         {locationType !== "Derived" && (
           <>
-            <h3 style={h3Style}>Where Should This Point End Up?</h3>
-            <div style={{ marginBottom: "10px" }}>
+            <h3 className="design-h3">Where Should This Point End Up?</h3>
+            <div className="design-input-group">
               <select
                 value={orientationParameters.targetDestination}
                 onChange={handleDestinationChange}
@@ -532,17 +378,7 @@ const Design: React.FC<PatternProps> = ({
         setShowAdvancedOptions={setShowAdvancedOptions}
       />
       <br />
-      <button
-        style={{
-          backgroundColor: "#3f51b5",
-          color: "white",
-          padding: "10px 20px",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-        onClick={handleViewAndColour}
-      >
+      <button className="knit-button" onClick={handleViewAndColour}>
         Knit and Dye
       </button>
     </div>

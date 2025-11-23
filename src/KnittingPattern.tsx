@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Stitch } from "./types/Stitch";
+import { constructConnections } from "./helpers/connections";
+import "./KnittingPattern.css";
 
 interface KnittingPatternProps {
   stitches: Stitch[];
@@ -17,18 +19,11 @@ const LabelRight: React.FC<{
   children: React.ReactNode;
 }> = ({ row, col, children }) => (
   <div
-    className="grid-label"
+    className="grid-label grid-label-right"
     id={`label-row-${row}-col-${col}`}
     style={{
       gridRow: row,
       gridColumn: col,
-      backgroundColor: "rgb(20, 20, 20)",
-      color: "white",
-      textAlign: "right",
-      aspectRatio: "1 / 1",
-      position: "relative",
-      right: 0,
-      paddingLeft: "2px",
     }}
   >
     {children}
@@ -41,17 +36,11 @@ const LabelBottom: React.FC<{
   children: React.ReactNode;
 }> = ({ row, col, children }) => (
   <div
-    className="grid-label"
+    className="grid-label grid-label-bottom"
     id={`label-row-${row}-col-${col}`}
     style={{
       gridRow: row,
       gridColumn: col,
-      backgroundColor: "rgb(20, 20, 20)",
-      color: "white",
-      textAlign: "left",
-      aspectRatio: "1 / 1",
-      position: "relative",
-      bottom: 0,
     }}
   >
     {children}
@@ -64,173 +53,101 @@ const StitchBox: React.FC<{
   numRows: number;
   numCols: number;
   completed: boolean;
-}> = ({ stitch, position, numRows, numCols, completed }) => (
+}> = React.memo(({ stitch, position, numRows, numCols, completed }) => (
   <div
+    className="stitch-box"
     key={`stitch-${stitch.id}-row-${position.row}-col-${position.col}`}
     id={`stitch-${stitch.id}-row-${position.row}-col-${position.col}`}
     style={{
       gridRow: numRows + position.row,
       gridColumn: numCols + position.col,
       backgroundColor: `rgb(${stitch.colour.join(",")})`,
-      border: "1px solid rgb(20, 50, 50)",
       borderLeftWidth: (position.col - 1) % 5 === 0 ? "2px" : "1px",
       borderTopWidth: (position.row - 1) % 5 === 0 ? "2px" : "1px",
-      textAlign: "center",
-      position: "relative",
       opacity: completed ? 0.4 : 1,
     }}
   >
-    {stitch.type === "k2tog" && (
-      <div
-        style={{
-          position: "absolute",
-          top: "14%",
-          left: "15%",
-          width: "100%",
-          height: "100%",
-          borderTop: "1px solid grey",
-          transform: "rotate(45deg)",
-          transformOrigin: "-0.5px 0",
-        }}
-      />
-    )}
+    {stitch.type === "k2tog" && <div className="stitch-decoration k2tog-line" />}
     {stitch.type === "k3tog" && (
       <React.Fragment>
-        <div
-          style={{
-            position: "absolute",
-            left: "calc(-50% - 0.5px)",
-            top: "calc(10%)",
-            width: "100%",
-            height: "85%",
-            borderRight: "1px solid grey",
-            transformOrigin: "top right",
-            transform: "rotate(20deg)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: "calc(-50% - 0.5px)",
-            top: "calc(10%)",
-            width: "100%",
-            height: "80%",
-            borderRight: "1px solid grey",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            left: "calc(-50% - 0.5px)",
-            top: "calc(10%)",
-            width: "100%",
-            height: "85%",
-            borderRight: "1px solid grey",
-            transformOrigin: "top right",
-            transform: "rotate(-20deg)",
-          }}
-        />
+        <div className="stitch-decoration k3tog-line-1" />
+        <div className="stitch-decoration k3tog-line-2" />
+        <div className="stitch-decoration k3tog-line-3" />
       </React.Fragment>
     )}
     {stitch.starInfo?.connectedStars.size > 0 && (
-      <div
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          width: "4px",
-          height: "4px",
-          backgroundColor: "white",
-          borderRadius: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
-      />
+      <div className="star-dot" />
     )}
   </div>
-);
-
-function constructConnections(stitches: Stitch[]): [number, number][] {
-  const deduplicated = new Set(
-    stitches.flatMap((stitch) =>
-      stitch?.starInfo?.connectedStars
-        ? Array.from(stitch.starInfo.connectedStars).flatMap((d) =>
-            d[1].map((e) => JSON.stringify([stitch.id, e].sort()))
-          )
-        : []
-    )
-  );
-  return Array.from(deduplicated).map(
-    (item) => JSON.parse(item) as [number, number]
-  );
-}
+));
 
 const KnittingPattern: React.FC<KnittingPatternProps> = ({
   stitches,
   progress,
 }) => {
-  const stitchPositions: { [id: number]: StitchPosition } = {};
-  const filteredStitches = stitches.filter((stitch) => stitch.id !== 0);
-  const connections = constructConnections(filteredStitches);
-  filteredStitches.forEach((stitch, index) => {
-    if (index === 0) {
-      stitchPositions[stitch.id] = { row: 0, col: 0 };
-      return;
-    }
-
-    const linksToConsider = stitch.links.filter((id) => id !== 0).slice(0, -1);
-
-    if (linksToConsider.length === 0) {
-      const linkedStitchPos =
-        stitchPositions[stitch.links[stitch.links.length - 1]];
-      stitchPositions[stitch.id] = {
-        row: linkedStitchPos.row,
-        col: linkedStitchPos.col - 1,
-      };
-    } else {
-      const middleIndex = Math.floor(linksToConsider.length / 2);
-      const middleLink = linksToConsider[middleIndex];
-      const middleLinkPos = stitchPositions[middleLink];
-      stitchPositions[stitch.id] = {
-        row: middleLinkPos.row - 1,
-        col: middleLinkPos.col,
-      };
-    }
-  });
-
-  filteredStitches.forEach((stitch) => {
-    stitch.starInfo.connectedStars.forEach((connectedStar, key) => {
-      console.log(
-        `Stitch ${stitch.id} connected to ${connectedStar} at ${key}`
-      );
-    });
-  });
-
-  const { minRow, minCol } = Object.values(stitchPositions).reduce(
-    (acc, pos) => {
-      acc.minRow = Math.min(acc.minRow, pos.row);
-      acc.minCol = Math.min(acc.minCol, pos.col);
-      return acc;
-    },
-    { minRow: Infinity, minCol: Infinity }
+  const filteredStitches = useMemo(
+    () => stitches.filter((stitch) => stitch.id !== 0),
+    [stitches]
   );
 
-  const numRows = 1 - minRow;
-  const numCols = 1 - minCol;
+  const connections = useMemo(
+    () => constructConnections(filteredStitches),
+    [filteredStitches]
+  );
+
+  const stitchPositions = useMemo(() => {
+    const positions: { [id: number]: StitchPosition } = {};
+    filteredStitches.forEach((stitch, index) => {
+      if (index === 0) {
+        positions[stitch.id] = { row: 0, col: 0 };
+        return;
+      }
+
+      const linksToConsider = stitch.links
+        .filter((id) => id !== 0)
+        .slice(0, -1);
+
+      if (linksToConsider.length === 0) {
+        const linkedStitchPos =
+          positions[stitch.links[stitch.links.length - 1]];
+        positions[stitch.id] = {
+          row: linkedStitchPos.row,
+          col: linkedStitchPos.col - 1,
+        };
+      } else {
+        const middleIndex = Math.floor(linksToConsider.length / 2);
+        const middleLink = linksToConsider[middleIndex];
+        const middleLinkPos = positions[middleLink];
+        positions[stitch.id] = {
+          row: middleLinkPos.row - 1,
+          col: middleLinkPos.col,
+        };
+      }
+    });
+    return positions;
+  }, [filteredStitches]);
+
+  const { numRows, numCols } = useMemo(() => {
+    const { minRow, minCol } = Object.values(stitchPositions).reduce(
+      (acc, pos) => {
+        acc.minRow = Math.min(acc.minRow, pos.row);
+        acc.minCol = Math.min(acc.minCol, pos.col);
+        return acc;
+      },
+      { minRow: Infinity, minCol: Infinity }
+    );
+    return { numRows: 1 - minRow, numCols: 1 - minCol };
+  }, [stitchPositions]);
 
   return (
     <div>
       <div
         id="printable-section"
+        className="knitting-pattern-container"
         style={{
-          display: "grid",
           gridTemplateRows: `repeat(${numRows + 1}, 10px)`,
           gridTemplateColumns: `repeat(${numCols + 1}, 10px)`,
-          gap: "0px",
           minHeight: `${(numRows + 2) * 10}px`,
-          overflowX: "auto",
-          overflowY: "hidden",
-          marginBottom: "10px",
-          position: "relative",
         }}
       >
         {filteredStitches.map((stitch) => {
@@ -258,6 +175,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
               </LabelBottom>
             );
           }
+          return null;
         })}
         {[...Array(numRows)].map((_, rowIndex) => {
           if ((rowIndex + 1) % 5 === 0) {
@@ -271,9 +189,9 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
               </LabelRight>
             );
           }
+          return null;
         })}
         {connections.map(([id1, id2]) => {
-          console.log(id1, id2);
           const isPhantom = id1 <= 0;
           const pos1 = isPhantom ? stitchPositions[-id1] : stitchPositions[id1];
           const pos2 = stitchPositions[id2];
@@ -301,13 +219,10 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
           return (
             <svg
               key={`connection-${id1}-${id2}`}
+              className="connection-svg"
               style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: `${(numCols) * 10}px`,
-                height: `${(numRows) * 10}px`,
-                pointerEvents: "none",
+                width: `${numCols * 10}px`,
+                height: `${numRows * 10}px`,
               }}
             >
               <line

@@ -1,0 +1,90 @@
+.knitting-pattern-container {
+  display: grid;
+  gap: 0px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.grid-label {
+  background-color: rgb(20, 20, 20);
+  color: white;
+  aspect-ratio: 1 / 1;
+  position: relative;
+}
+
+.grid-label-right {
+  text-align: right;
+  right: 0;
+  padding-left: 2px;
+}
+
+.grid-label-bottom {
+  text-align: left;
+  bottom: 0;
+}
+
+.stitch-box {
+  border: 1px solid rgb(20, 50, 50);
+  text-align: center;
+  position: relative;
+}
+
+.stitch-decoration {
+  position: absolute;
+  width: 100%;
+  border-color: grey;
+}
+
+.k2tog-line {
+  top: 14%;
+  left: 15%;
+  height: 100%;
+  border-top: 1px solid;
+  transform: rotate(45deg);
+  transform-origin: -0.5px 0;
+}
+
+.k3tog-line-1 {
+  left: calc(-50% - 0.5px);
+  top: 10%;
+  height: 85%;
+  border-right: 1px solid;
+  transform-origin: top right;
+  transform: rotate(20deg);
+}
+
+.k3tog-line-2 {
+  left: calc(-50% - 0.5px);
+  top: 10%;
+  height: 80%;
+  border-right: 1px solid;
+}
+
+.k3tog-line-3 {
+  left: calc(-50% - 0.5px);
+  top: 10%;
+  height: 85%;
+  border-right: 1px solid;
+  transform-origin: top right;
+  transform: rotate(-20deg);
+}
+
+.star-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background-color: white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.connection-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}

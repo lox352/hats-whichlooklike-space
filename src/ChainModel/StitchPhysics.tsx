@@ -9,6 +9,7 @@ import { adjacentStitchDistance, verticalStitchDistance } from "../constants";
 import { useFrame } from "@react-three/fiber";
 import { OrientationParameters } from "../types/OrientationParameters";
 import { Line } from "@react-three/drei";
+import { constructConnections } from "../helpers/connections";
 
 function createChevronTexture() {
   const size = 256; // Texture resolution
@@ -51,19 +52,6 @@ interface StitchPhysicsProps {
   onAnyStitchRendered?: () => void;
 }
 
-function constructConnections(stitches: Stitch[]): [number, number][] {
-  const deduplicated = new Set(
-    stitches.flatMap((stitch) =>
-      stitch?.starInfo?.connectedStars
-        ? Array.from(stitch.starInfo.connectedStars).flatMap((d) =>
-            d[1].map((e) => JSON.stringify([stitch.id, e].sort()))
-          )
-        : []
-    )
-  );
-  return Array.from(deduplicated).map((item) => JSON.parse(item) as [number, number]);
-}
-
 const StitchPhysics: React.FC<StitchPhysicsProps> = ({
   stitchesRef,
   setStitches,
@@ -75,16 +63,19 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
   const setRefsVersion = useState(0)[1];
   const frameNumber = useRef(0);
   const stitches = stitchesRef.current;
-  const stitchRefs = useRef<React.RefObject<RapierRigidBody>[]>(
-    stitches.map(() => React.createRef())
-  );
+
+  const stitchRefs = useRef<React.RefObject<RapierRigidBody>[]>([]);
+  if (stitchRefs.current.length === 0) {
+    stitchRefs.current = stitches.map(() => React.createRef());
+  }
 
   const [connections, setConnections] = useState<[number, number][]>(
     constructConnections(stitches)
   );
 
-  const colourRefs = useRef<React.MutableRefObject<Float32Array>[]>(
-    stitches.map((stitch) => {
+  const colourRefs = useRef<React.MutableRefObject<Float32Array>[]>([]);
+  if (colourRefs.current.length === 0) {
+    colourRefs.current = stitches.map((stitch) => {
       const ref = React.createRef() as MutableRefObject<Float32Array>;
       if (!ref.current) {
         ref.current = new Float32Array([
@@ -94,8 +85,8 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
         ]);
       }
       return ref;
-    })
-  );
+    });
+  }
 
   useFrame(() => {
     if (onAnyStitchRendered && frameNumber.current === 0) {

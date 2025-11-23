@@ -1,0 +1,64 @@
+.design-container {
+    text-align: left;
+    padding: 20px;
+}
+
+.design-h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.design-h2 {
+    font-size: 1.5rem;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.design-h3 {
+    font-size: 1rem;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.design-input-group {
+    margin-bottom: 10px;
+}
+
+.design-input-number {
+    margin-left: 10px;
+    margin-right: 20px;
+}
+
+.design-select {
+    margin-left: 10px;
+}
+
+.design-link {
+    cursor: pointer;
+    color: lightblue;
+    font-size: 0.9rem;
+}
+
+.advanced-options-container {
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+}
+
+.advanced-options-visible {
+    max-height: 1000px;
+    opacity: 1;
+}
+
+.advanced-options-hidden {
+    max-height: 0;
+    opacity: 0;
+}
+
+.knit-button {
+    background-color: #3f51b5;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
