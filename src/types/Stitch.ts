@@ -1,5 +1,5 @@
 import { StarInformation } from "../helpers/star-colouring";
-import { RGB } from "../PixelCanvas/PixelGrid";
+import { RGB } from "./RGB";
 import { Point } from "./Point";
 import { StitchType } from "./StitchType";
 
