@@ -1,26 +1,31 @@
+/* A ring rather than a bar: it reads as a dial at a glance and takes no width. */
 .progress-ring {
+  flex: none;
+  display: grid;
+  place-items: center;
   position: relative;
-  display: inline-flex;
   width: 46px;
   height: 46px;
-  flex-shrink: 0;
 }
+
 .progress-ring svg {
-  display: block;
+  transform: rotate(-90deg);
 }
+
 .progress-ring-track {
-  stroke: var(--rule);
+  stroke: var(--paper-sunken);
 }
+
 .progress-ring-fill {
   stroke: var(--accent);
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s ease-out;
 }
+
 .progress-ring-label {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font: 12px var(--font-mono, monospace);
+  font-size: 0.66rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
 }

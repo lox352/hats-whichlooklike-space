@@ -1,13 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import ThemeControl from "../ThemeControl";
 import "./PageLayout.css";
 
-export type Step = "design" | "dye" | "pattern";
+export type Step = "design" | "sky" | "pattern";
 
-const stepOrder: Step[] = ["design", "dye", "pattern"];
+const stepOrder: Step[] = ["design", "sky", "pattern"];
 const stepLabels: Record<Step, string> = {
   design: "Design",
-  dye: "Dye",
+  sky: "Sky",
   pattern: "Pattern",
 };
 
@@ -45,7 +46,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
   <div className="page">
     <header className="masthead screen-only">
       <Link to="/" className="masthead-title">
-        Hats Which Look Like Earth
+        Hats Which Look Like Space
       </Link>
       {step ? (
         <nav className="steps" aria-label="Progress">
@@ -81,6 +82,10 @@ const PageLayout: React.FC<PageLayoutProps> = ({
     {showTitle && <h1 className="page-title screen-only">{title}</h1>}
     {lede && <p className="page-lede screen-only">{lede}</p>}
     {children}
+    <footer className="colophon screen-only">
+      <span>Patterns are saved in this browser, on this device.</span>
+      <ThemeControl />
+    </footer>
   </div>
 );
 

@@ -1,115 +1,174 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import HatCanvas from "../ChainModel/HatCanvas";
-import { SettleMetrics } from "../helpers/settling";
+import { Stitch } from "../types/Stitch";
+import { emptySky, SkyMarks } from "../types/SkyMarks";
 import { getStitches } from "../helpers/stitches";
-import {
-  designFromSearchParams,
-  designToSearchParams,
-} from "../helpers/design-url";
-import { cacheHat, readHat } from "../helpers/design-session";
-import { emptySky } from "../types/SkyMarks";
 import { validateDesign } from "../types/KnittingMachine";
+import { designFromSearchParams, designKey } from "../helpers/design-url";
+import { cacheHat, readHat } from "../helpers/design-session";
+import PageLayout from "./ui/PageLayout";
 import Button from "./ui/Button";
-export default function Render() {
-  const [params] = useSearchParams();
-  const design = useMemo(() => designFromSearchParams(params), [params]);
-  const cached = useMemo(() => readHat(design), [design]);
-  const errors = validateDesign(
-    design.stitchesPerRow,
-    design.numberOfRows,
-    design.decreaseMethod,
-  );
-  const [stitches, setStitches] = useState(
-    () =>
-      cached?.stitches ??
-      (errors.length
-        ? []
-        : getStitches(
-            design.stitchesPerRow,
-            design.numberOfRows,
-            design.decreaseMethod,
-          )),
-  );
-  const [sky, setSky] = useState(cached?.sky ?? emptySky);
-  const [active, setActive] = useState(false);
-  const [metrics, setMetrics] = useState<SettleMetrics>();
-  const [frameMetrics, setFrameMetrics] = useState<{
-    drawCalls: number;
-    frameMs: number;
-  }>();
-  const [ready, setReady] = useState(!!cached);
+import "./Render.css";
+
+type Stage = "summoning" | "settling" | "charting" | "done";
+
+const statusText: Record<Stage, string> = {
+  summoning: "Casting on...",
+  settling: "Letting the stitches settle into a hat...",
+  charting: "Charting the stars onto it...",
+  done: "Drag to turn the hat; pinch or scroll to look closer.",
+};
+
+/**
+ * Stages only ever move forward. The physics signals and the charting signal
+ * arrive from different places, and charting can finish before React has
+ * processed the "simulation stopped" update, so ordering must not matter.
+ */
+const stageOrder: Stage[] = ["summoning", "settling", "charting", "done"];
+
+const Render: React.FC = () => {
   const navigate = useNavigate();
-  useEffect(() => {
-    if (ready) cacheHat(design, stitches, sky);
-  }, [ready, design, stitches, sky]);
-  const query = designToSearchParams(design).toString();
-  return (
-    <main className="page">
-      <a href="#/" className="eyebrow">
-        Hats which look like space
-      </a>
-      <h1>Charting your sky</h1>
-      {errors.length ? (
-        <>
-          <p role="alert">{errors.map((e) => e.message).join(" ")}</p>
-          <Button onClick={() => navigate(`/design?${query}`)}>
-            Edit design
-          </Button>
-        </>
-      ) : (
-        <>
-          <div className="hat-canvas">
-            <HatCanvas
-              stitches={stitches}
-              setStitches={cached ? undefined : setStitches}
-              sky={sky}
-              setSky={setSky}
-              orientationParameters={design.orientation}
-              onReady={() => setReady(true)}
-              onMetrics={setMetrics}
-              onFrameMetrics={
-                params.has("diagnostics") ? setFrameMetrics : undefined
-              }
-              simulationActive={active}
-              setSimulationActive={cached ? undefined : setActive}
-            />
-          </div>
-          <p role="status">
-            {ready
-              ? "Your sky is ready. Drag to turn the hat; pinch to zoom."
-              : "Letting the stitches settle into a hat…"}
-          </p>
-          <div className="actions">
-            <Button
-              variant="primary"
-              disabled={!ready}
-              onClick={() => navigate(`/pattern?${query}`)}
-            >
-              Open knitting chart
-            </Button>
-            <Button
-              variant="quiet"
-              onClick={() => navigate(`/design?${query}`)}
-            >
-              Edit design
-            </Button>
-          </div>
-          {params.has("diagnostics") && (
-            <output className="diagnostics">
-              {JSON.stringify({ settle: metrics, frames: frameMetrics })}
-            </output>
-          )}
-          <label className="share-link">
-            Share this design
-            <input
-              readOnly
-              value={`${window.location.origin}${window.location.pathname}#/design?${query}`}
-              onFocus={(e) => e.target.select()}
-            />
-          </label>
-        </>
-      )}
-    </main>
+  const [searchParams] = useSearchParams();
+
+  const design = useMemo(
+    () => designFromSearchParams(searchParams),
+    [searchParams]
   );
-}
+  const key = designKey(design);
+
+  const [stitches, setStitches] = useState<Stitch[]>([]);
+  const [sky, setSky] = useState<SkyMarks>(emptySky);
+  const [stage, setStage] = useState<Stage>("summoning");
+  const [simulationActive, setSimulationActive] = useState(false);
+  // A hat restored from the session cache is already charted, so it must not
+  // be handed to the simulation again.
+  const [restored, setRestored] = useState(false);
+  const simulationHasRun = useRef(false);
+  const knittedFor = useRef<string | null>(null);
+
+  const advanceTo = useCallback(
+    (next: Stage) =>
+      setStage((current) =>
+        stageOrder.indexOf(next) > stageOrder.indexOf(current) ? next : current
+      ),
+    []
+  );
+
+  const handleReady = useCallback(() => advanceTo("done"), [advanceTo]);
+
+  // Knit the hat this URL asks for. Re-runs when the design changes, so
+  // going back, editing and returning gives the hat you asked for rather than
+  // whatever was last in memory.
+  useEffect(() => {
+    if (knittedFor.current === key) return;
+    knittedFor.current = key;
+
+    const cached = readHat(design);
+    if (cached) {
+      setStitches(cached.stitches);
+      setSky(cached.sky);
+      setRestored(true);
+      setStage("done");
+      return;
+    }
+
+    if (
+      validateDesign(
+        design.stitchesPerRow,
+        design.numberOfRows,
+        design.decreaseMethod
+      ).length > 0
+    ) {
+      navigate(`/design?${searchParams.toString()}`, { replace: true });
+      return;
+    }
+
+    setRestored(false);
+    setStage("summoning");
+    simulationHasRun.current = false;
+    setSky(emptySky());
+    setStitches(
+      getStitches(
+        design.stitchesPerRow,
+        design.numberOfRows,
+        design.decreaseMethod
+      )
+    );
+  }, [key, design, navigate, searchParams]);
+
+  useEffect(() => {
+    if (restored) return;
+    if (simulationActive) {
+      simulationHasRun.current = true;
+      advanceTo("settling");
+      return;
+    }
+    if (simulationHasRun.current) {
+      advanceTo("charting");
+    }
+  }, [simulationActive, advanceTo, restored]);
+
+  // Keep the charted hat for the rest of the tab, so reloading the chart does
+  // not mean waiting for the simulation again.
+  useEffect(() => {
+    if (stage !== "done" || restored) return;
+    cacheHat(design, stitches, sky);
+  }, [stage, restored, design, stitches, sky]);
+
+  const working = stage !== "done";
+
+  if (stitches.length === 0) {
+    return (
+      <PageLayout title="Charting your sky" step="sky">
+        <p className="render-status render-status-working">Casting on...</p>
+      </PageLayout>
+    );
+  }
+
+  return (
+    <PageLayout
+      title="Charting your sky"
+      step="sky"
+      lede="The tube settles into a hat, and each star is charted onto the stitch it sits over."
+    >
+      <div className="hat-stage">
+        <HatCanvas
+          stitches={stitches}
+          setStitches={restored ? undefined : setStitches}
+          sky={sky}
+          setSky={setSky}
+          orientationParameters={design.orientation}
+          simulationActive={simulationActive}
+          setSimulationActive={restored ? undefined : setSimulationActive}
+          onReady={handleReady}
+        />
+      </div>
+      <p
+        aria-live="polite"
+        className={`render-status${working ? " render-status-working" : ""}`}
+      >
+        {statusText[stage]}
+      </p>
+      {stage === "done" && (
+        <div className="render-actions">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => navigate(`/pattern?${searchParams.toString()}`)}
+          >
+            Make the chart
+          </Button>
+          <Button
+            variant="quiet"
+            onClick={() => navigate(`/design?${searchParams.toString()}`)}
+          >
+            Back to the design
+          </Button>
+        </div>
+      )}
+    </PageLayout>
+  );
+};
+
+export default Render;

@@ -1,101 +1,435 @@
-.chart-scroll {
-  width: 100%;
-  overflow: auto;
-  overscroll-behavior-x: contain;
-  padding: 16px 0 24px;
-  scrollbar-color: var(--accent) var(--paper);
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-}
-.knitting-pattern-container {
+/*
+ * Screen and paper want quite different things from the chart. On screen it is
+ * a fixed-cell grid that scrolls sideways; on paper it needs to fit the page,
+ * so printing uses the SVG chart instead, scaled to the sheet.
+ */
+
+/* The chart, as a plate in an atlas. */
+.chart {
+  /*
+   * On the earth chart the rules are darker than the paper. Here they must
+   * be lighter than the night, and the every-fifth counting lines are gold:
+   * a ruled scale on an engraved plate rather than a heavier pen.
+   */
+  --graticule: color-mix(in srgb, var(--ink) 16%, transparent);
+  --graticule-strong: color-mix(in srgb, var(--gold) 55%, transparent);
   display: grid;
   gap: 0;
-  position: relative;
-  isolation: isolate;
+  /* Hug the chart rather than stretching an 20-column plate across the page,
+     but still scroll when the round is wider than the viewport. */
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--paper-sunken);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 6px;
 }
-.stitch-box {
+
+.chart-cell {
   position: relative;
-  min-width: 0;
-  min-height: 0;
+  text-align: center;
 }
-.stitch-box::after {
+
+/*
+ * Hairline graticule between stitches, heavier every fifth, drawn on an
+ * overlay rather than on the cell itself.
+ *
+ * Two reasons it is not a border on the cell. A border eats into the cell,
+ * taking the ten pixels down to nine, and the stepped cells that need the
+ * extra lines below are exactly the ones carrying decrease marks, so their
+ * marks would end up a size smaller than everyone else's. And an overlay can
+ * sit above the veil that covers a finished stitch, so a knitted row keeps
+ * its lines instead of having them washed out.
+ */
+.chart-cell::before {
   content: "";
   position: absolute;
   inset: 0;
-  border: 0.5px solid #c9a96155;
+  z-index: 2;
+  pointer-events: none;
+  border-right: 1px solid var(--graticule);
+  border-bottom: 1px solid var(--graticule);
+}
+
+.chart-cell-major-col::before {
+  border-right-color: var(--graticule-strong);
+}
+
+.chart-cell-major-row::before {
+  border-bottom-color: var(--graticule-strong);
+}
+
+/*
+ * The chart is not a rectangle. The crown steps inwards as it decreases, so
+ * plenty of cells have nothing above them or nothing to their left, and a
+ * cell only ever draws its own right and bottom. Those sides were left open,
+ * and the outline of the fabric came apart at every step. Where there is no
+ * neighbour to supply the line, the cell draws it itself.
+ */
+.chart-cell-open-top::before {
+  border-top: 1px solid var(--graticule);
+}
+
+.chart-cell-open-left::before {
+  border-left: 1px solid var(--graticule);
+}
+
+/* A knitted stitch reads as sunken and muted, not merely faded. */
+.chart-cell-done::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--paper-sunken) 62%, transparent);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.chart-cell-next {
+  z-index: 3;
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 4px var(--gold-bright),
+    0 0 10px 3px color-mix(in srgb, var(--gold) 70%, transparent);
+}
+
+/*
+ * The constellation figures, over the cells and under nothing.
+ *
+ * Gold on the night, a fine line, with the figures faint while you knit and
+ * the one you are sewing bright. Off the brim, dashed: that is a guide to a
+ * star that is not on the hat, and nobody should sew to it.
+ */
+.chart-sky {
+  z-index: 4;
+  overflow: visible;
   pointer-events: none;
 }
-.grid-five-col::after {
-  border-left: 1px solid #c9a96199;
+
+.chart-line line {
+  stroke: var(--figure);
+  stroke-width: 1;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
-.grid-five-row::after {
-  border-top: 1px solid #c9a96199;
+
+.chart-line-off-hat line {
+  stroke-dasharray: 3 3;
 }
-.stitch-done {
-  opacity: 0.4;
+
+/* While sewing, what is not in hand steps back. */
+.chart-sky-embroidering .chart-line-pending line {
+  stroke: var(--figure-faint);
 }
-.stitch-current {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  z-index: 3;
+
+.chart-sky-embroidering .chart-line-sewn line {
+  stroke: color-mix(in srgb, var(--ink) 60%, transparent);
 }
-.grid-label {
-  font:
-    8px/10px ui-monospace,
-    monospace;
+
+.chart-line-active line {
+  stroke: var(--gold-bright);
+  stroke-width: 2;
+}
+
+/* A dark halo under the active line so it stays visible across a star. */
+.chart-line-active .chart-line-halo {
+  stroke: var(--paper);
+  stroke-width: 5;
+  opacity: 0.85;
+}
+
+.chart-label {
+  background: var(--paper-sunken);
   color: var(--ink-faint);
-  text-align: center;
-  padding-top: 2px;
-  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  line-height: 10px;
+  aspect-ratio: 1 / 1;
+  position: relative;
 }
-.star-dot {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  box-shadow: 0 0 2px #fff6;
+
+.chart-label-right {
+  text-align: right;
+  padding-left: 2px;
 }
-.stitch-symbol {
+
+.chart-label-bottom {
+  text-align: left;
+}
+
+/*
+ * Decrease marks. The shapes come from helpers/stitch-marks, shared with the
+ * exported chart, so screen and paper show the same symbol.
+ */
+.chart-mark {
   position: absolute;
+  /*
+   * The cell carries its own right and bottom graticule line inside its ten
+   * pixels, so the padding box is exactly the square between the lines - which
+   * is the box a knitter sees, and the box the mark should be centred in.
+   */
   inset: 0;
   width: 100%;
   height: 100%;
   fill: none;
-  stroke: #c9a961;
+  stroke: color-mix(in srgb, var(--ink) 78%, transparent);
   stroke-width: 1;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-.connection-svg {
-  position: absolute;
-  top: 0;
-  left: 0;
   pointer-events: none;
-  overflow: hidden;
 }
-.constellation-line {
-  stroke: #c9a961;
-  stroke-width: 0.8;
-  fill: none;
-  opacity: 0.85;
+
+.chart-caption {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  margin: 0 0 14px;
 }
-.constellation-line.off-hat {
-  stroke-dasharray: 2 2;
-  opacity: 0.5;
+
+.print-only {
+  display: none;
 }
-.constellation-line.dimmed {
-  opacity: 0.16;
+
+@media print {
+  /* Landscape: charts are far wider than they are tall. */
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  .screen-only {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .print-sheet {
+    color: #000;
+    background: #fff;
+    font-family: ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .print-sheet h1 {
+    font-size: 16pt;
+    margin: 0 0 2mm;
+  }
+
+  .print-sheet .print-meta {
+    font-size: 9pt;
+    margin: 0 0 4mm;
+    color: #333;
+  }
+
+  /* Scale the chart to the page rather than clipping it. */
+  .print-sheet svg {
+    width: 100%;
+    height: auto;
+    /* Never split a chart across pages: it is unreadable in two halves. */
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4mm;
+    margin-top: 4mm;
+    font-size: 9pt;
+  }
+
+  .print-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5mm;
+  }
+
+  .print-legend-swatch {
+    width: 4mm;
+    height: 4mm;
+    border: 0.3mm solid #000;
+    display: inline-block;
+  }
 }
-.constellation-line.active {
-  stroke: #fff4cc;
-  stroke-width: 2;
-  opacity: 1;
+
+/*
+ * Print and download live at the foot of the page. They matter less than
+ * getting on with the knitting, so they should not sit between the chart and
+ * the buttons you actually came for.
+ */
+.chart-extras {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
 }
-.constellation-line.sewn {
-  stroke: #a9c7b7;
-  stroke-width: 1.3;
-  opacity: 1;
+
+@media (min-width: 620px) {
+  .chart-extras {
+    margin-top: 30px;
+    padding-top: 18px;
+  }
+}
+
+/* The extras, each folded away behind a quiet button until wanted. */
+.chart-extra-note {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  margin: 0 0 10px;
+  max-width: 60ch;
+}
+
+.chart-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.chart-actions-problem,
+.render-problem {
+  font-size: var(--text-sm);
+  color: var(--danger);
+}
+
+.constellation-index {
+  margin: 8px 0 0;
+  max-width: 70ch;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  line-height: 1.8;
+}
+
+.constellation-index-name {
+  white-space: nowrap;
+}
+
+.yarn-editor {
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-top: 10px;
+  max-width: 560px;
+}
+
+.yarn-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.yarn-choice-role {
+  width: 84px;
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.yarn-choice-colour {
+  width: 38px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: none;
+}
+
+.yarn-choice-name {
+  width: 180px;
+  max-width: 50%;
+}
+
+.yarn-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  vertical-align: middle;
+}
+
+.yarn-swatch-small {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 4px;
+}
+
+.shopping-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 6px;
+  font-size: var(--text-sm);
+}
+
+.shopping-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.shopping-list-name {
+  min-width: 7rem;
+  color: var(--ink);
+}
+
+.shopping-list-amount {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.written {
+  margin-top: 10px;
+  max-width: 760px;
+}
+
+.written-rows {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius);
+}
+
+.written-rows li {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.92rem;
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.written-row-label {
+  min-width: 104px;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.written-run {
+  white-space: nowrap;
+}
+
+/* The knitted and sewn percentages, beside the actions. */
+.progress-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+  flex-wrap: wrap;
 }

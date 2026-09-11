@@ -1,231 +1,236 @@
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { SavedPattern } from "../types/SavedPattern";
 import {
+  knittingParam,
+  embroideryParam,
+  bareIdFor,
+  deletePattern,
   listPatterns,
   patternsChangedEvent,
   percentComplete,
   renamePattern,
-  deletePattern,
-  bareIdFor,
 } from "../helpers/pattern-storage";
-import { SavedPattern } from "../types/SavedPattern";
+import { embroideryPercent } from "../helpers/embroidery";
+import PageLayout from "./ui/PageLayout";
 import Button from "./ui/Button";
-import NameDialog from "./ui/NameDialog";
 import Dialog from "./ui/Dialog";
+import NameDialog from "./ui/NameDialog";
 import ProgressRing from "./ProgressRing";
+import CelestialPlate from "./CelestialPlate";
+import { useReveal } from "../useReveal";
 import "./Home.css";
-export default function Home() {
+
+const formatSavedAt = (savedAt: string) =>
+  new Date(savedAt).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  });
+
+/** A section that rises into view the first time it is scrolled to. */
+const RevealSection: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const { ref, shown } = useReveal<HTMLElement>();
+  return (
+    <section ref={ref} className={`reveal${shown ? " reveal-shown" : ""}`}>
+      {children}
+    </section>
+  );
+};
+
+const PatternCard: React.FC<{
+  pattern: SavedPattern;
+  onRename: () => void;
+  onDelete: () => void;
+}> = ({ pattern, onRename, onDelete }) => {
   const navigate = useNavigate();
-  const [patterns, setPatterns] = useState(listPatterns);
-  const [renaming, setRenaming] = useState<SavedPattern>();
-  const [deleting, setDeleting] = useState<SavedPattern>();
-  const [problem, setProblem] = useState("");
+  const { ref, shown } = useReveal<HTMLLIElement>();
+  const id = bareIdFor(pattern.id);
+  const knitted = percentComplete(pattern);
+  const sewn = embroideryPercent(pattern);
+  const started = knitted > 0;
+  const knittingDone = knitted >= 100;
+  const sewingDone = sewn >= 100;
+
+  /*
+   * One primary action, for whatever comes next: knit until the knitting is
+   * done, then sew until the sewing is done, then look at it.
+   */
+  const next = knittingDone
+    ? sewingDone
+      ? { label: "See it", to: `/pattern/${id}` }
+      : {
+          label: sewn > 0 ? "Keep embroidering" : "Embroider the stars",
+          to: `/pattern/${id}?${embroideryParam}=1`,
+        }
+    : {
+        label: started ? "Keep knitting" : "Start knitting",
+        to: `/pattern/${id}?${knittingParam}=1`,
+      };
+
+  return (
+    <li
+      ref={ref}
+      className={`pattern-card reveal${shown ? " reveal-shown" : ""}`}
+    >
+      <div className="pattern-card-head">
+        <div>
+          <h3 className="pattern-name">{pattern.name ?? "Saved sky"}</h3>
+          <div className="pattern-date">
+            {sewingDone
+              ? "Finished"
+              : knittingDone
+                ? "Knitted, sewing the stars"
+                : formatSavedAt(pattern.savedAt)}
+          </div>
+        </div>
+        <div className="pattern-rings">
+          <ProgressRing
+            percent={knitted}
+            label={`${knitted.toFixed(0)}% knitted`}
+          />
+          {knittingDone && (
+            <ProgressRing
+              percent={sewn}
+              label={`${sewn.toFixed(0)}% embroidered`}
+            />
+          )}
+        </div>
+      </div>
+      <div className="pattern-card-actions">
+        <Button variant="primary" onClick={() => navigate(next.to)}>
+          {next.label}
+        </Button>
+        <Button variant="secondary" onClick={() => navigate(`/render/${id}`)}>
+          See the hat
+        </Button>
+      </div>
+      {/* Housekeeping, on its own line under the two things you came for. */}
+      <div className="pattern-card-admin">
+        <Button variant="quiet" onClick={() => navigate(`/pattern/${id}`)}>
+          Chart
+        </Button>
+        <Button variant="quiet" onClick={onRename}>
+          Rename
+        </Button>
+        <Button variant="quiet" onClick={onDelete}>
+          Delete
+        </Button>
+      </div>
+    </li>
+  );
+};
+
+const Home: React.FC = () => {
+  const navigate = useNavigate();
+  // Lazy initialiser: reading localStorage on every render is wasted work.
+  const [savedPatterns, setSavedPatterns] = useState<SavedPattern[]>(() =>
+    listPatterns()
+  );
+  const [renaming, setRenaming] = useState<SavedPattern | null>(null);
+  const [deleting, setDeleting] = useState<SavedPattern | null>(null);
+
+  const refresh = useCallback(() => setSavedPatterns(listPatterns()), []);
+
   useEffect(() => {
-    const refresh = () => setPatterns(listPatterns());
     window.addEventListener(patternsChangedEvent, refresh);
+    // `storage` fires when another tab writes, which the custom event misses.
     window.addEventListener("storage", refresh);
+
     return () => {
       window.removeEventListener(patternsChangedEvent, refresh);
       window.removeEventListener("storage", refresh);
     };
-  }, []);
+  }, [refresh]);
+
   return (
-    <main className="page home">
-      <header className="masthead">
-        <span className="eyebrow">Hats which look like space</span>
-        <span className="edition">A celestial knitting atlas</span>
-      </header>
+    <PageLayout
+      title="Hats Which Look Like Space"
+      showTitle={false}
+      aside={<span className="masthead-aside">A celestial atlas</span>}
+    >
+      {/* The masthead already carries the site name, so the hero is the pitch. */}
       <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">A moment. A place. A sky.</p>
-          <h1>
-            Keep a little
-            <br />
-            of the night.
-          </h1>
-          <p className="hero-intro">
-            The stars above you, made into a hat. Choose a moment to remember.
-            Knit its sky, then trace the constellations in thread.
+          <p className="eyebrow">A moment · a place · a sky</p>
+          <h1 className="hero-title">Knit the sky you stood under.</h1>
+          <p className="hero-lede">
+            Choose a night and a place. The stars that were overhead are
+            charted onto a hat: knitted in three yarns, then the constellations
+            sewn on in thread. You get a chart to knit from and a guide to sew
+            from.
           </p>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={() => navigate("/design")}
-          >
-            Chart your sky <span aria-hidden="true">↗</span>
-          </Button>
-          <p className="hero-note">
-            A pattern made for your head, your yarn, your sky.
-          </p>
-        </div>
-        <div className="celestial-plate" aria-hidden="true">
-          <svg viewBox="0 0 500 500">
-            <defs>
-              <pattern
-                id="engraving"
-                width="5"
-                height="5"
-                patternTransform="rotate(35)"
-                patternUnits="userSpaceOnUse"
-              >
-                <path d="M0 0V5" stroke="currentColor" strokeWidth="0.4" />
-              </pattern>
-            </defs>
-            <circle
-              cx="250"
-              cy="250"
-              r="230"
-              fill="url(#engraving)"
-              opacity=".25"
-            />
-            <circle cx="250" cy="250" r="222" />
-            <circle cx="250" cy="250" r="207" />
-            <circle cx="250" cy="250" r="180" />
-            <ellipse cx="250" cy="250" rx="100" ry="180" />
-            <ellipse cx="250" cy="250" rx="180" ry="75" />
-            <path
-              d="M30 250H470M250 30V470M110 110L390 390M110 390L390 110"
-              opacity=".3"
-            />
-            <g className="plate-figure">
-              <path d="M146 152L195 182L245 215L290 190L350 226L329 311L284 348M245 215L217 277L167 311M217 277L260 301L329 311" />
-              {[
-                [146, 152],
-                [195, 182],
-                [245, 215],
-                [290, 190],
-                [350, 226],
-                [329, 311],
-                [284, 348],
-                [217, 277],
-                [167, 311],
-                [260, 301],
-              ].map(([x, y], i) => (
-                <g key={i}>
-                  <circle cx={x} cy={y} r={i % 3 === 0 ? 5 : 3} />
-                  <path
-                    d={`M${x - 9} ${y}h18M${x} ${y - 9}v18`}
-                    opacity=".55"
-                  />
-                </g>
-              ))}
-            </g>
-            <text x="250" y="19">
-              N
-            </text>
-            <text x="481" y="254">
-              E
-            </text>
-            <text x="250" y="492">
-              S
-            </text>
-            <text x="18" y="254">
-              W
-            </text>
-          </svg>
-          <p>THE SKY BECOMES THE STITCH</p>
-        </div>
-      </section>
-      <ol className="craft-steps">
-        <li>
-          <span>01 / Observe</span>
-          <h2>Find your moment</h2>
-          <p>A birthday, a first meeting, a night worth keeping.</p>
-        </li>
-        <li>
-          <span>02 / Knit</span>
-          <h2>Work the night sky</h2>
-          <p>Three yarns, a fitted pattern, one stitch at a time.</p>
-        </li>
-        <li>
-          <span>03 / Trace</span>
-          <h2>Join the stars</h2>
-          <p>Embroider the constellation lines onto your finished hat.</p>
-        </li>
-      </ol>
-      {patterns.length > 0 && (
-        <section className="saved-hats">
-          <div className="section-heading">
-            <p className="eyebrow">Your observations</p>
-            <h2>Skies in the making</h2>
+          <div className="hero-actions">
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => navigate("/design")}
+            >
+              Chart your sky
+            </Button>
           </div>
-          <ul>
-            {patterns.map((p) => (
-              <li key={p.id}>
-                <ProgressRing
-                  percent={percentComplete(p)}
-                  label={`${percentComplete(p).toFixed(0)}% knitted`}
-                />
-                <div className="saved-title">
-                  <h3>{p.name ?? "Untitled sky"}</h3>
-                  <p>
-                    {new Date(p.savedAt).toLocaleDateString()} ·{" "}
-                    {percentComplete(p).toFixed(1)}% knitted
-                  </p>
-                </div>
-                <div className="actions">
-                  <Button
-                    onClick={() =>
-                      navigate(`/pattern/${bareIdFor(p.id)}?knitting=1`)
-                    }
-                  >
-                    Keep knitting
-                  </Button>
-                  <Button
-                    variant="quiet"
-                    onClick={() => navigate(`/pattern/${bareIdFor(p.id)}`)}
-                  >
-                    Chart
-                  </Button>
-                  <Button
-                    variant="quiet"
-                    onClick={() => navigate(`/render/${bareIdFor(p.id)}`)}
-                  >
-                    View hat
-                  </Button>
-                  <Button variant="quiet" onClick={() => setRenaming(p)}>
-                    Rename
-                  </Button>
-                  <Button variant="danger" onClick={() => setDeleting(p)}>
-                    Delete
-                  </Button>
-                </div>
-              </li>
+        </div>
+        <CelestialPlate className="hero-plate" />
+      </section>
+
+      <RevealSection>
+        <h2 className="section-heading">Your skies</h2>
+        {savedPatterns.length === 0 ? (
+          <div className="empty-state">
+            <p>
+              Nothing saved yet. Patterns you save live in this browser, on this
+              device, so they will be here when you come back, but they do not
+              travel with you.
+            </p>
+          </div>
+        ) : (
+          <ul className="pattern-list">
+            {savedPatterns.map((pattern) => (
+              <PatternCard
+                key={pattern.id}
+                pattern={pattern}
+                onRename={() => setRenaming(pattern)}
+                onDelete={() => setDeleting(pattern)}
+              />
             ))}
           </ul>
-        </section>
-      )}
-      <p role="status">{problem}</p>
-      <footer className="footer">
-        <span>Made of stars. Made by you.</span>
-        <span>Patterns are saved in this browser.</span>
-      </footer>
+        )}
+      </RevealSection>
+
       <NameDialog
-        open={!!renaming}
-        title="Rename your sky"
-        initialValue={renaming?.name}
-        onCancel={() => setRenaming(undefined)}
+        open={renaming !== null}
+        title="Rename this sky"
+        initialValue={renaming?.name ?? "Saved sky"}
         onConfirm={(name) => {
-          if (renaming) {
-            const result = renamePattern(renaming.id, name);
-            if (!result?.ok)
-              setProblem("Could not save the name. Storage may be full.");
-          }
-          setRenaming(undefined);
+          if (renaming) renamePattern(renaming.id, name);
+          setRenaming(null);
         }}
+        onCancel={() => setRenaming(null)}
       />
+
       <Dialog
-        open={!!deleting}
-        title="Delete this pattern?"
-        text="This removes the chart and its progress from this browser. Download a copy first if you want to keep it."
-        confirmLabel="Delete pattern"
+        open={deleting !== null}
+        title="Delete this sky?"
+        text={
+          <>
+            {deleting?.name ?? "This pattern"} will be gone for good. Saved
+            patterns are only in this browser, so there is no copy elsewhere.
+          </>
+        }
+        confirmLabel="Delete"
         confirmVariant="danger"
-        onCancel={() => setDeleting(undefined)}
         onConfirm={() => {
           if (deleting) deletePattern(deleting.id);
-          setDeleting(undefined);
+          setDeleting(null);
         }}
+        onCancel={() => setDeleting(null)}
       />
-    </main>
+    </PageLayout>
   );
-}
+};
+
+export default Home;

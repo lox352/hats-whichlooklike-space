@@ -1,22 +1,16 @@
-import { constellationName } from "../data/constellation-names";
-import YarnShoppingList from "./YarnShoppingList";
+import React from "react";
 import { Stitch } from "../types/Stitch";
 import { SkyMarks } from "../types/SkyMarks";
 import KnittingPattern from "../KnittingPattern";
 import ChartActions from "./ChartActions";
 import ChartPrintSheet from "./ChartPrintSheet";
+import ConstellationIndex from "./ConstellationIndex";
 import WrittenInstructions from "./WrittenInstructions";
-import YarnChoices from "./YarnChoices";
+import YarnChoicesEditor from "./YarnChoices";
+import YarnShoppingList from "./YarnShoppingList";
 import { useYarns } from "../useYarns";
-export default function PatternContents({
-  stitches,
-  sky,
-  progress,
-  name,
-  followProgress = false,
-  activeSegment,
-  sewnSegments,
-}: {
+
+interface PatternContentsProps {
   stitches: Stitch[];
   sky: SkyMarks;
   progress: number;
@@ -24,16 +18,31 @@ export default function PatternContents({
   followProgress?: boolean;
   activeSegment?: string;
   sewnSegments?: string[];
-}) {
+  /** What goes between the chart and the extras: the page's own actions. */
+  children?: React.ReactNode;
+}
+
+/**
+ * The chart and everything that hangs off it, shared by the fresh chart and
+ * the saved one.
+ *
+ * The chart comes first because it is the thing. The names of the
+ * constellations on it, the yarns, the written version and the downloads all
+ * matter less than getting on with the knitting, so they sit underneath.
+ */
+const PatternContents: React.FC<PatternContentsProps> = ({
+  stitches,
+  sky,
+  progress,
+  name,
+  followProgress = false,
+  activeSegment,
+  sewnSegments,
+  children,
+}) => {
   const { yarns, setYarns } = useYarns();
   return (
     <>
-      <p>
-        Knit the sky in three yarns. The connecting lines are embroidery: sew
-        them after the knitting is complete, using small backstitches. A line
-        leaving the brim is a guide to sky beyond the hat; do not sew to its
-        missing endpoint.
-      </p>
       <div className="screen-only">
         <KnittingPattern
           stitches={stitches}
@@ -45,22 +54,18 @@ export default function PatternContents({
         />
       </div>
       <ChartPrintSheet stitches={stitches} sky={sky} title={name} />
-      <details className="screen-only">
-        <summary>
-          Constellations on this hat ({sky.constellations.length})
-        </summary>
-        <p>
-          {sky.constellations
-            .map((c) => constellationName(c.abbreviation))
-            .join(" · ")}
-        </p>
-      </details>
-      <YarnShoppingList stitches={stitches} />
+
+      {children}
+
       <div className="chart-extras screen-only">
-        <YarnChoices yarns={yarns} setYarns={setYarns} />
+        <ConstellationIndex sky={sky} />
+        <YarnShoppingList stitches={stitches} />
+        <YarnChoicesEditor yarns={yarns} setYarns={setYarns} />
         <WrittenInstructions stitches={stitches} />
         <ChartActions stitches={stitches} sky={sky} name={name} />
       </div>
     </>
   );
-}
+};
+
+export default PatternContents;

@@ -72,9 +72,9 @@
 }
 
 .step-current .step-dot {
-  background: var(--ocean-deep);
-  border-color: var(--ocean-deep);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ocean) 30%, transparent);
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .step-line {
@@ -101,4 +101,30 @@
   .step-line {
     width: 10px;
   }
+}
+
+/* The colophon: a line at the foot of every plate. */
+.colophon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 56px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.theme-control label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.theme-control select {
+  min-height: 34px;
 }

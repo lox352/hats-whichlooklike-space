@@ -1,5 +1,6 @@
 import { SkyMarks, EmbroideryProgress } from "../types/SkyMarks";
 import { Stitch } from "../types/Stitch";
+import { SavedPattern } from "../types/SavedPattern";
 import { segmentsOf } from "./connections";
 import { constellationName } from "../data/constellation-names";
 export interface SewingSegment {
@@ -171,4 +172,17 @@ export function markSegment(
     current: group.abbreviation,
     segment: done ? next?.key : key,
   };
+}
+
+/**
+ * How much of the sewing is done, for the card on the home page. Counts
+ * segments, since that is what gets ticked off, and reads 0 for a hat with
+ * no figures on it rather than dividing by nothing.
+ */
+export function embroideryPercent(pattern: SavedPattern): number {
+  const groups = sewingGroups(pattern.sky, pattern.stitches);
+  const total = groups.reduce((sum, group) => sum + group.segments.length, 0);
+  if (total === 0) return 0;
+  const done = completedSegments(groups, pattern.embroidery).size;
+  return Math.min((100 * done) / total, 100);
 }

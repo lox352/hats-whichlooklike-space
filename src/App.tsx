@@ -1,7 +1,6 @@
 import "./App.css";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { YarnProvider } from "./YarnContext";
-import ThemeControl from "./components/ThemeControl";
 import Home from "./components/Home";
 import Design from "./components/Design";
 import Render from "./components/Render";
@@ -20,7 +19,6 @@ export default function App() {
           <Route path="/pattern" element={<Pattern />} />
           <Route path="/pattern/:patternId" element={<SavedPattern />} />
         </Routes>
-        <ThemeControl />
       </HashRouter>
     </YarnProvider>
   );

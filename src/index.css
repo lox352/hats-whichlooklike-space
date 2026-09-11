@@ -1,174 +1,449 @@
+html {
+  /* Stop mobile Safari inflating text of its own accord when you rotate. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ============================================================
+   Hats Which Look Like Space — an antique celestial atlas
+   ------------------------------------------------------------
+   Night is the design, not a dark mode: an engraved plate is
+   indigo ground, warm ink and gold rule. The light theme is the
+   exception - the same plate printed on parchment - and it is
+   built because the print sheet needs a light ground anyway.
+
+   The three yarns the hat is knitted in are tokens too, so the
+   chart, the legend and the shopping list draw the same colours.
+   ============================================================ */
+
 @font-face {
   font-family: "Cormorant Garamond";
-  src: url("/fonts/cormorant-garamond-latin-600-normal.woff2") format("woff2");
-  font-weight: 600;
   font-style: normal;
+  /*
+   * One weight, and a heavy one. Cormorant's hairlines thin out on a dark
+   * ground, so it is used for display sizes only and never lighter than
+   * this; the body and the interface are set in the UI face below.
+   */
+  font-weight: 600;
   font-display: swap;
+  src: url("/fonts/cormorant-garamond-latin-600-normal.woff2")
+    format("woff2");
 }
+
 :root {
+  /* Ground: indigo, in four depths. Named "paper" so the shared components
+     read the same on both sites; here the paper is night. */
+  --paper: #141b2e;
+  --paper-raised: #1b2439;
+  --paper-sunken: #0e1424;
+  --paper-edge: #2a3550;
+
+  /* Ink: warm, like paper showing through an engraved plate. */
+  --ink: #f0e6d2;
+  --ink-soft: #c2b69c;
+  --ink-faint: #8c8470;
+
+  /* Rules, as the engraver cut them. */
+  --rule: #2b3650;
+  --rule-strong: #4a5878;
+
+  /* The three yarns. */
+  --night: #0b1020;
+  --milky-way: #a8b4c8;
+  --star: #f7f4ec;
+
+  /* Gold leaf, in three depths. The accent everywhere. */
+  --gold: #c9a961;
+  --gold-bright: #e4c87f;
+  --gold-deep: #8c6f2e;
+  --danger: #d98a7c;
+
+  --accent: var(--gold);
+  --accent-strong: var(--gold-bright);
+  /* Filled controls stay gold leaf on both plates; text on them is night. */
+  --accent-fill: var(--gold);
+  --accent-fill-strong: var(--gold-bright);
+  --on-accent-fill: #141b2e;
+
+  /* Constellation figures, as sewn and as drawn. */
+  --figure: color-mix(in srgb, var(--gold) 82%, transparent);
+  --figure-faint: color-mix(in srgb, var(--gold) 34%, transparent);
+
+  /* Type */
+  --font-display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype",
+    Georgia, serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  /* A modular scale, ratio 1.2, with display sizes a step larger than
+     earth's: Cormorant is small on the body and needs the room. */
+  --text-xs: 0.79rem;
+  --text-sm: 0.889rem;
+  --text-base: 1rem;
+  --text-md: 1.2rem;
+  --text-lg: 1.44rem;
+  --text-xl: 1.9rem;
+  --text-2xl: 2.3rem;
+  --text-3xl: 2.9rem;
+
+  --radius: 4px;
+  --radius-lg: 8px;
+  /* On a dark ground a shadow is a glow. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  --page-max: 68rem;
+
+  color-scheme: dark;
   font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.55;
   color: var(--ink);
-  background: var(--paper);
+  background-color: var(--paper);
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --font-ui:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --paper: #141b2e;
-  --paper-raised: #1c263d;
-  --paper-edge: #3c4659;
-  --ink: #f0e6d2;
-  --ink-muted: #c2beaf;
-  --ink-faint: #b4ad9c;
-  --accent: #c9a961;
-  --accent-strong: #ecd19c;
-  --rule: #394050;
-  --rule-strong: #717166;
-  --danger: #ef9b90;
-  --ocean-deep: #c9a961;
-  --ocean-deeper: #dfc184;
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --radius: 3px;
-  --paper-sunken: var(--paper);
-  --ink-soft: var(--ink-muted);
-  --land-deep: var(--accent);
-  --text-md: 1.125rem;
-  --text-lg: 1.5rem;
-  color-scheme: dark;
+  -moz-osx-font-smoothing: grayscale;
 }
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  min-width: 280px;
-  background: repeating-linear-gradient(
-    115deg,
-    transparent 0 7px,
-    #c9a96104 7px 8px
-  );
-  line-height: 1.65;
-}
-h1,
-h2 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.1;
-}
-h1 {
-  font-size: clamp(44px, 6vw, 68px);
-  letter-spacing: -0.025em;
-  margin: 24px 0;
-}
-h2 {
-  font-size: 36px;
-}
-h3,
-h4 {
-  line-height: 1.25;
-}
-p {
-  max-width: 76ch;
-}
-a {
-  color: var(--accent);
-  text-underline-offset: 4px;
-}
+
 /*
- * No double-tap-to-zoom on anything you tap on purpose. Labels are in the
- * list because tapping one focuses its field, so a quick second tap on a
- * label zoomed the page just as it did on the field itself.
+ * The same plate on parchment. Reached by the device preferring light, or by
+ * asking for it; asking for night wins over the device.
  */
-button,
-input,
-select,
-summary,
-label,
-a {
-  touch-action: manipulation;
-}
-button,
-input,
-select {
-  font: inherit;
-}
-button,
-summary {
-  cursor: pointer;
-}
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-input,
-select {
-  color: var(--ink);
-  background: var(--paper-raised);
-  border: 1px solid var(--rule-strong);
-  border-radius: var(--radius);
-  min-height: 44px;
-  font-size: 16px;
-  max-width: 100%;
-}
-input[type="checkbox"] {
-  min-height: 24px;
-  width: 24px;
-  vertical-align: middle;
-  accent-color: var(--accent);
-}
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
-}
-::selection {
-  background: var(--accent);
-  color: var(--paper);
-}
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="night"]) {
     --paper: #e8dcc0;
-    --paper-raised: #f6ecd6;
-    --paper-edge: #c8bda5;
-    --ink: #202b40;
-    --ink-muted: #50555b;
-    --ink-faint: #5d5b55;
-    --accent: #796022;
-    --accent-strong: #544010;
-    --rule: #c6bba1;
-    --rule-strong: #8f8774;
-    --danger: #9e3834;
-    --ocean-deep: #796022;
-    --ocean-deeper: #544010;
+    --paper-raised: #f2e9d3;
+    --paper-sunken: #dccfae;
+    --paper-edge: #cdbd97;
+
+    --ink: #2a2416;
+    --ink-soft: #5c5240;
+    --ink-faint: #8a7d63;
+
+    --rule: #cbbb96;
+    --rule-strong: #a99a74;
+
+    --accent: var(--gold-deep);
+    --accent-strong: #6f5623;
+    --danger: #9c3f2e;
+    --figure: color-mix(in srgb, var(--gold-deep) 88%, transparent);
+    --figure-faint: color-mix(in srgb, var(--gold-deep) 40%, transparent);
+
+    --shadow-sm: 0 1px 2px rgba(42, 36, 22, 0.1);
+    --shadow: 0 1px 2px rgba(42, 36, 22, 0.08), 0 6px 16px rgba(42, 36, 22, 0.1);
     color-scheme: light;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
   }
 }
 
 :root[data-theme="paper"] {
   --paper: #e8dcc0;
-  --paper-raised: #f6ecd6;
-  --paper-edge: #c8bda5;
-  --ink: #202b40;
-  --ink-muted: #50555b;
-  --ink-faint: #5d5b55;
-  --accent: #796022;
-  --accent-strong: #544010;
-  --rule: #c6bba1;
-  --rule-strong: #8f8774;
-  --danger: #9e3834;
-  --ocean-deep: #796022;
-  --ocean-deeper: #544010;
+  --paper-raised: #f2e9d3;
+  --paper-sunken: #dccfae;
+  --paper-edge: #cdbd97;
+
+  --ink: #2a2416;
+  --ink-soft: #5c5240;
+  --ink-faint: #8a7d63;
+
+  --rule: #cbbb96;
+  --rule-strong: #a99a74;
+
+  --accent: var(--gold-deep);
+  --accent-strong: #6f5623;
+  --danger: #9c3f2e;
+  --figure: color-mix(in srgb, var(--gold-deep) 88%, transparent);
+  --figure-faint: color-mix(in srgb, var(--gold-deep) 40%, transparent);
+
+  --shadow-sm: 0 1px 2px rgba(42, 36, 22, 0.1);
+  --shadow: 0 1px 2px rgba(42, 36, 22, 0.08), 0 6px 16px rgba(42, 36, 22, 0.1);
   color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  /* dvh so a phone address bar does not make the page taller than the screen. */
+  min-height: 100dvh;
+  color: var(--ink);
+  background-color: var(--paper);
+  /*
+   * Engraved hatching, not a graticule. The earth site rules its ground like
+   * a map sheet; a plate is shaded with fine diagonal strokes, so faint they
+   * read as the grain of the paper rather than as a pattern. Fixed, so it
+   * is the sheet and not the content.
+   */
+  background-image: repeating-linear-gradient(
+    115deg,
+    transparent 0 7px,
+    color-mix(in srgb, var(--ink) 3%, transparent) 7px 8px
+  );
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.005em;
+  color: var(--ink);
+  margin: 0 0 0.5em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--text-3xl);
+}
+h2 {
+  font-size: var(--text-xl);
+}
+h3 {
+  font-size: var(--text-md);
+}
+
+/* Small caps in gold: the running heads of the plate. */
+.eyebrow {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 10px;
+}
+
+p {
+  margin: 0 0 1em;
+  max-width: 62ch;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--accent-strong);
+}
+
+/* Inputs should look like fields on a form, not like the browser default. */
+input[type="number"],
+input[type="text"],
+input[type="url"],
+select {
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  min-height: 34px;
+}
+
+input[type="number"] {
+  font-variant-numeric: tabular-nums;
+  width: 7.5rem;
+}
+
+input[type="number"]:disabled,
+input[type="text"]:disabled,
+select:disabled {
+  opacity: 0.55;
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+}
+
+label {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+/* One visible focus treatment everywhere, rather than the UA default only. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+button {
+  font: inherit;
+}
+
+/*
+ * Touch behaviour.
+ *
+ * Two things a phone browser does by default that this app never wants, both
+ * of which read as the page zooming at random.
+ *
+ * Focusing a field whose text is under 16px makes mobile Safari zoom in, and
+ * it does not zoom back out afterwards. So on a touch screen the fields are
+ * 16px, while a mouse-driven screen keeps the smaller size the rest of the
+ * type scale is built around.
+ *
+ * Double-tapping a control zooms too, which shows up most on the knitting
+ * panel, where counting a row means tapping the same button again and again.
+ * `manipulation` drops the double-tap gesture on controls and leaves panning
+ * and pinching alone, so zooming on purpose still works everywhere. Labels
+ * are in the list because tapping one focuses its field.
+ */
+a,
+button,
+label,
+summary,
+input,
+select,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/*
+ * Tapping a button should not start selecting its label, or raise the
+ * press-and-hold callout over it.
+ */
+button,
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+@media (pointer: coarse) {
+  input[type="number"],
+  input[type="text"],
+  input[type="url"],
+  select {
+    font-size: max(1rem, 16px);
+  }
+
+  /* Big enough to hit with a thumb without aiming. */
+  input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 2rem 0;
+}
+
+/* Collapsed sections, as entries in an index: a plus that becomes a minus. */
+details > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 12px 0;
+  color: var(--ink-soft);
+  font-size: var(--text-base);
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details > summary::before {
+  content: "+";
+  display: inline-block;
+  width: 1.4em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+details[open] > summary::before {
+  content: "−";
+}
+
+::selection {
+  background: color-mix(in srgb, var(--gold) 40%, transparent);
+}
+
+/* Utilities shared by the print sheet and the screen views. */
+.screen-only {
+  display: revert;
+}
+
+.print-only {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reveal on first scroll into view. See useReveal. */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.5s ease-out,
+    transform 0.5s ease-out;
+}
+
+.reveal-shown {
+  opacity: 1;
+  transform: none;
+}
+
+/*
+ * A fade between pages, so the three steps feel like one continuous thing
+ * rather than four unrelated documents.
+ */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page {
+  animation: page-in 0.28s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .page {
+    animation: none;
+  }
+}
+
+@media print {
+  .screen-only {
+    display: none !important;
+  }
+  .print-only {
+    display: block;
+  }
+  body {
+    background: white;
+    color: #141b2e;
+  }
 }

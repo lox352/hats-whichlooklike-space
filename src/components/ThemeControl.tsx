@@ -16,11 +16,11 @@ export default function ThemeControl() {
     }
   }, [theme]);
   return (
-    <div className="theme-control screen-only">
+    <div className="theme-control">
       <label>
-        Atlas appearance{" "}
+        Plate
         <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-          <option value="auto">Follow device</option>
+          <option value="auto">Follow the device</option>
           <option value="night">Night</option>
           <option value="paper">Parchment</option>
         </select>

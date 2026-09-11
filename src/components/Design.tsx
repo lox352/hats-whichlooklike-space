@@ -1,439 +1,582 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { defaultHatDesign } from "../types/HatDesign";
+import { HatDesign, SkyMoment, SkySource } from "../types/HatDesign";
+import { GlobalCoordinates } from "../types/GlobalCoordinates";
+import DestinationType from "../types/DestinationType";
+import {
+  DecreaseMethod,
+  DesignProblem,
+  validateDesign,
+} from "../types/KnittingMachine";
 import {
   designFromSearchParams,
   designToSearchParams,
 } from "../helpers/design-url";
+import { Gauge } from "../helpers/sizing";
 import { readGauge } from "../helpers/gauge-preference";
 import {
   daysInMonth,
-  raHoursToLongitude,
   longitudeToRaHours,
+  raHoursToLongitude,
   zenithFor,
 } from "../helpers/celestial-coordinates";
 import {
   findTimeZones,
   formatOffset,
   instantsForLocalTime,
+  LocalInstant,
   validLocalTime,
 } from "../helpers/time-zone-helper";
-import { DecreaseMethod, validateDesign } from "../types/KnittingMachine";
 import SizeCalculator from "./SizeCalculator";
-import NumberField from "./ui/NumberField";
+import InputField from "./InputField";
+import PlaceSearch from "./PlaceSearch";
+import ToggleAdvancedOptions from "./ToggleAdvancedOptions";
+import ShareDesignLink from "./ShareDesignLink";
+import PageLayout from "./ui/PageLayout";
 import Button from "./ui/Button";
+import NumberField from "./ui/NumberField";
 import "./Design.css";
 
-export default function Design() {
-  const [params] = useSearchParams();
+/*
+ * Named skies. Polaris and the four stars of Crux, the two things people
+ * most want on the crown of a hat.
+ */
+const polaris: GlobalCoordinates = { latitude: 89.26, longitude: 37.95 };
+const crux: GlobalCoordinates = { latitude: -60, longitude: -173 };
+
+type SkyMode = "moment" | "polaris" | "crux" | "point";
+
+const sameCoordinates = (a: GlobalCoordinates, b: GlobalCoordinates) =>
+  Math.abs(a.latitude - b.latitude) < 0.005 &&
+  Math.abs(a.longitude - b.longitude) < 0.005;
+
+/** Which way of choosing a sky a design was made with. */
+const modeFor = (design: HatDesign): SkyMode => {
+  if (design.source) return "moment";
+  const { coordinates } = design.orientation;
+  if (sameCoordinates(coordinates, polaris)) return "polaris";
+  if (sameCoordinates(coordinates, crux)) return "crux";
+  return "point";
+};
+
+const now = (): SkyMoment => {
+  const d = new Date();
+  return {
+    year: d.getFullYear(),
+    month: d.getMonth() + 1,
+    day: d.getDate(),
+    hour: d.getHours(),
+    minute: d.getMinutes(),
+  };
+};
+
+const problemFor = (
+  problems: DesignProblem[],
+  field: DesignProblem["field"]
+) => problems.find((problem) => problem.field === field)?.message;
+
+const monthNames = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+const Design: React.FC = () => {
   const navigate = useNavigate();
-  const [design, setDesign] = useState(() =>
-    designFromSearchParams(params, defaultHatDesign),
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  /*
+   * The design is read straight from the URL rather than mirrored into local
+   * state. Keeping a copy meant an incoming link was overwritten by whatever
+   * had been typed earlier, because the copy was only ever seeded once.
+   */
+  const design = useMemo(
+    () => designFromSearchParams(searchParams),
+    [searchParams]
   );
-  const [gauge, setGauge] = useState(readGauge);
-  const [mode, setMode] = useState(params.size ? "custom" : "moment");
-  const [moment, setMoment] = useState(() => {
-    const d = new Date();
-    return {
-      year: d.getFullYear(),
-      month: d.getMonth() + 1,
-      day: d.getDate(),
-      hour: d.getHours(),
-      minute: d.getMinutes(),
-    };
-  });
-  const [place, setPlace] = useState({ latitude: 0, longitude: 0 });
-  const placeKey = `${place.latitude},${place.longitude}`;
-  const [zoneResult, setZoneResult] = useState<{
+  const params = useMemo(() => designToSearchParams(design), [design]);
+
+  const [mode, setMode] = useState<SkyMode>(() => modeFor(design));
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [showProblems, setShowProblems] = useState(false);
+  const [gauge, setGauge] = useState<Gauge>(() => readGauge());
+  const [placeLabel, setPlaceLabel] = useState<string | null>(null);
+  const [locating, setLocating] = useState<string | null>(null);
+
+  // Fill in a bare /design URL so it is shareable without touching a field
+  // first. Replace rather than push, so editing does not fill the back button.
+  useEffect(() => {
+    if (searchParams.toString() === params.toString()) return;
+    setSearchParams(params, { replace: true });
+  }, [searchParams, params, setSearchParams]);
+
+  const problems = useMemo(
+    () =>
+      validateDesign(
+        design.stitchesPerRow,
+        design.numberOfRows,
+        design.decreaseMethod
+      ),
+    [design]
+  );
+
+  const update = (changes: Partial<HatDesign>) =>
+    setSearchParams(designToSearchParams({ ...design, ...changes }), {
+      replace: true,
+    });
+
+  const updateOrientation = (changes: Partial<HatDesign["orientation"]>) =>
+    update({ orientation: { ...design.orientation, ...changes } });
+
+  const updateSource = (changes: Partial<SkySource>) =>
+    update({
+      source: {
+        moment: design.source?.moment ?? now(),
+        place: design.source?.place ?? { latitude: 0, longitude: 0 },
+        ...design.source,
+        ...changes,
+      },
+    });
+
+  const chooseMode = (next: SkyMode) => {
+    setMode(next);
+    setPlaceLabel(null);
+    switch (next) {
+      case "moment":
+        // Start from tonight, here-ish, so the fields are never blank.
+        if (!design.source) {
+          update({
+            source: { moment: now(), place: { latitude: 0, longitude: 0 } },
+            orientation: { ...design.orientation, targetDestination: "crown" },
+          });
+        }
+        break;
+      case "polaris":
+        update({ source: undefined, orientation: { ...design.orientation, coordinates: polaris } });
+        break;
+      case "crux":
+        update({ source: undefined, orientation: { ...design.orientation, coordinates: crux } });
+        break;
+      case "point":
+        update({ source: undefined });
+        break;
+    }
+  };
+
+  /*
+   * A night and a place become a point in the sky in three steps: the place
+   * has a time zone (looked up lazily, from a file that is not loaded until
+   * it is needed), the zone turns the clock time into an instant, and the
+   * instant and place give the sky overhead. Each step is cached on the
+   * design so the URL always carries the answer as well as the question.
+   */
+  const source = design.source;
+  const placeKey = source ? `${source.place.latitude},${source.place.longitude}` : "";
+  const [zoneLookup, setZoneLookup] = useState<{
     key: string;
     zones: string[];
     error?: string;
   }>();
-  const [chosenZone, setChosenZone] = useState("");
-  const [occurrence, setOccurrence] = useState(0);
-  const [retry, setRetry] = useState(0);
-  const [problem, setProblem] = useState("");
-  const [advanced, setAdvanced] = useState(false);
-  const zoneBusy = mode === "moment" && zoneResult?.key !== placeKey;
-  const zones = zoneResult?.key === placeKey ? zoneResult.zones : [];
-  const zone = zones.includes(chosenZone) ? chosenZone : zones[0];
-  const validMoment = validLocalTime(moment);
-  const time = useMemo(() => {
-    if (!validMoment || !zone) return { instants: [], error: "" };
-    try {
-      const instants = instantsForLocalTime(moment, zone);
-      return {
-        instants,
-        error: instants.length
-          ? ""
-          : "This local time was skipped when the clocks moved forward. Choose a time before or after the clock change.",
-      };
-    } catch {
-      return {
-        instants: [],
-        error:
-          "Your browser cannot read this time zone. Please update your browser and retry.",
-      };
-    }
-  }, [moment, zone, validMoment]);
-  const instant = time.instants[Math.min(occurrence, time.instants.length - 1)];
+
   useEffect(() => {
-    if (mode !== "moment") return;
+    if (mode !== "moment" || !source) return;
     let cancelled = false;
     const timer = setTimeout(() => {
-      findTimeZones(place)
+      findTimeZones(source.place)
         .then((zones) => {
-          if (!cancelled) setZoneResult({ key: placeKey, zones });
+          if (!cancelled) setZoneLookup({ key: placeKey, zones });
         })
-        .catch((error) => {
-          if (!cancelled)
-            setZoneResult({
-              key: placeKey,
-              zones: [],
-              error: String(error.message),
-            });
+        .catch((error: Error) => {
+          if (!cancelled) setZoneLookup({ key: placeKey, zones: [], error: error.message });
         });
     }, 250);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [place, placeKey, mode, retry]);
-  const errors = validateDesign(
-    design.stitchesPerRow,
-    design.numberOfRows,
-    design.decreaseMethod,
-  );
-  const chart = () => {
-    if (
-      errors.length ||
-      (mode === "moment" && (!validMoment || zoneBusy || !instant))
-    )
-      return;
-    let orientation = design.orientation;
-    if (mode === "moment") {
-      const sky = zenithFor(instant!.utc, place);
-      orientation = {
-        ...orientation,
-        coordinates: {
-          latitude: sky.dec,
-          longitude: raHoursToLongitude(sky.ra),
-        },
-        targetDestination: "crown",
+  }, [mode, source, placeKey]);
+
+  const zonesReady = zoneLookup?.key === placeKey;
+  const zones = zonesReady ? zoneLookup.zones : [];
+  const zone = source?.zone && zones.includes(source.zone) ? source.zone : zones[0];
+  const momentValid = source ? validLocalTime(source.moment) : false;
+
+  const instants = useMemo<{ list: LocalInstant[]; error: string }>(() => {
+    if (!source || !momentValid || !zone) return { list: [], error: "" };
+    try {
+      const list = instantsForLocalTime(source.moment, zone);
+      return {
+        list,
+        error: list.length
+          ? ""
+          : "That clock time never happened: the clocks went forward over it. Choose a time before or after the change.",
       };
+    } catch {
+      return { list: [], error: "This browser cannot work out the time zone. Try a newer one." };
     }
-    navigate(`/render?${designToSearchParams({ ...design, orientation })}`);
-  };
-  const skyPoint = (latitude: number, longitude: number) =>
-    setDesign({
-      ...design,
-      orientation: {
-        ...design.orientation,
-        coordinates: { latitude, longitude },
-      },
-    });
-  const locate = () =>
+  }, [source, momentValid, zone]);
+
+  const instant =
+    instants.list[Math.min(source?.occurrence ?? 0, instants.list.length - 1)];
+
+  // The sky overhead, once known, is written to the design as its orientation.
+  useEffect(() => {
+    if (mode !== "moment" || !source || !instant) return;
+    const sky = zenithFor(instant.utc, source.place);
+    const coordinates = { latitude: sky.dec, longitude: raHoursToLongitude(sky.ra) };
+    if (sameCoordinates(coordinates, design.orientation.coordinates)) return;
+    updateOrientation({ coordinates, targetDestination: "crown" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, source, instant]);
+
+  const skyReady =
+    mode !== "moment" || (!!source && momentValid && zonesReady && !!instant);
+
+  const locate = () => {
+    setLocating("Finding where you are…");
     navigator.geolocation.getCurrentPosition(
-      (p) => {
-        setPlace({
-          latitude: p.coords.latitude,
-          longitude: p.coords.longitude,
+      (position) => {
+        updateSource({
+          place: {
+            latitude: Math.round(position.coords.latitude * 100) / 100,
+            longitude: Math.round(position.coords.longitude * 100) / 100,
+          },
+          zone: undefined,
         });
-        setProblem("");
+        setPlaceLabel("where you are now");
+        setLocating(null);
       },
-      () => setProblem("Location unavailable. Enter latitude and longitude."),
+      () => setLocating("Your location is not available. Search for a place, or type its coordinates.")
     );
+  };
+
+  const handleKnitAndChart = () => {
+    if (problems.length > 0) {
+      setShowProblems(true);
+      // The crown rule lives under the extra options, so open them to show
+      // where the fix is.
+      setShowAdvancedOptions(true);
+      return;
+    }
+    if (!skyReady) return;
+    navigate(`/render?${params.toString()}`);
+  };
+
+  const overhead = design.orientation.coordinates;
+
   return (
-    <main className="design-container page">
-      <a href="#/" className="eyebrow">
-        Hats which look like space
-      </a>
-      <h1>Your patch of sky</h1>
-      <p>A moment overhead, translated into stitches.</p>
+    <PageLayout
+      title="Design your sky"
+      step="design"
+      lede="Say how big the head is, then which night and which place the sky is from."
+    >
+      <h2 className="design-section-heading">Size</h2>
+
       <SizeCalculator
         gauge={gauge}
         setGauge={setGauge}
         stitchesPerRow={design.stitchesPerRow}
         numberOfRows={design.numberOfRows}
         decreaseMethod={design.decreaseMethod}
-        onSize={(stitchesPerRow, numberOfRows) =>
-          setDesign({ ...design, stitchesPerRow, numberOfRows })
-        }
+        onSize={(stitchesPerRow, numberOfRows) => {
+          setShowProblems(false);
+          update({ stitchesPerRow, numberOfRows });
+        }}
       />
-      <section className="design-card">
-        <h2>The sky to remember</h2>
+
+      <div className="design-row">
+        <InputField
+          label="Stitches per row"
+          value={design.stitchesPerRow}
+          valueSetter={(stitchesPerRow) => update({ stitchesPerRow })}
+          problem={showProblems ? problemFor(problems, "stitchesPerRow") : undefined}
+        />
+        <InputField
+          label="Rows before the crown"
+          value={design.numberOfRows}
+          valueSetter={(numberOfRows) => update({ numberOfRows })}
+          problem={showProblems ? problemFor(problems, "numberOfRows") : undefined}
+        />
+      </div>
+
+      <h2 className="design-section-heading" style={{ marginTop: "22px" }}>
+        The sky
+      </h2>
+
+      <div className="design-field">
         <label>
-          Choose your sky
-          <select
-            value={mode}
-            onChange={(e) => {
-              setMode(e.target.value);
-              if (e.target.value === "polaris") skyPoint(89.26, 37.95);
-              if (e.target.value === "crux") skyPoint(-60, -173);
-            }}
-          >
-            <option value="moment">A place and moment</option>
-            <option value="polaris">North Star (Polaris)</option>
-            <option value="crux">Southern Cross (Crux)</option>
-            <option value="custom">Right ascension and declination</option>
+          <span className="design-field-label">Which sky</span>
+          <select value={mode} onChange={(e) => chooseMode(e.target.value as SkyMode)}>
+            <option value="moment">The sky over a place, on a night</option>
+            <option value="polaris">The North Star, Polaris</option>
+            <option value="crux">The Southern Cross</option>
+            <option value="point">A point, by right ascension and declination</option>
           </select>
         </label>
-        {mode === "moment" ? (
-          <>
-            <div className="design-row">
-              {(["year", "month", "day", "hour", "minute"] as const).map(
-                (field) => (
-                  <NumberField
-                    key={field}
-                    label={field[0].toUpperCase() + field.slice(1)}
-                    value={moment[field]}
-                    onChange={(value) => {
-                      setMoment({ ...moment, [field]: value });
-                      setOccurrence(0);
-                    }}
-                    min={
-                      field === "year"
-                        ? 1900
-                        : field === "month" || field === "day"
-                          ? 1
-                          : 0
-                    }
-                    max={
-                      field === "year"
-                        ? 2100
-                        : field === "month"
-                          ? 12
-                          : field === "day"
-                            ? daysInMonth(moment.month, moment.year)
-                            : field === "hour"
-                              ? 23
-                              : 59
-                    }
-                  />
-                ),
-              )}
-            </div>
-            {!validMoment && (
-              <p role="alert">Enter a valid calendar date and time.</p>
-            )}
-            <div className="design-row">
-              <NumberField
-                label="Latitude"
-                value={place.latitude}
-                onChange={(latitude) => setPlace({ ...place, latitude })}
-                min={-90}
-                max={90}
-                step={0.01}
-              />
-              <NumberField
-                label="Longitude"
-                value={place.longitude}
-                onChange={(longitude) => setPlace({ ...place, longitude })}
-                min={-180}
-                max={180}
-                step={0.01}
-              />
-            </div>
-            <Button variant="quiet" onClick={locate}>
-              Use current location
-            </Button>
-            <p>
-              <a href="data-credits.html" target="_blank" rel="noreferrer">
-                Time-zone map: © OpenStreetMap contributors
-              </a>
-            </p>
-            <p>
-              Enter the local clock time at this place. Daylight saving is
-              included automatically for your chosen date.
-            </p>
-            {zone && (
-              <p className="zone-status" aria-live="polite">
-                {zone.replace(/_/g, " ")}
-                {instant ? ` · ${formatOffset(instant.offset)}` : ""}
-              </p>
-            )}
-            {zones.length > 1 && (
-              <label>
-                Time zone at this location
-                <select
-                  value={zone}
-                  onChange={(e) => {
-                    setChosenZone(e.target.value);
-                    setOccurrence(0);
-                  }}
-                >
-                  {zones.map((z) => (
-                    <option key={z} value={z}>
-                      {z.replace(/_/g, " ")}
-                    </option>
-                  ))}
-                </select>
-                <span>
-                  This location lies on overlapping time-zone boundaries. Choose
-                  the place whose clock you used.
-                </span>
-              </label>
-            )}
-            {time.instants.length > 1 && (
-              <label>
-                The clocks moved back, so this time happened twice.
-                <select
-                  value={occurrence}
-                  onChange={(e) => setOccurrence(Number(e.target.value))}
-                >
-                  {time.instants.map((candidate, i) => (
-                    <option key={candidate.timestamp} value={i}>
-                      {i === 0
-                        ? "First occurrence, before the clocks moved back"
-                        : "Second occurrence, after the clocks moved back"}{" "}
-                      ({formatOffset(candidate.offset)})
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <p role="status">
-              {zoneBusy
-                ? "Finding the local time zone…"
-                : zoneResult?.error || time.error || problem}
-            </p>
-            {zoneResult?.error && !zoneBusy && (
-              <Button
-                onClick={() => {
-                  setZoneResult(undefined);
-                  setRetry(retry + 1);
-                }}
-              >
-                Retry time-zone lookup
-              </Button>
-            )}
-          </>
-        ) : (
+      </div>
+
+      {mode === "moment" && source && (
+        <div className="sky-moment">
+          <PlaceSearch
+            onPick={(coordinates, place) => {
+              updateSource({ place: coordinates, zone: undefined });
+              setPlaceLabel(`${place.name}, ${place.region}`);
+              setLocating(null);
+            }}
+          />
           <div className="design-row">
-            <NumberField
-              label="Right ascension (hours)"
-              value={longitudeToRaHours(
-                design.orientation.coordinates.longitude,
-              )}
-              onChange={(v) =>
-                skyPoint(
-                  design.orientation.coordinates.latitude,
-                  raHoursToLongitude(v),
-                )
-              }
-              min={0}
-              max={24}
-              step={0.01}
-            />
-            <NumberField
-              label="Declination (degrees)"
-              value={design.orientation.coordinates.latitude}
-              onChange={(v) =>
-                skyPoint(v, design.orientation.coordinates.longitude)
-              }
+            <InputField
+              label="Latitude"
+              value={source.place.latitude}
+              valueSetter={(latitude) => {
+                updateSource({ place: { ...source.place, latitude }, zone: undefined });
+                setPlaceLabel(null);
+              }}
               min={-90}
               max={90}
               step={0.01}
             />
+            <InputField
+              label="Longitude"
+              value={source.place.longitude}
+              valueSetter={(longitude) => {
+                updateSource({ place: { ...source.place, longitude }, zone: undefined });
+                setPlaceLabel(null);
+              }}
+              min={-180}
+              max={180}
+              step={0.01}
+            />
+            <div className="design-field design-field-button">
+              <Button variant="secondary" onClick={locate}>
+                Where I am now
+              </Button>
+            </div>
           </div>
-        )}
-      </section>
-      <Button
-        variant="quiet"
-        aria-expanded={advanced}
-        onClick={() => setAdvanced(!advanced)}
-      >
-        Stitches and sky detail
-      </Button>
-      {advanced && (
-        <section className="design-card">
-          <div className="design-row">
+          {(placeLabel || locating) && (
+            <p className="design-hint" style={{ marginTop: "-8px" }}>
+              {locating ?? `Standing at ${placeLabel}.`}
+            </p>
+          )}
+
+          <div className="design-row sky-clock">
+            <label>
+              <span className="design-field-label">Month</span>
+              <select
+                  value={source.moment.month}
+                  onChange={(e) => {
+                    const month = Number(e.target.value);
+                    const day = Math.min(source.moment.day, daysInMonth(month, source.moment.year));
+                    updateSource({ moment: { ...source.moment, month, day }, occurrence: undefined });
+                  }}
+                >
+                {monthNames.map((name, i) => (
+                  <option key={name} value={i + 1}>{name}</option>
+                ))}
+              </select>
+            </label>
             <NumberField
-              label="Stitches per row"
-              value={design.stitchesPerRow}
-              onChange={(stitchesPerRow) =>
-                setDesign({ ...design, stitchesPerRow })
-              }
+              label="Day"
+              value={source.moment.day}
+              onChange={(day) => updateSource({ moment: { ...source.moment, day }, occurrence: undefined })}
+              min={1}
+              max={daysInMonth(source.moment.month, source.moment.year)}
+              width="5rem"
             />
             <NumberField
-              label="Rows before decreasing"
-              value={design.numberOfRows}
-              onChange={(numberOfRows) =>
-                setDesign({ ...design, numberOfRows })
-              }
+              label="Year"
+              value={source.moment.year}
+              onChange={(year) => updateSource({ moment: { ...source.moment, year }, occurrence: undefined })}
+              min={1900}
+              max={2200}
+              width="6rem"
+            />
+            <NumberField
+              label="Hour"
+              value={source.moment.hour}
+              onChange={(hour) => updateSource({ moment: { ...source.moment, hour }, occurrence: undefined })}
+              min={0}
+              max={23}
+              width="5rem"
+            />
+            <NumberField
+              label="Minute"
+              value={source.moment.minute}
+              onChange={(minute) => updateSource({ moment: { ...source.moment, minute }, occurrence: undefined })}
+              min={0}
+              max={59}
+              width="5rem"
             />
           </div>
-          <label>
-            Crown shaping
-            <select
-              value={design.decreaseMethod}
-              onChange={(e) =>
-                setDesign({
-                  ...design,
-                  decreaseMethod: e.target.value as DecreaseMethod,
-                })
-              }
-            >
-              <option>Pyramidal</option>
-              <option>Hemispherical</option>
-            </select>
-          </label>
-          <NumberField
-            label="Star magnitude limit"
-            value={design.orientation.magnitudeLimit ?? 4}
-            onChange={(magnitudeLimit) =>
-              setDesign({
-                ...design,
-                orientation: { ...design.orientation, magnitudeLimit },
-              })
+
+          {!momentValid && (
+            <p role="alert" className="design-problem">
+              That is not a date and time on the calendar.
+            </p>
+          )}
+
+          {zones.length > 1 && (
+            <div className="design-field">
+              <label>
+                <span className="design-field-label">Whose clock</span>
+                <select
+                  value={zone}
+                  onChange={(e) => updateSource({ zone: e.target.value, occurrence: undefined })}
+                >
+                  {zones.map((name) => (
+                    <option key={name} value={name}>{name.replace(/_/g, " ")}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="design-hint">
+                This place sits on a boundary between time zones. Choose the one the clock was set to.
+              </div>
+            </div>
+          )}
+
+          {instants.list.length > 1 && (
+            <div className="design-field">
+              <label>
+                <span className="design-field-label">Which of the two</span>
+                <select
+                  value={source.occurrence ?? 0}
+                  onChange={(e) => updateSource({ occurrence: Number(e.target.value) || undefined })}
+                >
+                  {instants.list.map((candidate, i) => (
+                    <option key={candidate.timestamp} value={i}>
+                      {i === 0 ? "Before the clocks went back" : "After the clocks went back"} ({formatOffset(candidate.offset)})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="design-hint">
+                The clocks went back that night, so this time came round twice.
+              </div>
+            </div>
+          )}
+
+          <p className="design-hint sky-status" aria-live="polite">
+            {!zonesReady
+              ? "Working out the local time…"
+              : zoneLookup?.error ||
+                instants.error ||
+                (instant && zone
+                  ? `${zone.replace(/_/g, " ")}, ${formatOffset(instant.offset)} · overhead: right ascension ${longitudeToRaHours(overhead.longitude).toFixed(1)}h, declination ${overhead.latitude.toFixed(1)}°`
+                  : "")}
+          </p>
+          <p className="design-hint design-credit">
+            Time zones from the OpenStreetMap boundaries, © OpenStreetMap contributors.
+          </p>
+        </div>
+      )}
+
+      {mode === "point" && (
+        <div className="design-row">
+          <InputField
+            label="Right ascension (hours)"
+            value={longitudeToRaHours(overhead.longitude)}
+            valueSetter={(hours) =>
+              updateOrientation({ coordinates: { ...overhead, longitude: raHoursToLongitude(hours) } })
             }
             min={0}
-            max={6}
-            step={0.5}
+            max={24}
+            step={0.01}
           />
-          <p>
-            A higher limit includes fainter stars. Constellation endpoints
-            always remain visible. Stars use one white yarn.
-          </p>
-          {mode !== "moment" && (
+          <InputField
+            label="Declination (degrees)"
+            value={overhead.latitude}
+            valueSetter={(latitude) => updateOrientation({ coordinates: { ...overhead, latitude } })}
+            min={-90}
+            max={90}
+            step={0.01}
+          />
+        </div>
+      )}
+
+      {mode !== "moment" && (
+        <p className="design-hint" style={{ marginTop: "-4px" }}>
+          {mode === "polaris" && "Polaris sits at the crown; the sky turns around it."}
+          {mode === "crux" && "The Southern Cross sits at the crown, with the Pointers beside it."}
+          {mode === "point" && "That point in the sky sits wherever you put it below."}
+        </p>
+      )}
+
+      <ToggleAdvancedOptions
+        showAdvancedOptions={showAdvancedOptions}
+        setShowAdvancedOptions={setShowAdvancedOptions}
+      />
+
+      <div
+        className={`advanced-panel ${
+          showAdvancedOptions ? "advanced-panel-open" : "advanced-panel-closed"
+        }`}
+      >
+        <h2 className="design-section-heading" style={{ marginTop: "22px" }}>
+          The stars
+        </h2>
+
+        <InputField
+          label="Faintest star to knit (magnitude)"
+          value={design.orientation.magnitudeLimit ?? 4}
+          valueSetter={(magnitudeLimit) => updateOrientation({ magnitudeLimit })}
+          min={0}
+          max={6}
+          step={0.5}
+          hint="Bigger is fainter: 4 is what a town sky shows, 6 is the whole catalogue. A star a constellation passes through is always knitted."
+        />
+
+        {mode !== "moment" && (
+          <div className="design-field">
             <label>
-              Place this point at
+              <span className="design-field-label">Where that point sits on the hat</span>
               <select
                 value={design.orientation.targetDestination}
                 onChange={(e) =>
-                  setDesign({
-                    ...design,
-                    orientation: {
-                      ...design.orientation,
-                      targetDestination: e.target.value as
-                        "crown" | "front" | "rim",
-                    },
-                  })
+                  updateOrientation({ targetDestination: e.target.value as DestinationType })
                 }
               >
-                <option value="crown">Crown</option>
-                <option value="front">Front</option>
-                <option value="rim">Rim</option>
+                <option value="crown">At the crown</option>
+                <option value="front">At the front</option>
+                <option value="rim">At the rim</option>
               </select>
             </label>
-          )}
-        </section>
-      )}
-      {errors.map((e) => (
-        <p role="alert" key={e.field}>
-          {e.message}
-        </p>
-      ))}
-      <Button
-        variant="primary"
-        onClick={chart}
-        disabled={
-          errors.length > 0 ||
-          (mode === "moment" && (!validMoment || zoneBusy || !instant))
-        }
-      >
-        Knit and chart
-      </Button>
-    </main>
+          </div>
+        )}
+
+        <h2 className="design-section-heading" style={{ marginTop: "26px" }}>
+          Shaping
+        </h2>
+
+        <div className="design-field">
+          <label>
+            <span className="design-field-label">Crown shape</span>
+            <select
+              value={design.decreaseMethod}
+              onChange={(e) => update({ decreaseMethod: e.target.value as DecreaseMethod })}
+            >
+              <option value="Pyramidal">Pyramidal</option>
+              <option value="Hemispherical">Rounded</option>
+            </select>
+          </label>
+          <div className="design-hint">
+            A pyramidal crown decreases in straight lines and needs a stitch
+            count divisible by ten. A rounded one takes any even count.
+          </div>
+        </div>
+      </div>
+
+      <div className="design-actions">
+        <Button
+          variant="primary"
+          size="lg"
+          onClick={handleKnitAndChart}
+          disabled={mode === "moment" && !skyReady}
+        >
+          Knit and chart
+        </Button>
+        <ShareDesignLink />
+      </div>
+    </PageLayout>
   );
-}
+};
+
+export default Design;

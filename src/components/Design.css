@@ -1,62 +1,279 @@
-.design-container {
-  max-width: 900px;
+.design-section {
+  margin-bottom: 30px;
 }
-.design-card {
-  padding: 28px;
-  border: 1px solid var(--rule);
-  background: var(--paper-raised);
-  margin: 28px 0;
-  border-radius: var(--radius);
-}
-.design-card-title {
-  font: 600 32px var(--font-display);
-  margin: 0 0 24px;
-}
-.size-group {
-  margin: 20px 0 28px;
-}
-.size-group-title {
-  font-size: 12px;
-  letter-spacing: 0.1em;
+
+.design-section-heading {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--accent);
-  margin: 0 0 10px;
+  color: var(--ink-faint);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 16px;
 }
-.size-group-note,
-.design-hint {
-  font-size: 14px;
-  color: var(--ink-muted);
+
+.design-field {
+  margin-bottom: 16px;
 }
+
 .design-field-label {
   display: block;
-  font-size: 12px;
-  margin-bottom: 6px;
-  color: var(--ink-muted);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  margin-bottom: 5px;
 }
-.design-summary {
-  border-top: 1px solid var(--rule);
-  padding-top: 18px;
-  font-size: 14px;
+
+.design-hint {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  margin-top: 5px;
 }
-.design-invalid,
-[aria-invalid="true"] {
-  border-color: var(--danger);
-}
-[role="alert"] {
+
+.design-problem {
+  font-size: var(--text-xs);
   color: var(--danger);
+  margin-top: 5px;
 }
-.design-card h2 {
-  margin-top: 0;
+
+.design-invalid {
+  border-color: var(--danger);
+  outline: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
 }
-.design-card select {
+
+.design-row {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+/* A card for the calculator, so it reads as a tool rather than more form. */
+.design-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  margin-bottom: 22px;
+  max-width: 620px;
+  box-shadow: var(--shadow-sm);
+}
+
+.design-card-title {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.design-card-note {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  margin: 0 0 14px;
+}
+
+.design-summary {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+
+.design-summary strong {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Advanced options: collapsed by default, animated open. */
+.advanced-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 6px 0;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+@media (pointer: coarse) {
+  .advanced-toggle {
+    min-height: 44px;
+  }
+}
+
+.advanced-toggle:hover {
+  color: var(--accent);
+}
+
+.advanced-caret {
+  transition: transform 0.25s ease;
+  font-size: 0.7em;
+}
+
+.advanced-open .advanced-caret {
+  transform: rotate(180deg);
+}
+
+.advanced-panel {
+  overflow: hidden;
+  transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.advanced-panel-closed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.advanced-panel-open {
+  max-height: 1400px;
+  opacity: 1;
+}
+
+.design-actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 22px;
+  border-top: 1px solid var(--rule);
+  margin-top: 8px;
+}
+
+/* Place search */
+.place-search {
+  position: relative;
+  margin-bottom: 16px;
+  max-width: 380px;
+}
+
+.place-input {
+  width: 100%;
+}
+
+.place-results {
+  list-style: none;
+  margin: 5px 0 0;
+  padding: 4px;
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow);
+  position: absolute;
+  z-index: 20;
+  width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.place-option {
+  padding: 7px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--text-sm);
+  align-items: baseline;
+}
+
+.place-option-active {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.place-option-region {
+  color: var(--ink-faint);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.place-empty {
+  padding: 8px 9px;
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+}
+
+/*
+ * The two kinds of measurement are separated: what the hat should be, and what
+ * your knitting does. They used to sit in one row, which made it unclear which
+ * was which.
+ */
+.size-group {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.size-group:last-of-type {
+  border-bottom: none;
+  padding-bottom: 6px;
+}
+
+.size-group-title {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 6px;
+}
+
+.size-group-note {
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  margin: 0 0 12px;
+  max-width: 60ch;
+}
+
+/*
+ * A checkbox and its label as one target. The box itself is only as big as a
+ * checkbox, so the row it sits in is what has to be thumb-sized.
+ */
+.design-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (pointer: coarse) {
+  .design-checkbox {
+    min-height: 44px;
+  }
+}
+
+/* The night and the place: a block of their own within the sky section. */
+.sky-moment {
+  padding: 4px 0 0;
+}
+
+.sky-clock {
+  align-items: flex-end;
+}
+
+.design-field-button {
+  align-self: flex-end;
+}
+
+.sky-status {
+  min-height: 1.4em;
+  font-variant-numeric: tabular-nums;
+}
+
+.design-credit {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+/* A select never wider than the column it is in, whatever its longest option. */
+.design-field select,
+.sky-clock select {
   max-width: 100%;
-}
-@media (max-width: 600px) {
-  .design-card {
-    padding: 18px;
-    margin: 20px 0;
-  }
-  .design-card-title {
-    font-size: 30px;
-  }
 }

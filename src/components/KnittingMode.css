@@ -32,7 +32,7 @@
 
 .knitting-progress-fill {
   height: 100%;
-  background: linear-gradient(to right, var(--land-deep), var(--ocean-deep));
+  background: linear-gradient(to right, var(--gold-deep), var(--accent-fill));
   transition: width 0.25s ease-out;
 }
 
@@ -141,22 +141,23 @@
   cursor: not-allowed;
 }
 
+/* Gold leaf, with the night's ink on it whichever plate this is. */
 .knitting-button-primary,
 .knitting-button-run {
   min-height: 52px;
   font-size: var(--text-base);
   font-weight: 600;
-  color: var(--paper-raised);
+  color: var(--on-accent-fill);
 }
 
 .knitting-button-primary {
-  background: var(--land-deep);
-  border-color: var(--land-deep);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
 }
 
 .knitting-button-run {
-  background: var(--ocean-deep);
-  border-color: var(--ocean-deep);
+  background: var(--accent-fill-strong);
+  border-color: var(--accent-fill-strong);
 }
 
 /* Everything else, small and out of the way. */
@@ -220,7 +221,7 @@
   }
 
   .knitting-button:hover:not(:disabled) {
-    border-color: var(--ocean-deep);
+    border-color: var(--accent);
   }
 }
 

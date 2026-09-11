@@ -1,6 +1,11 @@
 import DestinationType from "../types/DestinationType";
 import { DecreaseMethod } from "../types/KnittingMachine";
-import { defaultHatDesign, HatDesign } from "../types/HatDesign";
+import {
+  defaultHatDesign,
+  HatDesign,
+  SkyMoment,
+  SkySource,
+} from "../types/HatDesign";
 
 /**
  * Reads and writes a hat design as URL query parameters, so a design can be
@@ -19,6 +24,11 @@ const keys = {
   longitude: "lon",
   destination: "to",
   magnitude: "mag",
+  /* The source of the sky point, when there was one. */
+  when: "when",
+  where: "where",
+  zone: "tz",
+  occurrence: "occ",
 } as const;
 
 const decreaseMethods: DecreaseMethod[] = ["Hemispherical", "Pyramidal"];
@@ -51,7 +61,59 @@ export const designToSearchParams = (design: HatDesign): URLSearchParams => {
   );
   params.set(keys.destination, design.orientation.targetDestination);
   params.set(keys.magnitude, String(design.orientation.magnitudeLimit ?? 4));
+  if (design.source) {
+    const { moment, place, zone, occurrence } = design.source;
+    params.set(keys.when, formatMoment(moment));
+    params.set(
+      keys.where,
+      `${place.latitude.toFixed(2)},${place.longitude.toFixed(2)}`,
+    );
+    if (zone) params.set(keys.zone, zone);
+    if (occurrence) params.set(keys.occurrence, String(occurrence));
+  }
   return params;
+};
+
+const pad = (value: number) => String(value).padStart(2, "0");
+
+/** A local clock time as `YYYY-MM-DDTHH:MM`: readable in a link, no zone. */
+export const formatMoment = (moment: SkyMoment): string =>
+  `${moment.year}-${pad(moment.month)}-${pad(moment.day)}T${pad(moment.hour)}:${pad(moment.minute)}`;
+
+const parseMoment = (raw: string | null): SkyMoment | undefined => {
+  if (!raw) return undefined;
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(raw);
+  if (!match) return undefined;
+  const [year, month, day, hour, minute] = match.slice(1).map(Number);
+  const inRange =
+    year >= 1900 && year <= 2200 &&
+    month >= 1 && month <= 12 &&
+    day >= 1 && day <= 31 &&
+    hour >= 0 && hour <= 23 &&
+    minute >= 0 && minute <= 59;
+  return inRange ? { year, month, day, hour, minute } : undefined;
+};
+
+const parsePlace = (raw: string | null) => {
+  if (!raw) return undefined;
+  const [latitude, longitude] = raw.split(",").map(Number);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return undefined;
+  if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return undefined;
+  return { latitude, longitude };
+};
+
+const sourceFrom = (params: URLSearchParams): SkySource | undefined => {
+  const moment = parseMoment(params.get(keys.when));
+  const place = parsePlace(params.get(keys.where));
+  if (!moment || !place) return undefined;
+  const zone = params.get(keys.zone) ?? undefined;
+  const occurrence = Number(params.get(keys.occurrence));
+  return {
+    moment,
+    place,
+    ...(zone ? { zone } : {}),
+    ...(occurrence === 1 ? { occurrence } : {}),
+  };
 };
 
 export const designFromSearchParams = (
@@ -106,6 +168,10 @@ export const designFromSearchParams = (
         6,
       ),
     },
+    ...(() => {
+      const source = sourceFrom(params);
+      return source ? { source } : {};
+    })(),
   };
 };
 

@@ -41,15 +41,16 @@
   min-height: 46px;
 }
 
+/* Gold leaf, with the night's ink on it whichever plate this is. */
 .btn-primary {
-  background: var(--ocean-deep);
-  border-color: var(--ocean-deep);
-  color: var(--paper-raised);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: var(--on-accent-fill);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--ocean-deeper);
-  border-color: var(--ocean-deeper);
+  background: var(--accent-fill-strong);
+  border-color: var(--accent-fill-strong);
 }
 
 .btn-secondary {
@@ -59,8 +60,8 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  border-color: var(--ocean-deep);
-  color: var(--ocean-deep);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .btn-danger {

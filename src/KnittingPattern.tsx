@@ -1,196 +1,404 @@
-import { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { Stitch } from "./types/Stitch";
 import { SkyMarks } from "./types/SkyMarks";
-import { segmentsOf } from "./helpers/connections";
-import { layOutStitches } from "./helpers/pattern-layout";
-import { stitchMarkPath } from "./helpers/stitch-marks";
+import { layOutStitches, StitchPosition } from "./helpers/pattern-layout";
+import { Segment, segmentsOf } from "./helpers/connections";
+import { segmentKey } from "./helpers/embroidery";
 import { useYarns } from "./useYarns";
-import { cssColour, displayYarn } from "./helpers/yarn-preference";
-import { SkyPalette } from "./helpers/sky-palette";
+import { cssColour, displayYarn, YarnChoices } from "./helpers/yarn-preference";
+import { stitchMarkPath } from "./helpers/stitch-marks";
 import "./KnittingPattern.css";
-interface Props {
+
+interface KnittingPatternProps {
   stitches: Stitch[];
   sky: SkyMarks;
   progress: number;
+  /** Mark the next stitch to work and keep it in view. */
   followProgress?: boolean;
+  /** The line being sewn, as a segment key, when embroidering. */
   activeSegment?: string;
+  /** Lines already sewn, when embroidering. */
   sewnSegments?: string[];
 }
-export default function KnittingPattern({
-  stitches,
-  sky,
-  progress,
-  followProgress,
-  activeSegment,
-  sewnSegments = [],
-}: Props) {
-  const { yarns } = useYarns();
-  const charted = useMemo(() => stitches.filter((s) => s.id > 0), [stitches]);
-  const { positions, numRows, numCols } = useMemo(
-    () => layOutStitches(charted),
-    [charted],
-  );
-  const stars = useMemo(() => new Set(sky.stars), [sky]);
-  const connections = useMemo(() => segmentsOf(sky), [sky]);
-  useEffect(() => {
-    if (!followProgress && !activeSegment) return;
-    const segment = connections.find(
-      (s) =>
-        `${s.abbreviation}:${s.strokeIndex}:${s.segmentIndex}` ===
-        activeSegment,
-    );
-    const cell = document.getElementById(
-      `stitch-${segment?.from.stitch ?? progress + 1}`,
-    );
-    if (!cell) return;
-    const rect = cell.getBoundingClientRect();
-    const panel = document
-      .querySelector(activeSegment ? ".embroidery-panel" : ".knitting-panel")
-      ?.getBoundingClientRect();
-    const bottom = (panel?.top ?? window.innerHeight) - 50;
-    const scroller = cell.closest(".chart-scroll");
-    if (scroller) {
-      const box = scroller.getBoundingClientRect();
-      scroller.scrollBy({
-        left: rect.left - box.left - box.width / 2,
-        behavior: "instant",
-      });
-    }
-    if (rect.bottom > bottom || rect.top < 70)
-      window.scrollBy({
-        top: rect.top - bottom + 70,
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
-          : "smooth",
-      });
-  }, [progress, followProgress, activeSegment, connections]);
-  return (
-    <div
-      className="chart-scroll"
-      tabIndex={0}
-      aria-label="Knitting chart. Scroll sideways to see all stitches."
-    >
+
+const cellSize = 10;
+/** Every nth grid line is drawn heavier, to make counting easier. */
+const emphasisEvery = 5;
+
+/**
+ * How far above the panel the stitch being worked should sit, in rows.
+ *
+ * Enough that the row you are on and the few you have just finished are all
+ * clear of the panel, rather than the stitch you want hugging its top edge.
+ */
+const rowsAbovePanel = 5;
+
+const prefersReducedMotion = (): boolean =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const Label: React.FC<{
+  row: number;
+  col: number;
+  edge: "right" | "bottom";
+  children: React.ReactNode;
+}> = ({ row, col, edge, children }) => (
+  <div
+    className={`chart-label chart-label-${edge}`}
+    style={{ gridRow: row, gridColumn: col }}
+  >
+    {children}
+  </div>
+);
+
+const StitchBox: React.FC<{
+  stitch: Stitch;
+  position: StitchPosition;
+  numRows: number;
+  numCols: number;
+  completed: boolean;
+  isNext: boolean;
+  /** No neighbour on that side, so this cell closes the outline itself. */
+  openTop: boolean;
+  openLeft: boolean;
+  yarns: YarnChoices;
+}> = React.memo(
+  ({
+    stitch,
+    position,
+    numRows,
+    numCols,
+    completed,
+    isNext,
+    openTop,
+    openLeft,
+    yarns,
+  }) => {
+    const mark = stitchMarkPath(stitch.type, 0, 0, cellSize);
+    return (
       <div
-        className="knitting-pattern-container"
+        className={[
+          "chart-cell",
+          /*
+           * The heavy lines fall *after* every fifth stitch and row, counting
+           * from the bottom right as you knit.
+           *
+           * A cell draws its own right and bottom, and stitch number n sits at
+           * col 1 - n (so stitch 1 is col 0, and the numbers grow leftwards).
+           * The line between stitch 5 and stitch 6 is therefore the right-hand
+           * border of stitch 6, which is col -5. Marking col -5, -10, -15 puts
+           * the line after each fifth stitch; marking stitch 5 itself, as this
+           * used to, put it between 4 and 5.
+           */
+          position.col !== 0 && position.col % emphasisEvery === 0
+            ? "chart-cell-major-col"
+            : "",
+          position.row !== 0 && position.row % emphasisEvery === 0
+            ? "chart-cell-major-row"
+            : "",
+          // Nothing above or to the left to draw the line, so draw it here.
+          openTop ? "chart-cell-open-top" : "",
+          openLeft ? "chart-cell-open-left" : "",
+          completed ? "chart-cell-done" : "",
+          isNext ? "chart-cell-next" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        data-next-stitch={isNext ? "true" : undefined}
+        data-stitch={stitch.id}
         style={{
-          width: (numCols + 2) * 10,
-          height: (numRows + 2) * 10,
-          gridTemplateRows: `repeat(${numRows + 2},10px)`,
-          gridTemplateColumns: `repeat(${numCols + 2},10px)`,
+          gridRow: numRows + position.row,
+          gridColumn: numCols + position.col,
+          backgroundColor: cssColour(displayYarn(stitch.colour, yarns).colour),
         }}
       >
-        {charted.map((s) => {
-          const pos = positions[s.id];
-          if (!pos) return null;
-          const star = stars.has(s.id);
-          const colour = displayYarn(s.colour, yarns).colour;
-          const path = stitchMarkPath(s.type, 0, 0, 10);
+        {mark && (
+          <svg
+            className="chart-mark"
+            viewBox={`0 0 ${cellSize} ${cellSize}`}
+            aria-hidden="true"
+          >
+            <path d={mark} vectorEffect="non-scaling-stroke" />
+          </svg>
+        )}
+      </div>
+    );
+  }
+);
+
+/**
+ * The constellation figures over the chart: one SVG spanning every cell.
+ *
+ * A single drawing rather than one per line, laid into the grid so it is
+ * exactly the cells' size and scrolls with them, and with overflow visible so
+ * a line running off the brim can be drawn leaving the hat, below the last
+ * row, instead of being clipped at it.
+ *
+ * The chart is a tube cut open, so a line between two stitches on opposite
+ * sides of the seam is drawn twice, once each way round; and a stroke that
+ * runs off the brim is drawn to where its missing star would be, as far
+ * below the brim as its reflection landed above it, and dashed.
+ */
+const SkyLines: React.FC<{
+  segments: Segment[];
+  positions: Record<number, StitchPosition>;
+  numRows: number;
+  numCols: number;
+  activeSegment?: string;
+  sewn: Set<string>;
+  embroidering: boolean;
+}> = React.memo(
+  ({ segments, positions, numRows, numCols, activeSegment, sewn, embroidering }) => {
+    const width = numCols * cellSize;
+    const height = numRows * cellSize;
+    const centreX = (position: StitchPosition) =>
+      (numCols + position.col - 0.5) * cellSize;
+    const centreY = (position: StitchPosition, offHat: boolean) =>
+      (offHat ? numRows - position.row + 0.5 : numRows + position.row - 0.5) *
+      cellSize;
+
+    return (
+      <svg
+        className={`chart-sky${embroidering ? " chart-sky-embroidering" : ""}`}
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        style={{ gridArea: `1 / 1 / ${numRows + 1} / ${numCols + 1}` }}
+        aria-hidden="true"
+      >
+        {segments.map((segment) => {
+          const a = positions[segment.from.stitch];
+          const b = positions[segment.to.stitch];
+          if (!a || !b) return null;
+          let x1 = centreX(a);
+          let x2 = centreX(b);
+          const y1 = centreY(a, segment.from.offHat);
+          const y2 = centreY(b, segment.to.offHat);
+          const crossesSeam = Math.abs(x2 - x1) > width / 2;
+          if (crossesSeam) {
+            if (x1 < x2) x1 += width;
+            else x2 += width;
+          }
+          const key = segmentKey(segment);
+          const state =
+            key === activeSegment
+              ? "chart-line-active"
+              : sewn.has(key)
+                ? "chart-line-sewn"
+                : "chart-line-pending";
+          const offHat = segment.from.offHat || segment.to.offHat;
+          const copies = crossesSeam ? [0, -width] : [0];
           return (
-            <div
-              key={s.id}
-              id={`stitch-${s.id}`}
-              className={`stitch-box${s.id <= progress ? " stitch-done" : ""}${s.id === progress + 1 && followProgress ? " stitch-current" : ""}${(1 - pos.col) % 5 === 0 ? " grid-five-col" : ""}${(1 - pos.row) % 5 === 0 ? " grid-five-row" : ""}`}
-              style={{
-                gridRow: numRows + pos.row,
-                gridColumn: numCols + pos.col,
-                backgroundColor: cssColour(
-                  star ? displayYarn(SkyPalette.Night, yarns).colour : colour,
-                ),
-              }}
+            <g
+              key={key}
+              className={`chart-line ${state}${offHat ? " chart-line-off-hat" : ""}`}
+              data-segment={key}
             >
-              {star && (
-                <span
-                  className="star-dot"
-                  style={{ backgroundColor: cssColour(colour) }}
-                />
-              )}
-              {path && (
-                <svg
-                  className="stitch-symbol"
-                  viewBox="0 0 10 10"
-                  aria-hidden="true"
-                >
-                  <path d={path} />
-                </svg>
-              )}
-            </div>
-          );
-        })}
-        {Array.from({ length: numCols }, (_, i) => i + 1)
-          .filter((n) => n % 5 === 0)
-          .map((n) => (
-            <span
-              key={`c${n}`}
-              className="grid-label"
-              style={{ gridRow: numRows + 1, gridColumn: numCols - n + 1 }}
-            >
-              {n}
-            </span>
-          ))}
-        {Array.from({ length: numRows }, (_, i) => i + 1)
-          .filter((n) => n % 5 === 0)
-          .map((n) => (
-            <span
-              key={`r${n}`}
-              className="grid-label"
-              style={{ gridRow: numRows - n + 1, gridColumn: numCols + 1 }}
-            >
-              {n}
-            </span>
-          ))}
-        <svg
-          className="connection-svg"
-          width={numCols * 10}
-          height={numRows * 10}
-          aria-hidden="true"
-        >
-          {connections.map(
-            ({ abbreviation, strokeIndex, segmentIndex, from, to }) => {
-              const a = positions[from.stitch],
-                b = positions[to.stitch];
-              if (!a || !b) return null;
-              let x1 = (numCols + a.col - 0.5) * 10,
-                x2 = (numCols + b.col - 0.5) * 10;
-              const y1 =
-                  (from.offHat
-                    ? numRows - a.row + 0.5
-                    : numRows + a.row - 0.5) * 10,
-                y2 =
-                  (to.offHat ? numRows - b.row + 0.5 : numRows + b.row - 0.5) *
-                  10;
-              const wrap = numCols * 10;
-              if (Math.abs(x2 - x1) > wrap / 2) {
-                if (x1 < x2) x1 += wrap;
-                else x2 += wrap;
-              }
-              const key = `${abbreviation}:${strokeIndex}:${segmentIndex}`;
-              const status =
-                key === activeSegment
-                  ? "active"
-                  : sewnSegments.includes(key)
-                    ? "sewn"
-                    : "pending";
-              return (
-                <g
-                  key={key}
-                  className={`constellation-line ${status}${activeSegment && status === "pending" ? " dimmed" : ""}${from.offHat || to.offHat ? " off-hat" : ""}`}
-                  data-segment={key}
-                >
-                  {[0, -wrap].map((shift) => (
+              {copies.map((shift) => (
+                <React.Fragment key={shift}>
+                  {key === activeSegment && (
                     <line
-                      key={shift}
+                      className="chart-line-halo"
                       x1={x1 + shift}
                       y1={y1}
                       x2={x2 + shift}
                       y2={y2}
                     />
-                  ))}
-                </g>
-              );
-            },
-          )}
-        </svg>
+                  )}
+                  <line x1={x1 + shift} y1={y1} x2={x2 + shift} y2={y2} />
+                </React.Fragment>
+              ))}
+            </g>
+          );
+        })}
+      </svg>
+    );
+  }
+);
+
+const KnittingPattern: React.FC<KnittingPatternProps> = ({
+  stitches,
+  sky,
+  progress,
+  followProgress = false,
+  activeSegment,
+  sewnSegments,
+}) => {
+  const { yarns } = useYarns();
+  const gridRef = useRef<HTMLDivElement>(null);
+  const nextStitchId = followProgress ? progress + 1 : undefined;
+
+  const filteredStitches = useMemo(
+    () => stitches.filter((stitch) => stitch.id !== 0),
+    [stitches]
+  );
+
+  const { positions, numRows, numCols } = useMemo(
+    () => layOutStitches(filteredStitches),
+    [filteredStitches]
+  );
+
+  const segments = useMemo(() => segmentsOf(sky), [sky]);
+  const sewn = useMemo(() => new Set(sewnSegments ?? []), [sewnSegments]);
+  const embroidering = activeSegment !== undefined || sewnSegments !== undefined;
+
+  /*
+   * Which squares of the grid have a stitch in them, so a cell can tell
+   * whether anything is going to draw the line above or to the left of it.
+   * Rows count upwards as they go negative and columns leftwards, so the
+   * neighbour above is one row lower and the one to the left one column lower.
+   */
+  const filled = useMemo(() => {
+    const squares = new Set<string>();
+    for (const stitch of filteredStitches) {
+      const position = positions[stitch.id];
+      if (position) squares.add(`${position.row},${position.col}`);
+    }
+    return squares;
+  }, [filteredStitches, positions]);
+
+  /*
+   * The stitch to keep in view: the next one to knit, or, when sewing, the
+   * star the current line starts from.
+   */
+  const focusStitchId = useMemo(() => {
+    if (nextStitchId !== undefined) return nextStitchId;
+    if (!activeSegment) return undefined;
+    const segment = segments.find((s) => segmentKey(s) === activeSegment);
+    return segment?.from.stitch;
+  }, [nextStitchId, activeSegment, segments]);
+
+  // Sideways, within the chart: keep the stitch being worked in the middle, so
+  // the chart follows the knitter rather than having to be hunted for.
+  useEffect(() => {
+    if (focusStitchId === undefined) return;
+    const grid = gridRef.current;
+    const cell = grid?.querySelector<HTMLElement>(`[data-stitch="${focusStitchId}"]`);
+    if (!grid || !cell) return;
+    const target =
+      cell.offsetLeft - grid.clientWidth / 2 + cell.offsetWidth / 2;
+    grid.scrollTo({
+      left: Math.max(target, 0),
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  }, [focusStitchId]);
+
+  /*
+   * And down the page: keep that stitch clear of the panel.
+   *
+   * Only when the row changes. Within a row the stitch moves sideways, which
+   * the effect above handles, and scrolling the page on every stitch would
+   * have the whole chart twitching once per stitch.
+   */
+  const focusRow =
+    focusStitchId === undefined ? undefined : positions[focusStitchId]?.row;
+
+  useEffect(() => {
+    if (focusRow === undefined || focusStitchId === undefined) return;
+    const cell = gridRef.current?.querySelector<HTMLElement>(
+      `[data-stitch="${focusStitchId}"]`
+    );
+    if (!cell) return;
+    /*
+     * The panel is stuck to the bottom of the screen while you work, so the
+     * part of the page you can actually see ends at its top edge rather than
+     * at the bottom of the window.
+     *
+     * Its height, not wherever it happens to be sitting: it is sticky, so at
+     * the very bottom of the page it comes unstuck and rides higher than it
+     * will once the page has scrolled. Aiming at that moving line settled
+     * the stitch six rows off.
+     */
+    const panel = document.querySelector<HTMLElement>(".knitting-panel");
+    const floor = window.innerHeight - (panel?.offsetHeight ?? 0);
+    const wanted = floor - rowsAbovePanel * cellSize;
+    const delta = cell.getBoundingClientRect().bottom - wanted;
+    if (Math.abs(delta) < 1) return;
+    window.scrollBy({
+      top: delta,
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+    // Re-aim only when the row changes; the id is in the closure for the query.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRow]);
+
+  if (numRows === 0 || numCols === 0) {
+    return <p>This pattern has no stitches to chart.</p>;
+  }
+
+  return (
+    <div>
+      <div
+        id="printable-section"
+        className="chart"
+        ref={gridRef}
+        style={{
+          gridTemplateRows: `repeat(${numRows + 1}, ${cellSize}px)`,
+          gridTemplateColumns: `repeat(${numCols + 1}, ${cellSize}px)`,
+          minHeight: `${(numRows + 2) * cellSize}px`,
+        }}
+      >
+        {filteredStitches.map((stitch) => {
+          const position = positions[stitch.id];
+          if (!position) return null;
+          return (
+            <StitchBox
+              key={`box-${stitch.id}`}
+              stitch={stitch}
+              position={position}
+              numRows={numRows}
+              numCols={numCols}
+              completed={stitch.id <= progress}
+              isNext={stitch.id === nextStitchId}
+              openTop={!filled.has(`${position.row - 1},${position.col}`)}
+              openLeft={!filled.has(`${position.row},${position.col - 1}`)}
+              yarns={yarns}
+            />
+          );
+        })}
+        {[...Array(numCols)].map((_, colIndex) => {
+          if ((colIndex + 1) % emphasisEvery !== 0) return null;
+          return (
+            <Label
+              key={`col-label-${colIndex}`}
+              edge="bottom"
+              row={numRows + 1}
+              col={numCols - colIndex}
+            >
+              {colIndex + 1}
+            </Label>
+          );
+        })}
+        {[...Array(numRows)].map((_, rowIndex) => {
+          if ((rowIndex + 1) % emphasisEvery !== 0) return null;
+          return (
+            <Label
+              key={`row-label-${rowIndex}`}
+              edge="right"
+              col={numCols + 1}
+              row={numRows - rowIndex}
+            >
+              {rowIndex + 1}
+            </Label>
+          );
+        })}
+        <SkyLines
+          segments={segments}
+          positions={positions}
+          numRows={numRows}
+          numCols={numCols}
+          activeSegment={activeSegment}
+          sewn={sewn}
+          embroidering={embroidering}
+        />
       </div>
+      <p className="chart-caption">
+        {numCols} stitches across, {numRows} rows. Read from the bottom right,
+        working right to left; scroll sideways to see the whole round. The gold
+        lines are the constellations, sewn on after the knitting; a dashed line
+        runs off the brim to a star that is not on the hat.
+      </p>
     </div>
   );
-}
+};
+
+export default KnittingPattern;

@@ -33,6 +33,9 @@ const patternCache = new Map<string, { raw: string; pattern: SavedPattern }>();
  */
 export const knittingParam = "knitting";
 
+/** The same, for opening straight into the embroidery guide. */
+export const embroideryParam = "embroidery";
+
 /** Fired after any write, so open views can re-read. */
 export const patternsChangedEvent = "storageUpdated";
 

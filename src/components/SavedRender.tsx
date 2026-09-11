@@ -1,35 +1,65 @@
-import { useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import HatCanvas from "../ChainModel/HatCanvas";
 import { readPattern } from "../helpers/pattern-storage";
+import PageLayout from "./ui/PageLayout";
 import Button from "./ui/Button";
-export default function SavedRender() {
-  const { patternId } = useParams();
+import "./Render.css";
+
+const SavedRender: React.FC = () => {
   const navigate = useNavigate();
-  const pattern = useMemo(() => readPattern(patternId), [patternId]);
+  const { patternId } = useParams();
+  const [ready, setReady] = React.useState(false);
+
+  // Read once per id rather than on every render.
+  const pattern = React.useMemo(() => readPattern(patternId), [patternId]);
+
+  if (!pattern || pattern.stitches.length === 0) {
+    return (
+      <PageLayout title="Pattern not found">
+        <p>
+          This pattern is no longer saved in this browser. Saved patterns live
+          only on the device that made them.
+        </p>
+        <Button variant="primary" onClick={() => navigate("/")}>
+          Back to your skies
+        </Button>
+      </PageLayout>
+    );
+  }
+
   return (
-    <main className="page">
-      <a href="#/" className="eyebrow">
-        Your hats
-      </a>
-      <h1>{pattern?.name ?? "Saved sky"}</h1>
-      {pattern ? (
-        <>
-          <div className="hat-canvas">
-            <HatCanvas
-              stitches={pattern.stitches}
-              sky={pattern.sky}
-              simulationActive={false}
-            />
-          </div>
-          <p>Drag to turn the hat. Pinch to zoom.</p>
-          <Button onClick={() => navigate(`/pattern/${patternId}`)}>
-            Open knitting chart
-          </Button>
-        </>
-      ) : (
-        <p>This pattern is not saved in this browser.</p>
-      )}
-    </main>
+    <PageLayout
+      title={pattern.name ?? "Your sky"}
+      lede="Drag to turn it, scroll to look closer."
+    >
+      <div className="hat-stage">
+        <HatCanvas
+          stitches={pattern.stitches}
+          sky={pattern.sky}
+          simulationActive={false}
+          onReady={() => setReady(true)}
+        />
+      </div>
+      <p
+        aria-live="polite"
+        className={`render-status${ready ? "" : " render-status-working"}`}
+      >
+        {ready ? "Every white stitch is a star." : "Casting on..."}
+      </p>
+      <div className="render-actions">
+        <Button
+          variant="primary"
+          onClick={() => navigate(`/pattern/${patternId}`)}
+        >
+          Go to the chart
+        </Button>
+        <Button variant="quiet" onClick={() => navigate("/")}>
+          Back to your skies
+        </Button>
+      </div>
+    </PageLayout>
   );
-}
+};
+
+export default SavedRender;
