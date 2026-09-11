@@ -110,9 +110,11 @@ export interface ProjectionOptions {
 export const starAtVertex = (vertex: Position): number | undefined =>
   catalogueByKey.get(coordinateKey(vertex));
 
-/** The catalogue, for tests that assert known stars by their HIP number. */
+const catalogueByHip = new Map(catalogue.map((star) => [star.hip, star]));
+
+/** The catalogue by HIP number; the tests assert known stars by it. */
 export const catalogueStar = (hip: number): CatalogueStar | undefined =>
-  catalogue.find((star) => star.hip === hip);
+  catalogueByHip.get(hip);
 
 /**
  * Colour every stitch, and work out where the stars and constellations land.
@@ -168,11 +170,41 @@ export const colourSpace = (
 
   // 2. The stars.
   const starStitches = new Set<number>();
+  /*
+   * The star that speaks for each lit stitch, for the constellation label
+   * below. A stitch is a couple of degrees across and a boundary can run
+   * between a star and the centre of the stitch it lands on, so a lit
+   * stitch takes its region from its star, not its centre. Where several
+   * stars share a stitch, one a figure is drawn to wins - that is the star
+   * the eye sees the line meet - and otherwise the brightest.
+   */
+  const spokesman = new Map<
+    number,
+    { coordinates: GlobalCoordinates; magnitude: number; vertex: boolean }
+  >();
+  const speakFor = (
+    stitch: number,
+    coordinates: GlobalCoordinates,
+    magnitude: number,
+    vertex: boolean,
+  ) => {
+    const current = spokesman.get(stitch);
+    if (
+      !current ||
+      (vertex && !current.vertex) ||
+      (vertex === current.vertex && magnitude < current.magnitude)
+    ) {
+      spokesman.set(stitch, { coordinates, magnitude, vertex });
+    }
+  };
   for (const star of catalogue) {
     if (star.magnitude >= magnitudeLimit) continue;
     if (!onHat(star.vector)) continue;
     const stitch = stitchNear(star.vector);
-    if (stitch >= 0) starStitches.add(stitch);
+    if (stitch >= 0) {
+      starStitches.add(stitch);
+      speakFor(stitch, star.coordinates, star.magnitude, false);
+    }
   }
 
   /*
@@ -195,6 +227,8 @@ export const colourSpace = (
       const stitch = stitchNear(vector);
       if (stitch < 0) return undefined;
       starStitches.add(stitch);
+      const star = catalogueStar(starAtVertex(vertex) ?? -1);
+      speakFor(stitch, coordinates, star?.magnitude ?? Infinity, true);
       return { stitch, offHat: false };
     }
     const inHatSpace = rotateFromDestination(
@@ -254,12 +288,21 @@ export const colourSpace = (
   const starList = [...starStitches].sort((a, b) => a - b);
   for (const stitch of starList) colours[stitch] = SkyPalette.Star;
 
-  // 3. The label on every stitch: which constellation's sky it faces.
+  /*
+   * 4. The label on every stitch: which constellation's sky it faces. A lit
+   * stitch is labelled by its star, so a figure's star is never left just
+   * outside its own constellation by the width of a stitch. A figure can
+   * still reach a star in the next constellation over - Auriga is drawn to
+   * Elnath, which is Taurus's - and that is left as the sky has it.
+   */
   const regions = Object.fromEntries(
     skyCoordinates
       .map((coordinate, id) => [id, coordinate] as const)
       .filter(([id]) => id > 0)
-      .map(([id, coordinate]) => [id, constellationAt(coordinate)]),
+      .map(([id, coordinate]) => [
+        id,
+        constellationAt(spokesman.get(id)?.coordinates ?? coordinate),
+      ]),
   );
 
   return {

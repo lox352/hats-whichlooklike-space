@@ -13,7 +13,8 @@ import {
   rotateFromDestination,
   rotateToDestination,
 } from "./sky-geometry";
-import { angleBetween, toUnitVector } from "./sky-index";
+import { angleBetween, dot, toUnitVector } from "./sky-index";
+import { constellationAt } from "./constellation-regions";
 import { GlobalCoordinates } from "../types/GlobalCoordinates";
 import {
   defaultOrientationParameters,
@@ -289,6 +290,82 @@ describe("colourSpace", () => {
     expect(lookingAt.longitude).toBeCloseTo(knownStars.Sirius.longitude, 6);
     const { sky } = colourSpace(coordinates, orientation);
     expect(sky.stars).toContain(0);
+  });
+
+  it("labels a figure's stars with the figure's own constellation", () => {
+    const orientation = orientedTo(knownStars.Sirius);
+    const { sky } = colourSpace(coordinates, orientation, { magnitudeLimit: 4 });
+    const regions = sky.regions!;
+    /*
+     * A boundary can run between a star and the centre of the stitch it
+     * lands on, so a lit stitch is labelled by its star, not its centre,
+     * and a figure's star is in the figure's own constellation - with two
+     * honest exceptions. Some figures are drawn to a neighbour's star
+     * (Auriga reaches Elnath, which the IAU gave to Taurus), and two
+     * figures' stars can land on one stitch, which can only carry one
+     * label. Both are checked for rather than allowed by name.
+     */
+    const figureOf = new Map<number, Set<string>>();
+    for (const mark of sky.constellations) {
+      for (const stroke of mark.strokes) {
+        for (const point of stroke.points) {
+          if (point.offHat) continue;
+          const set = figureOf.get(point.stitch) ?? new Set();
+          set.add(mark.abbreviation.replace(/\d$/, ""));
+          figureOf.set(point.stitch, set);
+        }
+      }
+    }
+    const strayed: string[] = [];
+    let borrowed = 0;
+    for (const mark of sky.constellations) {
+      const abbreviation = mark.abbreviation.replace(/\d$/, "");
+      const feature = constellations.features.find((f) => f.id === mark.abbreviation)!;
+      const vertices = feature.geometry.coordinates.flat();
+      for (const stroke of mark.strokes) {
+        for (const point of stroke.points) {
+          if (point.offHat || regions[point.stitch] === abbreviation) continue;
+          // Is the figure reaching across a border for this star?
+          const vertex = vertices.find(
+            (v) => starAtVertex(v) !== undefined && stitchOf(v) === point.stitch,
+          );
+          const home =
+            vertex &&
+            constellationAt({ longitude: vertex[0], latitude: vertex[1] });
+          if (home && home !== abbreviation) {
+            borrowed += 1;
+            continue;
+          }
+          // Two figures on one stitch: the label must be one of them.
+          if ((figureOf.get(point.stitch)?.size ?? 0) > 1) continue;
+          strayed.push(`${mark.abbreviation} on ${regions[point.stitch]}`);
+        }
+      }
+    }
+    expect(strayed).toEqual([]);
+    expect(borrowed).toBeGreaterThan(0);
+    // Every knitted stitch has a label; the phantom does not.
+    expect(Object.keys(regions)).toHaveLength(coordinates.length - 1);
+    expect(regions[0]).toBeUndefined();
+
+    function stitchOf(vertex: number[]) {
+      const target = toUnitVector(
+        rotateFromDestination(
+          { longitude: vertex[0], latitude: vertex[1] },
+          orientation,
+        ),
+      );
+      let best = -1;
+      let bestCosine = -2;
+      coordinates.forEach((c, id) => {
+        const cosine = dot(toUnitVector(c), target);
+        if (cosine > bestCosine) {
+          bestCosine = cosine;
+          best = id;
+        }
+      });
+      return best;
+    }
   });
 
   it("is deterministic", () => {
