@@ -14,6 +14,10 @@ Stars are matched to stitches using spherical nearest-neighbour search. This cor
 
 The sky catalogue uses J2000 coordinates without precession. Time-zone polygons describe standard offsets; daylight-saving time is not inferred. Saved patterns live in this browser, not an account.
 
-## Work in progress
+## Making a hat
 
-See `PROGRESS.md` for checkpoints and verification. Embroidery is scheduled after the rendering and motion work.
+Choose a head measurement or stitch count, set your sky, and generate a preview. Designs are shareable in the URL. Save a chart to track knitting by stitch or row, then follow the embroidery guide one constellation at a time. Sewing has its own progress, undo, and highlighted stitch endpoints. Lines beyond the brim are guides and are excluded from sewing.
+
+Name your three yarns, estimate yardage from a measured swatch, and download SVG or PNG charts. Printing uses white paper, grey Milky Way cells, dark star dots, and constellation guides.
+
+See `PROGRESS.md` for completed checkpoints and verification. The optional physical measurement suite runs with `SPACE_MEASURE=1 npm test -- src/helpers/settling.test.ts` and takes about 90 seconds.

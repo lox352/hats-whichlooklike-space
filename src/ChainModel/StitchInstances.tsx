@@ -70,7 +70,7 @@ const StitchInstances: React.FC<StitchInstancesProps> = ({
   // Stitch 0 is the phantom start of the helix and is never drawn.
   const drawn = useMemo(
     () => stitches.filter((stitch) => stitch.id !== 0),
-    [stitches]
+    [stitches],
   );
 
   /**
@@ -120,7 +120,7 @@ const StitchInstances: React.FC<StitchInstancesProps> = ({
       // the cast-on row or at the seam, so fall back to something sane.
       const hasAcross = readPosition(
         neighbours.acrossOf[index],
-        neighbourAcross
+        neighbourAcross,
       );
       const hasBelow = readPosition(neighbours.belowOf[index], neighbourBelow);
 
@@ -170,7 +170,7 @@ const StitchInstances: React.FC<StitchInstancesProps> = ({
             targetColours[index * 3],
             targetColours[index * 3 + 1],
             targetColours[index * 3 + 2],
-            THREE.SRGBColorSpace
+            THREE.SRGBColorSpace,
           )
           .lerpColors(undyed, colour, eased);
         mesh.setColorAt(index, colour);
@@ -190,8 +190,7 @@ const StitchInstances: React.FC<StitchInstancesProps> = ({
       args={[geometry, undefined, drawn.length]}
       frustumCulled={false}
     >
-      <meshBasicMaterial toneMapped={false} side={THREE.DoubleSide}
-      />
+      <meshBasicMaterial toneMapped={false} side={THREE.DoubleSide} />
     </instancedMesh>
   );
 };

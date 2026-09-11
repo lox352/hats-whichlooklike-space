@@ -81,7 +81,7 @@ export const indexRows = (stitches: Stitch[]): RowIndex => {
 export const positionOf = (
   stitches: Stitch[],
   progress: number,
-  index: RowIndex
+  index: RowIndex,
 ): KnittingPosition => {
   const lastId = stitches.length > 0 ? stitches[stitches.length - 1].id : 0;
   const nextStitchId = progress >= lastId ? undefined : progress + 1;
@@ -112,7 +112,7 @@ export const positionOf = (
 export const currentRun = (
   stitches: Stitch[],
   progress: number,
-  index: RowIndex
+  index: RowIndex,
 ): ColourRun | undefined => {
   const startId = progress + 1;
   const byId = new Map(stitches.map((stitch) => [stitch.id, stitch]));
@@ -143,7 +143,7 @@ export const upcomingRuns = (
   stitches: Stitch[],
   progress: number,
   index: RowIndex,
-  count = 3
+  count = 3,
 ): ColourRun[] => {
   const runs: ColourRun[] = [];
   let at = progress;
@@ -159,7 +159,7 @@ export const upcomingRuns = (
 /** Stitches remaining, and how many have been worked. */
 export const remainingStitches = (
   stitches: Stitch[],
-  progress: number
+  progress: number,
 ): { worked: number; total: number; remaining: number } => {
   const total = Math.max(stitches.length - 1, 0);
   const worked = Math.min(Math.max(progress, 0), total);
@@ -169,7 +169,7 @@ export const remainingStitches = (
 /** Id of the last stitch of the row containing `progress + 1`. */
 export const endOfCurrentRow = (
   progress: number,
-  index: RowIndex
+  index: RowIndex,
 ): number | undefined => {
   const row = index.rowOf.get(progress + 1);
   if (row === undefined) return undefined;

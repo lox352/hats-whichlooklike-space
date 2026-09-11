@@ -29,7 +29,7 @@ const readNumber = (
   key: string,
   fallback: number,
   min: number,
-  max: number
+  max: number,
 ): number => {
   const raw = params.get(key);
   if (raw === null) return fallback;
@@ -47,7 +47,7 @@ export const designToSearchParams = (design: HatDesign): URLSearchParams => {
   params.set(keys.latitude, design.orientation.coordinates.latitude.toFixed(2));
   params.set(
     keys.longitude,
-    design.orientation.coordinates.longitude.toFixed(2)
+    design.orientation.coordinates.longitude.toFixed(2),
   );
   params.set(keys.destination, design.orientation.targetDestination);
   params.set(keys.magnitude, String(design.orientation.magnitudeLimit ?? 4));
@@ -56,7 +56,7 @@ export const designToSearchParams = (design: HatDesign): URLSearchParams => {
 
 export const designFromSearchParams = (
   params: URLSearchParams,
-  fallback: HatDesign = defaultHatDesign
+  fallback: HatDesign = defaultHatDesign,
 ): HatDesign => {
   const decreaseRaw = params.get(keys.decreaseMethod);
   const decreaseMethod = decreaseMethods.includes(decreaseRaw as DecreaseMethod)
@@ -65,21 +65,19 @@ export const designFromSearchParams = (
 
   const destinationRaw = params.get(keys.destination);
   const targetDestination = destinations.includes(
-    destinationRaw as DestinationType
+    destinationRaw as DestinationType,
   )
     ? (destinationRaw as DestinationType)
     : fallback.orientation.targetDestination;
-
-
 
   return {
     // Generous bounds: validateDesign reports the real limits to the user, so
     // clamping here only needs to keep the numbers sane.
     stitchesPerRow: Math.round(
-      readNumber(params, keys.stitchesPerRow, fallback.stitchesPerRow, 0, 2000)
+      readNumber(params, keys.stitchesPerRow, fallback.stitchesPerRow, 0, 2000),
     ),
     numberOfRows: Math.round(
-      readNumber(params, keys.numberOfRows, fallback.numberOfRows, 0, 2000)
+      readNumber(params, keys.numberOfRows, fallback.numberOfRows, 0, 2000),
     ),
     decreaseMethod,
     orientation: {
@@ -89,18 +87,24 @@ export const designFromSearchParams = (
           keys.latitude,
           fallback.orientation.coordinates.latitude,
           -90,
-          90
+          90,
         ),
         longitude: readNumber(
           params,
           keys.longitude,
           fallback.orientation.coordinates.longitude,
           -180,
-          180
+          180,
         ),
       },
       targetDestination,
-      magnitudeLimit: readNumber(params, keys.magnitude, fallback.orientation.magnitudeLimit ?? 4, 0, 6),
+      magnitudeLimit: readNumber(
+        params,
+        keys.magnitude,
+        fallback.orientation.magnitudeLimit ?? 4,
+        0,
+        6,
+      ),
     },
   };
 };

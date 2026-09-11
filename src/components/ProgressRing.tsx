@@ -1,4 +1,5 @@
 import React from "react";
+import "./ProgressRing.css";
 
 interface ProgressRingProps {
   /** 0 to 100. */

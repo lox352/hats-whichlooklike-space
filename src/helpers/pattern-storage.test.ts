@@ -71,14 +71,18 @@ describe("percentComplete", () => {
         sky: emptySky(),
         progress: 0,
         embroidery: noEmbroidery(),
-      })
+      }),
     ).toBe(0);
   });
 });
 
 describe("round trip", () => {
   it("saves and reads back a pattern", () => {
-    const { result, pattern } = createPattern(stitches(5), emptySky(), "Wellington");
+    const { result, pattern } = createPattern(
+      stitches(5),
+      emptySky(),
+      "Wellington",
+    );
     expect(result.ok).toBe(true);
 
     const read = readPattern(pattern.id);
@@ -140,7 +144,7 @@ describe("listPatterns", () => {
         savedAt: new Date(1000).toISOString(),
         stitches: stitches(2),
         progress: 0,
-      })
+      }),
     );
     localStorage.setItem(
       "pattern-3000",
@@ -151,7 +155,7 @@ describe("listPatterns", () => {
         savedAt: new Date(3000).toISOString(),
         stitches: stitches(2),
         progress: 0,
-      })
+      }),
     );
     localStorage.setItem(
       "pattern-2000",
@@ -162,7 +166,7 @@ describe("listPatterns", () => {
         savedAt: new Date(2000).toISOString(),
         stitches: stitches(2),
         progress: 0,
-      })
+      }),
     );
 
     expect(listPatterns().map((p) => p.name)).toEqual([
@@ -194,11 +198,15 @@ describe("listPatterns", () => {
   it("skips an entry whose stitches are missing or malformed", () => {
     localStorage.setItem(
       "pattern-600",
-      JSON.stringify({ id: "pattern-600", stitches: [], progress: 0 })
+      JSON.stringify({ id: "pattern-600", stitches: [], progress: 0 }),
     );
     localStorage.setItem(
       "pattern-601",
-      JSON.stringify({ id: "pattern-601", stitches: [{ nope: 1 }], progress: 0 })
+      JSON.stringify({
+        id: "pattern-601",
+        stitches: [{ nope: 1 }],
+        progress: 0,
+      }),
     );
     expect(listPatterns()).toHaveLength(0);
   });
@@ -211,11 +219,11 @@ describe("migration from version 1", () => {
    */
   const legacyStitches = (count: number) =>
     stitches(count).map((stitch) =>
-      JSON.stringify({ ...stitch, starInfo: { connectedStars: {} } })
+      JSON.stringify({ ...stitch, starInfo: { connectedStars: {} } }),
     );
   const writeLegacy = (
     key: string,
-    overrides: Record<string, unknown> = {}
+    overrides: Record<string, unknown> = {},
   ) => {
     localStorage.setItem(
       key,
@@ -226,7 +234,7 @@ describe("migration from version 1", () => {
         stitches: legacyStitches(8),
         progress: 4,
         ...overrides,
-      })
+      }),
     );
   };
 
@@ -255,14 +263,14 @@ describe("migration from version 1", () => {
 
   it("recovers savedAt from the key when it is missing or unparseable", () => {
     writeLegacy("pattern-1700000000002", { savedAt: undefined });
-    expect(new Date(readPattern("pattern-1700000000002")!.savedAt).getTime()).toBe(
-      1700000000002
-    );
+    expect(
+      new Date(readPattern("pattern-1700000000002")!.savedAt).getTime(),
+    ).toBe(1700000000002);
 
     writeLegacy("pattern-1700000000003", { savedAt: "not a date" });
-    expect(new Date(readPattern("pattern-1700000000003")!.savedAt).getTime()).toBe(
-      1700000000003
-    );
+    expect(
+      new Date(readPattern("pattern-1700000000003")!.savedAt).getTime(),
+    ).toBe(1700000000003);
   });
 
   it("clamps a legacy progress that ran past the end of the pattern", () => {
@@ -277,7 +285,10 @@ describe("migration from version 1", () => {
 
   it("does not downgrade an entry written by a newer build", () => {
     // A newer build writes plain stitches, whatever else it adds.
-    writeLegacy("pattern-1700000000006", { version: 99, stitches: stitches(8) });
+    writeLegacy("pattern-1700000000006", {
+      version: 99,
+      stitches: stitches(8),
+    });
     expect(readPattern("pattern-1700000000006")?.version).toBe(99);
   });
 });
@@ -314,7 +325,9 @@ describe("migration of a captured version 1 pattern", () => {
 
   it("maps the old computed colours onto the three yarns", () => {
     const read = readPattern(key)!;
-    const yarns = new Set(read.stitches.map((stitch) => yarnFor(stitch.colour)));
+    const yarns = new Set(
+      read.stitches.map((stitch) => yarnFor(stitch.colour)),
+    );
     expect([...yarns].every((yarn) => yarn !== undefined)).toBe(true);
     // The fixture has white stars, blue-grey galaxy and near-black night.
     expect(yarns.has("Star")).toBe(true);
@@ -327,7 +340,7 @@ describe("migration of a captured version 1 pattern", () => {
     expect(abbreviations).toContain("Per");
     expect(abbreviations).toContain("Eri");
     const points = read.sky.constellations.flatMap((c) =>
-      c.strokes.flatMap((stroke) => stroke.points)
+      c.strokes.flatMap((stroke) => stroke.points),
     );
     // The fixture carries two links below the brim, stored as negative ids.
     expect(points.filter((point) => point.offHat)).toHaveLength(2);
@@ -343,7 +356,9 @@ describe("migration of a captured version 1 pattern", () => {
      */
     const read = readPattern(key)!;
     const ends = read.sky.constellations.flatMap((c) =>
-      c.strokes.flatMap((s) => s.points.filter((p) => !p.offHat).map((p) => p.stitch))
+      c.strokes.flatMap((s) =>
+        s.points.filter((p) => !p.offHat).map((p) => p.stitch),
+      ),
     );
     const unlit = ends.filter((stitch) => !read.sky.stars.includes(stitch));
     expect(unlit.length).toBeGreaterThan(0);
@@ -355,7 +370,7 @@ describe("migration of a captured version 1 pattern", () => {
       c.strokes.map((stroke) => {
         const [a, b] = stroke.points.map((p) => p.stitch).sort((x, y) => x - y);
         return `${c.abbreviation}:${a}-${b}`;
-      })
+      }),
     );
     expect(new Set(keys).size).toBe(keys.length);
   });
@@ -373,7 +388,9 @@ describe("migration of a captured version 1 pattern", () => {
 
   it("colours a star stitch as star yarn", () => {
     const read = readPattern(key)!;
-    const starStitch = read.stitches.find((s) => read.sky.stars.includes(s.id))!;
+    const starStitch = read.stitches.find((s) =>
+      read.sky.stars.includes(s.id),
+    )!;
     expect(starStitch.colour).toEqual(SkyPalette.Star);
   });
 });
@@ -425,4 +442,18 @@ describe("percentComplete", () => {
   it("handles a single-stitch pattern without dividing by zero", () => {
     expect(percentComplete(pattern(1, 0))).toBe(0);
   });
+});
+
+it("preserves geometry identities across progress writes", () => {
+  const { pattern } = createPattern(
+    [stitch(0), stitch(1)],
+    emptySky(),
+    "Cached",
+  );
+  const first = readPattern(pattern.id)!;
+  setProgress(pattern.id, 1);
+  const second = readPattern(pattern.id)!;
+  expect(second.stitches).toBe(first.stitches);
+  expect(second.sky).toBe(first.sky);
+  expect(second.progress).toBe(1);
 });

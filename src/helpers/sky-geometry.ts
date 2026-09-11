@@ -21,7 +21,7 @@ const clampToUnit = (value: number): number => {
 
 function rotateAboutAxis(
   coord: GlobalCoordinates,
-  angle: number
+  angle: number,
 ): GlobalCoordinates {
   const { latitude, longitude } = coord;
   const newLongitude = longitude + angle;
@@ -45,7 +45,7 @@ function rotateAboutAxis(
  */
 function rotateVertically(
   coord: GlobalCoordinates,
-  angleInDegrees: number
+  angleInDegrees: number,
 ): GlobalCoordinates {
   const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
   const toDegrees = (radians: number) => (radians * 180) / Math.PI;
@@ -83,7 +83,7 @@ const verticalAngleFor = (orientationParameters: OrientationParameters) => {
       return latitude + 90;
     default:
       throw new Error(
-        `Invalid target destination: ${orientationParameters.targetDestination}`
+        `Invalid target destination: ${orientationParameters.targetDestination}`,
       );
   }
 };
@@ -102,9 +102,12 @@ const verticalAngleFor = (orientationParameters: OrientationParameters) => {
  */
 function rotateToDestination(
   coord: GlobalCoordinates,
-  orientationParameters: OrientationParameters
+  orientationParameters: OrientationParameters,
 ): GlobalCoordinates {
-  const rotated = rotateVertically(coord, verticalAngleFor(orientationParameters));
+  const rotated = rotateVertically(
+    coord,
+    verticalAngleFor(orientationParameters),
+  );
   return rotateAboutAxis(rotated, orientationParameters.coordinates.longitude);
 }
 
@@ -115,9 +118,12 @@ function rotateToDestination(
  */
 function rotateFromDestination(
   coord: GlobalCoordinates,
-  orientationParameters: OrientationParameters
+  orientationParameters: OrientationParameters,
 ): GlobalCoordinates {
-  const unspun = rotateAboutAxis(coord, -orientationParameters.coordinates.longitude);
+  const unspun = rotateAboutAxis(
+    coord,
+    -orientationParameters.coordinates.longitude,
+  );
   return rotateVertically(unspun, -verticalAngleFor(orientationParameters));
 }
 
@@ -134,17 +140,16 @@ function rotateFromDestination(
  */
 const getGlobalCoordinates = (
   position: Point,
-  maxY: number
+  maxY: number,
 ): GlobalCoordinates => {
   const { x, y, z } = position;
   const heightAboveEquator = y - maxY / 2;
   const radius = Math.sqrt(
-    x * x + heightAboveEquator * heightAboveEquator + z * z
+    x * x + heightAboveEquator * heightAboveEquator + z * z,
   );
   if (radius === 0) return { latitude: 90, longitude: 0 };
 
-  const longitude =
-    Math.atan2(z / radius, -x / radius) * (180 / Math.PI);
+  const longitude = Math.atan2(z / radius, -x / radius) * (180 / Math.PI);
   const latitude =
     Math.asin(clampToUnit(heightAboveEquator / radius)) * (180 / Math.PI);
   return { latitude, longitude };
@@ -157,13 +162,12 @@ const getGlobalCoordinates = (
 const skyCoordinatesForStitch = (
   position: Point,
   maxY: number,
-  orientationParameters: OrientationParameters
+  orientationParameters: OrientationParameters,
 ): GlobalCoordinates =>
   rotateToDestination(
     getGlobalCoordinates(position, maxY),
-    orientationParameters
+    orientationParameters,
   );
-
 
 export {
   clampToUnit,

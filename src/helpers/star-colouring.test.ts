@@ -27,14 +27,14 @@ const hat = (stitchesPerRow = 160, rows = 35) => {
   const stitches = getStitches(stitchesPerRow, rows, "Pyramidal");
   const maxY = Math.max(...stitches.map((stitch) => stitch.position.y));
   const coordinates = stitches.map((stitch) =>
-    getGlobalCoordinates(stitch.position, maxY)
+    getGlobalCoordinates(stitch.position, maxY),
   );
   return { stitches, coordinates };
 };
 
 const orientedTo = (
   coordinates: GlobalCoordinates,
-  targetDestination: OrientationParameters["targetDestination"] = "crown"
+  targetDestination: OrientationParameters["targetDestination"] = "crown",
 ): OrientationParameters => ({
   ...defaultOrientationParameters,
   coordinates,
@@ -56,7 +56,12 @@ const knownStars = {
   Acrux: { hip: 60718, longitude: -173.3504, latitude: -63.0991, mag: 0.77 },
   Mimosa: { hip: 62434, longitude: -168.0697, latitude: -59.6888, mag: 1.25 },
   Gacrux: { hip: 61084, longitude: -172.2085, latitude: -57.1132, mag: 1.59 },
-  DeltaCrucis: { hip: 59747, longitude: -176.2137, latitude: -58.7489, mag: 2.79 },
+  DeltaCrucis: {
+    hip: 59747,
+    longitude: -176.2137,
+    latitude: -58.7489,
+    mag: 2.79,
+  },
 };
 
 describe("the star catalogue", () => {
@@ -72,19 +77,21 @@ describe("the star catalogue", () => {
 
   it("is the whole sky to magnitude six", () => {
     expect(stars.features.length).toBe(5044);
-    expect(Math.max(...stars.features.map((star) => star.properties.mag))).toBe(6);
+    expect(Math.max(...stars.features.map((star) => star.properties.mag))).toBe(
+      6,
+    );
   });
 });
 
 describe("constellation vertices", () => {
   const vertices = constellations.features.flatMap((feature) =>
-    feature.geometry.coordinates.flat()
+    feature.geometry.coordinates.flat(),
   );
   const distinct = new Map(vertices.map((v) => [`${v[0]},${v[1]}`, v]));
 
   it("are, almost all of them, catalogue stars by exact coordinate", () => {
-    const resolved = [...distinct.values()].filter((vertex) =>
-      starAtVertex(vertex) !== undefined
+    const resolved = [...distinct.values()].filter(
+      (vertex) => starAtVertex(vertex) !== undefined,
     );
     // 754 of 757. The three that are not are near misses in the source data.
     expect(distinct.size).toBe(757);
@@ -92,9 +99,11 @@ describe("constellation vertices", () => {
   });
 
   it("resolve Crux to its four named stars", () => {
-    const crux = constellations.features.find((feature) => feature.id === "Cru")!;
+    const crux = constellations.features.find(
+      (feature) => feature.id === "Cru",
+    )!;
     const hips = new Set(
-      crux.geometry.coordinates.flat().map((vertex) => starAtVertex(vertex))
+      crux.geometry.coordinates.flat().map((vertex) => starAtVertex(vertex)),
     );
     expect(hips).toEqual(
       new Set([
@@ -102,7 +111,7 @@ describe("constellation vertices", () => {
         knownStars.Mimosa.hip,
         knownStars.Gacrux.hip,
         knownStars.DeltaCrucis.hip,
-      ])
+      ]),
     );
   });
 
@@ -120,14 +129,17 @@ describe("colourSpace", () => {
   const { coordinates } = hat();
   const stitchNearest = (
     sky: GlobalCoordinates,
-    orientation: OrientationParameters
+    orientation: OrientationParameters,
   ) => {
     // Where a sky point lands, by brute force, for the assertions to lean on.
     const v = toUnitVector(sky);
     let best = -1;
     let bestAngle = Infinity;
     coordinates.forEach((c, i) => {
-      const angle = angleBetween(v, toUnitVector(rotateToDestination(c, orientation)));
+      const angle = angleBetween(
+        v,
+        toUnitVector(rotateToDestination(c, orientation)),
+      );
       if (angle < bestAngle) {
         bestAngle = angle;
         best = i;
@@ -137,7 +149,10 @@ describe("colourSpace", () => {
   };
 
   it("uses exactly the three yarns", () => {
-    const { colours } = colourSpace(coordinates, orientedTo(knownStars.Polaris));
+    const { colours } = colourSpace(
+      coordinates,
+      orientedTo(knownStars.Polaris),
+    );
     const yarns = new Set(colours.map((colour) => yarnFor(colour)));
     expect(yarns).toEqual(new Set(["Night", "MilkyWay", "Star"]));
     expect(colours.length).toBe(coordinates.length);
@@ -154,7 +169,7 @@ describe("colourSpace", () => {
     const crown = coordinates.length - 1;
     const crownAngle = angleBetween(
       toUnitVector(rotateToDestination(coordinates[index], orientation)),
-      toUnitVector(rotateToDestination(coordinates[crown], orientation))
+      toUnitVector(rotateToDestination(coordinates[crown], orientation)),
     );
     expect(crownAngle).toBeLessThan(4);
   });
@@ -182,7 +197,7 @@ describe("colourSpace", () => {
     const crux = sky.constellations.find((c) => c.abbreviation === "Cru")!;
     expect(crux).toBeDefined();
     const cruxStitches = new Set(
-      crux.strokes.flatMap((stroke) => stroke.points.map((p) => p.stitch))
+      crux.strokes.flatMap((stroke) => stroke.points.map((p) => p.stitch)),
     );
     for (const { index } of placed) expect(cruxStitches).toContain(index);
     for (const stroke of crux.strokes) {
@@ -191,7 +206,10 @@ describe("colourSpace", () => {
   });
 
   it("lights every stitch a constellation passes through", () => {
-    const { colours, sky } = colourSpace(coordinates, orientedTo(knownStars.Polaris));
+    const { colours, sky } = colourSpace(
+      coordinates,
+      orientedTo(knownStars.Polaris),
+    );
     for (const constellation of sky.constellations) {
       for (const stroke of constellation.strokes) {
         for (const point of stroke.points) {
@@ -204,7 +222,10 @@ describe("colourSpace", () => {
   });
 
   it("only ever runs off the hat at the ends of a stroke", () => {
-    const { sky } = colourSpace(coordinates, orientedTo({ latitude: 0, longitude: 0 }));
+    const { sky } = colourSpace(
+      coordinates,
+      orientedTo({ latitude: 0, longitude: 0 }),
+    );
     let offHatEnds = 0;
     for (const constellation of sky.constellations) {
       for (const stroke of constellation.strokes) {
@@ -237,7 +258,9 @@ describe("colourSpace", () => {
         latitude: star.geometry.coordinates[1],
         longitude: star.geometry.coordinates[0],
       }))
-      .filter((star) => rotateFromDestination(star, orientation).latitude >= brim);
+      .filter(
+        (star) => rotateFromDestination(star, orientation).latitude >= brim,
+      );
     for (const star of litFromCatalogue) {
       const { index, angle } = stitchNearest(star, orientation);
       if (angle < maxSnapDegrees) expect(sky.stars).toContain(index);
@@ -259,7 +282,7 @@ describe("colourSpace", () => {
         latitude: first.latitude - knownStars.Sirius.latitude,
         longitude: knownStars.Sirius.longitude - 180,
       },
-      "front"
+      "front",
     );
     const lookingAt = rotateToDestination(first, orientation);
     expect(lookingAt.latitude).toBeCloseTo(knownStars.Sirius.latitude, 6);

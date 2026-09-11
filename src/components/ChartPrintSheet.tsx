@@ -25,12 +25,15 @@ const ChartPrintSheet: React.FC<ChartPrintSheetProps> = ({
 }) => {
   const { yarns } = useYarns();
   const chart = useMemo(
-    () => chartToSvg(stitches, { cell: 12, yarns, sky }),
-    [stitches, yarns, sky]
+    () => chartToSvg(stitches, { cell: 12, yarns, sky, paper: true }),
+    [stitches, yarns, sky],
   );
 
   const used = useMemo(() => {
-    const counts = new Map<string, { colour: Stitch["colour"]; count: number }>();
+    const counts = new Map<
+      string,
+      { colour: Stitch["colour"]; count: number }
+    >();
     stitches.forEach((stitch) => {
       if (stitch.id === 0) return;
       const key = stitch.colour.join(",");
@@ -53,6 +56,10 @@ const ChartPrintSheet: React.FC<ChartPrintSheetProps> = ({
         // escapes its only text and coerces colours to integers.
         dangerouslySetInnerHTML={{ __html: chart.svg }}
       />
+      <p className="print-meta">
+        Blank cells: Night · pale cells: Milky Way · dots: Star. Gold lines are
+        sewn after knitting. Dashed lines beyond the brim are guides only.
+      </p>
       <div className="print-legend">
         {used.map((entry) => {
           const yarn = displayYarn(entry.colour, yarns);

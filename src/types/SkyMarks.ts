@@ -39,7 +39,7 @@ export interface StrokePoint {
 }
 
 /**
- * Which strokes have been sewn.
+ * Which segments have been sewn.
  *
  * A set, not a high-water mark. Knitting is one number because a stitch
  * cannot exist before the one under it; embroidery has no such order - Orion
@@ -47,10 +47,12 @@ export interface StrokePoint {
  * two, not the twelve between" unrepresentable.
  */
 export interface EmbroideryProgress {
-  /** Finished strokes, as "abbreviation:strokeIndex". */
+  /** Finished segments, as "abbreviation:strokeIndex:segmentIndex". Legacy stroke keys are expanded on read by the embroidery guide. */
   done: string[];
   /** The constellation being sewn, if one is in hand. */
   current?: string;
+  /** Stable source segment key, including constellation, stroke and segment. */
+  segment?: string;
 }
 
 export const strokeKey = (abbreviation: string, strokeIndex: number): string =>

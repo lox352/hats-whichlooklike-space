@@ -1,0 +1,123 @@
+.embroidery-panel {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  box-shadow: 0 -8px 32px #0003;
+  padding: 18px;
+  margin-top: 24px;
+  max-height: 78vh;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.embroidery-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.embroidery-heading .eyebrow {
+  min-height: 24px;
+}
+.embroidery-panel > label {
+  display: inline-block;
+  margin: 8px 20px 8px 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+  max-width: 100%;
+}
+.embroidery-panel select {
+  display: block;
+  padding: 8px;
+  font-size: 16px;
+  width: 100%;
+}
+.embroidery-current {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+}
+.embroidery-current h2 {
+  font-size: 32px;
+  margin: 0;
+}
+.embroidery-address {
+  font-size: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 12px 0;
+}
+.embroidery-address span {
+  display: block;
+}
+.embroidery-note {
+  font-size: 12px;
+  color: var(--ink-muted);
+  margin: 10px 0;
+  max-width: 75ch;
+}
+.embroidery-panel > .actions {
+  margin-top: 8px;
+}
+.embroidery-finished {
+  font: 600 28px var(--font-display);
+}
+.constellation-progress {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+.constellation-progress button {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  min-height: 48px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 8px;
+  font-size: 13px;
+}
+.constellation-progress button[aria-pressed="true"] {
+  border-color: var(--accent);
+}
+.embroidery-panel details {
+  padding-bottom: 0;
+}
+.embroidery-panel summary {
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  .embroidery-panel {
+    padding: 12px;
+    max-height: 65vh;
+  }
+  .embroidery-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 0;
+  }
+  .embroidery-current h2 {
+    font-size: 28px;
+  }
+  .embroidery-note {
+    line-height: 1.4;
+  }
+  .embroidery-panel select {
+    min-height: 44px;
+  }
+  .embroidery-panel > label {
+    margin-right: 8px;
+  }
+  .embroidery-address {
+    gap: 4px;
+    margin: 8px 0;
+    font-size: 14px;
+  }
+}

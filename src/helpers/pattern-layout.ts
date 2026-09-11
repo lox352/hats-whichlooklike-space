@@ -67,7 +67,7 @@ export const layOutStitches = (stitches: Stitch[]): PatternLayout => {
       minRow: Math.min(acc.minRow, pos.row),
       minCol: Math.min(acc.minCol, pos.col),
     }),
-    { minRow: Infinity, minCol: Infinity }
+    { minRow: Infinity, minCol: Infinity },
   );
 
   return { positions, numRows: 1 - minRow, numCols: 1 - minCol };

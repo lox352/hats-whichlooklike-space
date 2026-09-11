@@ -35,7 +35,7 @@ describe("validateDesign", () => {
     (stitchesPerRow) => {
       const problems = validateDesign(stitchesPerRow, 35, "Hemispherical");
       expect(problems.map((p) => p.field)).toContain("stitchesPerRow");
-    }
+    },
   );
 
   it.each([0, -1, minimumNumberOfRows - 1, 2.5])(
@@ -43,7 +43,7 @@ describe("validateDesign", () => {
     (numberOfRows) => {
       const problems = validateDesign(160, numberOfRows, "Pyramidal");
       expect(problems.map((p) => p.field)).toContain("numberOfRows");
-    }
+    },
   );
 
   it("reports both fields at once when both are wrong", () => {
@@ -67,7 +67,7 @@ describe("KnittingMachine", () => {
       const stitches = build(decrease);
       expect(stitches.length).toBeGreaterThan(stitchesPerRow);
       stitches.forEach((stitch, index) => expect(stitch.id).toBe(index));
-    }
+    },
   );
 
   it.each(["Hemispherical", "Pyramidal"] as const)(
@@ -77,10 +77,10 @@ describe("KnittingMachine", () => {
       const offenders = stitches.flatMap((stitch) =>
         stitch.links
           .filter((link) => link >= stitch.id || link < 0)
-          .map((link) => `${stitch.id} -> ${link}`)
+          .map((link) => `${stitch.id} -> ${link}`),
       );
       expect(offenders).toEqual([]);
-    }
+    },
   );
 
   it.each(["Hemispherical", "Pyramidal"] as const)(
@@ -89,10 +89,10 @@ describe("KnittingMachine", () => {
       const stitches = build(decrease);
       const ids = new Set(stitches.map((s) => s.id));
       const dangling = stitches.flatMap((stitch) =>
-        stitch.links.filter((link) => !ids.has(link))
+        stitch.links.filter((link) => !ids.has(link)),
       );
       expect(dangling).toEqual([]);
-    }
+    },
   );
 
   it("casts on exactly one row, then closes the round with a join", () => {
@@ -110,7 +110,7 @@ describe("KnittingMachine", () => {
 
     // Nothing after the join is fixed.
     expect(
-      stitches.slice(stitchesPerRow + 1).some((stitch) => stitch.fixed)
+      stitches.slice(stitchesPerRow + 1).some((stitch) => stitch.fixed),
     ).toBe(false);
   });
 
@@ -125,8 +125,7 @@ describe("KnittingMachine", () => {
   it("decreases to a narrow final row", () => {
     const stitches = build("Pyramidal");
     const finalStitch = stitches[stitches.length - 1];
-    const finalRowWidth =
-      finalStitch.id - stitches[finalStitch.links[0]].id;
+    const finalRowWidth = finalStitch.id - stitches[finalStitch.links[0]].id;
     expect(finalRowWidth).toBeLessThan(stitchesPerRow / 2);
     expect(finalRowWidth).toBeGreaterThan(0);
   });
@@ -136,7 +135,7 @@ describe("KnittingMachine", () => {
     machine.castOnRow(generateCircle(43)).join();
     machine.knitRow(["k1"]);
     expect(() => machine.decreasePyramidically(pyramidalBase)).toThrow(
-      /divisible by 10/
+      /divisible by 10/,
     );
   });
 
@@ -144,7 +143,7 @@ describe("KnittingMachine", () => {
     const summarise = (stitches: Stitch[]) =>
       stitches.map((s) => `${s.id}:${s.type}:${s.links.join("|")}`).join(",");
     expect(summarise(build("Hemispherical"))).toBe(
-      summarise(build("Hemispherical"))
+      summarise(build("Hemispherical")),
     );
   });
 });

@@ -31,7 +31,7 @@ describe("stitchesPerRowFor", () => {
         const count = stitchesPerRowFor(
           head,
           { ...defaultGauge, stitchesPer10cm },
-          "Pyramidal"
+          "Pyramidal",
         );
         expect(count % (pyramidalBase * 2)).toBe(0);
         expect(count).toBeGreaterThan(0);
@@ -59,10 +59,18 @@ describe("stitchesPerRowFor", () => {
     // 32 it is 179.2, which rounds to 180. The count is the head measurement
     // straight through the gauge, which is why the gauge is an input.
     expect(
-      stitchesPerRowFor(56, { ...defaultGauge, stitchesPer10cm: 22 }, "Pyramidal")
+      stitchesPerRowFor(
+        56,
+        { ...defaultGauge, stitchesPer10cm: 22 },
+        "Pyramidal",
+      ),
     ).toBe(120);
     expect(
-      stitchesPerRowFor(56, { ...defaultGauge, stitchesPer10cm: 32 }, "Pyramidal")
+      stitchesPerRowFor(
+        56,
+        { ...defaultGauge, stitchesPer10cm: 32 },
+        "Pyramidal",
+      ),
     ).toBe(180);
   });
 
@@ -74,10 +82,10 @@ describe("stitchesPerRowFor", () => {
 
   it("never returns zero, even for nonsense", () => {
     expect(stitchesPerRowFor(0, defaultGauge, "Pyramidal")).toBe(
-      pyramidalBase * 2
+      pyramidalBase * 2,
     );
     expect(stitchesPerRowFor(-10, defaultGauge, "Pyramidal")).toBe(
-      pyramidalBase * 2
+      pyramidalBase * 2,
     );
   });
 });
@@ -98,7 +106,7 @@ describe("round tripping", () => {
     const circumference = circumferenceFor(count, defaultGauge);
     // The hat is the size of the head, so the head asked for is the target.
     expect(Math.abs(circumference - 56)).toBeLessThanOrEqual(
-      halfStep(defaultGauge) + 0.001
+      halfStep(defaultGauge) + 0.001,
     );
   });
 
@@ -119,7 +127,7 @@ describe("round tripping", () => {
     const count = stitchesPerRowFor(
       defaultHeadCircumference,
       defaultGauge,
-      "Pyramidal"
+      "Pyramidal",
     );
     expect(count).toBeGreaterThan(60);
     expect(count).toBeLessThan(200);
@@ -170,7 +178,7 @@ describe("defaults agree with each other", () => {
       defaultStitchesPerRow,
       defaultNumberOfRows,
       defaultGauge,
-      defaultDecreaseMethod
+      defaultDecreaseMethod,
     );
     expect(height).toBeGreaterThan(15.5);
     expect(height).toBeLessThan(24);
@@ -179,14 +187,14 @@ describe("defaults agree with each other", () => {
 
   it("the default stitch count is valid for both crown shapes", () => {
     expect(
-      validateDesign(defaultStitchesPerRow, defaultNumberOfRows, "Pyramidal")
+      validateDesign(defaultStitchesPerRow, defaultNumberOfRows, "Pyramidal"),
     ).toEqual([]);
     expect(
       validateDesign(
         defaultStitchesPerRow,
         defaultNumberOfRows,
-        "Hemispherical"
-      )
+        "Hemispherical",
+      ),
     ).toEqual([]);
   });
 });
@@ -203,8 +211,7 @@ describe("crownRowsFor", () => {
     for (const method of ["Pyramidal", "Hemispherical"] as const) {
       for (const stitches of [60, 120, 160]) {
         const rows = [10, 20, 35, 50].map(
-          (body) =>
-            totalRowsFor(stitches, body, method) - body
+          (body) => totalRowsFor(stitches, body, method) - body,
         );
         expect(new Set(rows).size).toBe(1);
         expect(rows[0]).toBe(crownRowsFor(stitches, method));
@@ -250,7 +257,9 @@ describe("sizing by finished height", () => {
       for (const stitches of [80, 120, 160]) {
         const body = bodyRowsForHeight(wanted, stitches, gauge, "Pyramidal");
         const actual = totalHeightFor(stitches, body, gauge, "Pyramidal");
-        expect(Math.abs(actual - wanted)).toBeLessThanOrEqual(rowHeight + 0.001);
+        expect(Math.abs(actual - wanted)).toBeLessThanOrEqual(
+          rowHeight + 0.001,
+        );
       }
     }
   });
@@ -267,7 +276,12 @@ describe("sizing by finished height", () => {
   it("never asks for fewer rows than the machine accepts", () => {
     for (const wanted of [0, 1, 3, 5]) {
       for (const stitches of [80, 160, 240]) {
-        const body = bodyRowsForHeight(wanted, stitches, defaultGauge, "Pyramidal");
+        const body = bodyRowsForHeight(
+          wanted,
+          stitches,
+          defaultGauge,
+          "Pyramidal",
+        );
         expect(validateDesign(stitches, body, "Pyramidal")).toEqual([]);
       }
     }

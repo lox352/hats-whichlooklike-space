@@ -25,6 +25,6 @@ export const segmentsOf = (sky: SkyMarks): Segment[] =>
         segmentIndex: i,
         from: stroke.points[i],
         to,
-      }))
-    )
+      })),
+    ),
   );

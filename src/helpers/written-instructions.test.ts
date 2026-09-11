@@ -98,7 +98,9 @@ describe("instructionsToText", () => {
     const text = instructionsToText(stitches, nameByValue);
     const lines = text.split("\n");
     expect(lines).toHaveLength(indexRows(stitches).totalRows);
-    lines.forEach((line, i) => expect(line.startsWith(`Row ${i + 1} `)).toBe(true));
+    lines.forEach((line, i) =>
+      expect(line.startsWith(`Row ${i + 1} `)).toBe(true),
+    );
   });
 
   it("is not empty for a real hat", () => {

@@ -26,7 +26,11 @@ export const yarnKey = (colour: RGB): string =>
 
 export const skyColours: { key: string; label: string; colour: RGB }[] = [
   { key: yarnKey(SkyPalette.Night), label: "Night", colour: SkyPalette.Night },
-  { key: yarnKey(SkyPalette.MilkyWay), label: "Milky Way", colour: SkyPalette.MilkyWay },
+  {
+    key: yarnKey(SkyPalette.MilkyWay),
+    label: "Milky Way",
+    colour: SkyPalette.MilkyWay,
+  },
   { key: yarnKey(SkyPalette.Star), label: "Star", colour: SkyPalette.Star },
 ];
 
@@ -34,10 +38,7 @@ export type YarnChoices = Record<string, Yarn>;
 
 export const defaultYarns = (): YarnChoices =>
   Object.fromEntries(
-    skyColours.map(({ key, label, colour }) => [
-      key,
-      { name: label, colour },
-    ])
+    skyColours.map(({ key, label, colour }) => [key, { name: label, colour }]),
   );
 
 const storageKey = "space-yarn-choices";
@@ -75,7 +76,7 @@ export const readYarns = (): YarnChoices => {
       skyColours.map(({ key }) => [
         key,
         sanitiseYarn(parsed[key], defaults[key]),
-      ])
+      ]),
     );
   } catch {
     return defaults;

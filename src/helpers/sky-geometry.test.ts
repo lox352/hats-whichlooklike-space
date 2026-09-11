@@ -19,12 +19,14 @@ import { angleBetween, toUnitVector } from "./sky-index";
  *
  * This is easy to "fix" into being wrong, hence the coverage.
  */
-const hatAnchors: Record<DestinationType, { latitude: number; longitude: number }> =
-  {
-    crown: { latitude: 90, longitude: 0 },
-    front: { latitude: 0, longitude: 0 },
-    rim: { latitude: -90, longitude: 0 },
-  };
+const hatAnchors: Record<
+  DestinationType,
+  { latitude: number; longitude: number }
+> = {
+  crown: { latitude: 90, longitude: 0 },
+  front: { latitude: 0, longitude: 0 },
+  rim: { latitude: -90, longitude: 0 },
+};
 
 const skyPoints = [
   { name: "the north celestial pole", latitude: 90, longitude: 0 },
@@ -37,7 +39,7 @@ const skyPoints = [
 
 const oriented = (
   place: { latitude: number; longitude: number },
-  targetDestination: DestinationType
+  targetDestination: DestinationType,
 ): OrientationParameters => ({
   ...defaultOrientationParameters,
   coordinates: { latitude: place.latitude, longitude: place.longitude },
@@ -52,7 +54,7 @@ describe("rotateToDestination", () => {
       it(`carries the ${destination} anchor to ${place.name}`, () => {
         const result = rotateToDestination(
           hatAnchors[destination],
-          oriented(place, destination)
+          oriented(place, destination),
         );
         expect(result.latitude).toBeCloseTo(place.latitude, 6);
         // At the poles longitude is degenerate, so only check it elsewhere.
@@ -66,7 +68,7 @@ describe("rotateToDestination", () => {
   it("keeps longitude inside [-180, 180] when the rotation wraps", () => {
     const result = rotateToDestination(
       { latitude: 0, longitude: 170 },
-      oriented({ latitude: 0, longitude: 170 }, "front")
+      oriented({ latitude: 0, longitude: 170 }, "front"),
     );
     expect(result.longitude).toBeGreaterThanOrEqual(-180);
     expect(result.longitude).toBeLessThanOrEqual(180);
@@ -79,7 +81,7 @@ describe("rotateToDestination", () => {
     const before = angleBetween(toUnitVector(a), toUnitVector(b));
     const after = angleBetween(
       toUnitVector(rotateToDestination(a, orientation)),
-      toUnitVector(rotateToDestination(b, orientation))
+      toUnitVector(rotateToDestination(b, orientation)),
     );
     expect(after).toBeCloseTo(before, 6);
   });
@@ -88,8 +90,8 @@ describe("rotateToDestination", () => {
     expect(() =>
       rotateToDestination(
         { latitude: 0, longitude: 0 },
-        oriented({ latitude: 0, longitude: 0 }, "brim" as DestinationType)
-      )
+        oriented({ latitude: 0, longitude: 0 }, "brim" as DestinationType),
+      ),
     ).toThrow();
   });
 });
@@ -101,12 +103,15 @@ describe("rotateFromDestination", () => {
         const orientation = oriented(place, destination);
         for (const latitude of [-80, -30, 0, 45, 80]) {
           for (const longitude of [-170, -60, 0, 90, 179]) {
-            const there = rotateToDestination({ latitude, longitude }, orientation);
+            const there = rotateToDestination(
+              { latitude, longitude },
+              orientation,
+            );
             const back = rotateFromDestination(there, orientation);
             // Compare as directions, so degenerate longitude at a pole is fine.
             const angle = angleBetween(
               toUnitVector({ latitude, longitude }),
-              toUnitVector(back)
+              toUnitVector(back),
             );
             expect(angle).toBeLessThan(1e-6);
           }
@@ -153,7 +158,10 @@ describe("getGlobalCoordinates", () => {
   });
 
   it("puts the equator halfway up", () => {
-    const { latitude } = getGlobalCoordinates({ x: 50, y: maxY / 2, z: 0 }, maxY);
+    const { latitude } = getGlobalCoordinates(
+      { x: 50, y: maxY / 2, z: 0 },
+      maxY,
+    );
     expect(latitude).toBeCloseTo(0, 6);
   });
 
@@ -172,19 +180,25 @@ describe("getGlobalCoordinates", () => {
 
   it("puts the seam at the back", () => {
     // Stitch 0 sits on the positive x axis, which is longitude 180.
-    const { longitude } = getGlobalCoordinates({ x: 50, y: maxY / 2, z: 0 }, maxY);
+    const { longitude } = getGlobalCoordinates(
+      { x: 50, y: maxY / 2, z: 0 },
+      maxY,
+    );
     expect(Math.abs(longitude)).toBeCloseTo(180, 6);
   });
 
   it.each([-1, -5, -1000])(
     "returns a usable latitude for a stitch below the brim (y = %s)",
     (y) => {
-      const { latitude, longitude } = getGlobalCoordinates({ x: 50, y, z: 0 }, maxY);
+      const { latitude, longitude } = getGlobalCoordinates(
+        { x: 50, y, z: 0 },
+        maxY,
+      );
       expect(Number.isFinite(latitude)).toBe(true);
       expect(Number.isFinite(longitude)).toBe(true);
       expect(latitude).toBeGreaterThanOrEqual(-90);
       expect(latitude).toBeLessThanOrEqual(90);
-    }
+    },
   );
 
   it("never returns out-of-range coordinates anywhere on a hat-shaped cloud", () => {
@@ -193,9 +207,11 @@ describe("getGlobalCoordinates", () => {
         const radians = (angle * Math.PI) / 180;
         const { latitude, longitude } = getGlobalCoordinates(
           { x: 50 * Math.cos(radians), y, z: 50 * Math.sin(radians) },
-          maxY
+          maxY,
         );
-        expect(Number.isFinite(latitude) && Number.isFinite(longitude)).toBe(true);
+        expect(Number.isFinite(latitude) && Number.isFinite(longitude)).toBe(
+          true,
+        );
         expect(latitude).toBeGreaterThanOrEqual(-90.000001);
         expect(latitude).toBeLessThanOrEqual(90.000001);
         expect(longitude).toBeGreaterThanOrEqual(-180.000001);
@@ -205,7 +221,10 @@ describe("getGlobalCoordinates", () => {
   });
 
   it("tolerates a degenerate position at the origin", () => {
-    const { latitude, longitude } = getGlobalCoordinates({ x: 0, y: 0, z: 0 }, 0);
+    const { latitude, longitude } = getGlobalCoordinates(
+      { x: 0, y: 0, z: 0 },
+      0,
+    );
     expect(Number.isFinite(latitude)).toBe(true);
     expect(Number.isFinite(longitude)).toBe(true);
   });

@@ -54,7 +54,6 @@ export const defaultOverTheTop = 34;
 export const hatHeightFromArc = (overTheTop: number): number =>
   Math.max(overTheTop, 0) / 2;
 
-
 /*
  * The hat is knitted the size of the head, with no allowance taken off.
  *
@@ -67,7 +66,7 @@ export const hatHeightFromArc = (overTheTop: number): number =>
 export const stitchesPerRowFor = (
   headCircumference: number,
   gauge: Gauge,
-  decreaseMethod: DecreaseMethod
+  decreaseMethod: DecreaseMethod,
 ): number => {
   const raw = (headCircumference / 10) * gauge.stitchesPer10cm;
 
@@ -82,7 +81,7 @@ export const stitchesPerRowFor = (
 /** The finished circumference a stitch count actually gives, in cm. */
 export const circumferenceFor = (
   stitchesPerRow: number,
-  gauge: Gauge
+  gauge: Gauge,
 ): number => (stitchesPerRow / gauge.stitchesPer10cm) * 10;
 
 /** The height of the straight part of the hat, before decreasing, in cm. */
@@ -106,7 +105,7 @@ const crownRowCache = new Map<string, number>();
 
 export const crownRowsFor = (
   stitchesPerRow: number,
-  decreaseMethod: DecreaseMethod
+  decreaseMethod: DecreaseMethod,
 ): number => {
   const key = `${stitchesPerRow}:${decreaseMethod}`;
   const cached = crownRowCache.get(key);
@@ -118,7 +117,7 @@ export const crownRowsFor = (
     rows = Math.max(
       indexRows(getStitches(stitchesPerRow, body, decreaseMethod)).totalRows -
         body,
-      0
+      0,
     );
   } catch {
     // An invalid stitch count for this shaping; the design validator reports
@@ -134,7 +133,7 @@ export const crownRowsFor = (
 export const totalRowsFor = (
   stitchesPerRow: number,
   numberOfRows: number,
-  decreaseMethod: DecreaseMethod
+  decreaseMethod: DecreaseMethod,
 ): number => numberOfRows + crownRowsFor(stitchesPerRow, decreaseMethod);
 
 /** Finished height of the hat, brim edge to crown, in cm. */
@@ -142,7 +141,7 @@ export const totalHeightFor = (
   stitchesPerRow: number,
   numberOfRows: number,
   gauge: Gauge,
-  decreaseMethod: DecreaseMethod
+  decreaseMethod: DecreaseMethod,
 ): number =>
   (totalRowsFor(stitchesPerRow, numberOfRows, decreaseMethod) /
     gauge.rowsPer10cm) *
@@ -157,7 +156,7 @@ export const bodyRowsForHeight = (
   hatHeight: number,
   stitchesPerRow: number,
   gauge: Gauge,
-  decreaseMethod: DecreaseMethod
+  decreaseMethod: DecreaseMethod,
 ): number => {
   const totalRows = Math.round((hatHeight / 10) * gauge.rowsPer10cm);
   const crown = crownRowsFor(stitchesPerRow, decreaseMethod);
@@ -198,12 +197,12 @@ export const defaultDecreaseMethod: DecreaseMethod = "Pyramidal";
 export const defaultStitchesPerRow = stitchesPerRowFor(
   defaultHeadCircumference,
   defaultGauge,
-  defaultDecreaseMethod
+  defaultDecreaseMethod,
 );
 
 export const defaultNumberOfRows = bodyRowsForHeight(
   hatHeightFromArc(defaultOverTheTop),
   defaultStitchesPerRow,
   defaultGauge,
-  defaultDecreaseMethod
+  defaultDecreaseMethod,
 );

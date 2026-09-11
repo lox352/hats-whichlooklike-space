@@ -16,11 +16,13 @@ export interface SkyColouring {
  */
 export const colourNodes = (
   positions: Point[],
-  orientationParameters: OrientationParameters
+  orientationParameters: OrientationParameters,
 ): SkyColouring => {
   const maxY = positions.reduce((max, { y }) => (y > max ? y : max), 0);
   const hatCoordinates = positions.map((position) =>
-    getGlobalCoordinates(position, maxY)
+    getGlobalCoordinates(position, maxY),
   );
-  return colourSpace(hatCoordinates, orientationParameters, { magnitudeLimit: orientationParameters.magnitudeLimit });
+  return colourSpace(hatCoordinates, orientationParameters, {
+    magnitudeLimit: orientationParameters.magnitudeLimit,
+  });
 };

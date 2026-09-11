@@ -33,7 +33,7 @@ describe("chartToSvg", () => {
     const { svg } = chartToSvg(stitches);
     const parsed = new DOMParser().parseFromString(svg, "image/svg+xml");
     const decreases = stitches.filter(
-      (s) => s.type === "k2tog" || s.type === "k3tog"
+      (s) => s.type === "k2tog" || s.type === "k3tog",
     ).length;
     expect(decreases).toBeGreaterThan(0);
     expect(parsed.querySelectorAll("path").length).toBe(decreases);
@@ -67,7 +67,11 @@ describe("chartToSvg", () => {
         links: [],
         fixed: true,
         type: "k1",
-        colour: ['"/><script>bad()</script>', 999, -4] as unknown as Stitch["colour"],
+        colour: [
+          '"/><script>bad()</script>',
+          999,
+          -4,
+        ] as unknown as Stitch["colour"],
       },
     ];
     const { svg } = chartToSvg(nasty);
@@ -80,7 +84,38 @@ describe("chartToSvg", () => {
 
 it("exports constellation lines with a clipped brim guide", () => {
   const stitches = getStitches(40, 4, "Pyramidal");
-  const { svg } = chartToSvg(stitches, { sky: {stars:[1,2],constellations:[{abbreviation:"Cru",strokes:[{points:[{stitch:1,offHat:false},{stitch:2,offHat:true}]}]}]} });
+  const { svg } = chartToSvg(stitches, {
+    sky: {
+      stars: [1, 2],
+      constellations: [
+        {
+          abbreviation: "Cru",
+          strokes: [
+            {
+              points: [
+                { stitch: 1, offHat: false },
+                { stitch: 2, offHat: true },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  });
   expect(svg).toContain('clip-path="url(#hat)"');
   expect(svg).toContain('stroke-dasharray="3 2"');
+});
+
+it("prints night as blank cells and stars as dark dots", () => {
+  const stitches = getStitches(40, 4, "Pyramidal").map((s) => ({
+    ...s,
+    colour: [11, 16, 32] as [number, number, number],
+  }));
+  const { svg } = chartToSvg(stitches, {
+    paper: true,
+    sky: { stars: [1], constellations: [] },
+  });
+  const parsed = new DOMParser().parseFromString(svg, "image/svg+xml");
+  expect(parsed.querySelectorAll("circle")).toHaveLength(1);
+  expect(svg).not.toContain("rgb(11,16,32)");
 });

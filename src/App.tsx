@@ -9,9 +9,19 @@ import Pattern from "./components/Pattern";
 import SavedPattern from "./components/SavedPattern";
 import SavedRender from "./components/SavedRender";
 export default function App() {
-  return <YarnProvider><HashRouter><Routes>
-    <Route path="/" element={<Home/>}/><Route path="/design" element={<Design/>}/>
-    <Route path="/render" element={<Render/>}/><Route path="/render/:patternId" element={<SavedRender/>}/>
-    <Route path="/pattern" element={<Pattern/>}/><Route path="/pattern/:patternId" element={<SavedPattern/>}/>
-  </Routes><ThemeControl/></HashRouter></YarnProvider>;
+  return (
+    <YarnProvider>
+      <HashRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/design" element={<Design />} />
+          <Route path="/render" element={<Render />} />
+          <Route path="/render/:patternId" element={<SavedRender />} />
+          <Route path="/pattern" element={<Pattern />} />
+          <Route path="/pattern/:patternId" element={<SavedPattern />} />
+        </Routes>
+        <ThemeControl />
+      </HashRouter>
+    </YarnProvider>
+  );
 }

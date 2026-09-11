@@ -13,7 +13,10 @@ import { getStitches } from "./stitches";
 import { getGlobalCoordinates } from "./sky-geometry";
 
 /** A real hat's stitch directions, from the machine's idealised positions. */
-const hatCoordinates = (stitchesPerRow = 160, rows = 35): GlobalCoordinates[] => {
+const hatCoordinates = (
+  stitchesPerRow = 160,
+  rows = 35,
+): GlobalCoordinates[] => {
   const stitches = getStitches(stitchesPerRow, rows, "Pyramidal");
   const maxY = Math.max(...stitches.map((stitch) => stitch.position.y));
   return stitches.map((stitch) => getGlobalCoordinates(stitch.position, maxY));
@@ -73,13 +76,17 @@ describe("buildSkyIndex", () => {
   const vectors = coordinates.map(toUnitVector);
   const bruteForce = (vector: UnitVector) => {
     let best = -Infinity;
-    for (const candidate of vectors) best = Math.max(best, dot(vector, candidate));
+    for (const candidate of vectors)
+      best = Math.max(best, dot(vector, candidate));
     return best;
   };
 
   it("has a reference that agrees with the exported one", () => {
     const vector = toUnitVector({ latitude: 10, longitude: 20 });
-    expect(bruteForce(vector)).toBeCloseTo(nearestByBruteForce(vector, coordinates).cosine, 12);
+    expect(bruteForce(vector)).toBeCloseTo(
+      nearestByBruteForce(vector, coordinates).cosine,
+      12,
+    );
   });
 
   it("indexes every stitch", () => {
@@ -105,8 +112,14 @@ describe("buildSkyIndex", () => {
     coordinates.forEach((coordinate) => {
       const found = index.nearest(toUnitVector(coordinate));
       expect(found.cosine).toBeCloseTo(1, 12);
-      expect(coordinates[found.index].latitude).toBeCloseTo(coordinate.latitude, 9);
-      expect(coordinates[found.index].longitude).toBeCloseTo(coordinate.longitude, 9);
+      expect(coordinates[found.index].latitude).toBeCloseTo(
+        coordinate.latitude,
+        9,
+      );
+      expect(coordinates[found.index].longitude).toBeCloseTo(
+        coordinate.longitude,
+        9,
+      );
     });
   });
 
@@ -128,7 +141,10 @@ describe("buildSkyIndex", () => {
     for (const latitude of [-90, -88, -2, 0, 2, 88, 90]) {
       for (const longitude of [-180, -90, 0, 90, 179.999]) {
         const vector = toUnitVector({ latitude, longitude });
-        expect(index.nearest(vector).cosine).toBeCloseTo(bruteForce(vector), 12);
+        expect(index.nearest(vector).cosine).toBeCloseTo(
+          bruteForce(vector),
+          12,
+        );
       }
     }
   });
@@ -142,7 +158,10 @@ describe("buildSkyIndex", () => {
     const fine = buildSkyIndex(coordinates, 0.5);
     for (const point of randomSky(500, "bands")) {
       const vector = toUnitVector(point);
-      expect(coarse.nearest(vector).cosine).toBeCloseTo(fine.nearest(vector).cosine, 12);
+      expect(coarse.nearest(vector).cosine).toBeCloseTo(
+        fine.nearest(vector).cosine,
+        12,
+      );
     }
   });
 });

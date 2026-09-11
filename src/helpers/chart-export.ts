@@ -1,3 +1,4 @@
+import { yarnFor } from "./sky-palette";
 import { SkyMarks } from "../types/SkyMarks";
 import { segmentsOf } from "./connections";
 import { Stitch } from "../types/Stitch";
@@ -15,6 +16,8 @@ export interface ChartSvgOptions {
   /** Side of one stitch cell, in SVG units. */
   cell?: number;
   sky?: SkyMarks;
+  /** Ink-saving chart key: blank night, pale Milky Way, dark star dots. */
+  paper?: boolean;
   /** Draw row and stitch numbers around the edges. */
   labels?: boolean;
   background?: string;
@@ -31,7 +34,7 @@ const defaults = {
   background: "#ffffff",
   gridColour: "#334155",
   emphasisEvery: 5,
-} satisfies Omit<Required<ChartSvgOptions>, "yarns" | "sky">;
+} satisfies Omit<Required<ChartSvgOptions>, "yarns" | "sky" | "paper">;
 
 /**
  * Stitch colours are rendered into SVG markup, and stitches can come from
@@ -45,7 +48,7 @@ const safeColour = (colour: Stitch["colour"]): string => {
     return Math.min(Math.max(number, 0), 255);
   };
   return `rgb(${channel(colour?.[0])},${channel(colour?.[1])},${channel(
-    colour?.[2]
+    colour?.[2],
   )})`;
 };
 
@@ -62,7 +65,7 @@ const decreaseSymbol = (
   x: number,
   y: number,
   cell: number,
-  colour: string
+  colour: string,
 ): string => {
   const path = stitchMarkPath(type, x, y, cell);
   if (!path) return "";
@@ -82,7 +85,7 @@ export interface ChartSvg {
 
 export const chartToSvg = (
   stitches: Stitch[],
-  options: ChartSvgOptions = {}
+  options: ChartSvgOptions = {},
 ): ChartSvg => {
   const { cell, labels, background, gridColour, emphasisEvery } = {
     ...defaults,
@@ -110,11 +113,22 @@ export const chartToSvg = (
     if (col < 0 || row < 0) return;
     const x = col * cell;
     const y = row * cell;
+    const yarn = yarnFor(stitch.colour);
+    const isStar = options.sky?.stars.includes(stitch.id) ?? yarn === "Star";
+    const fill = options.paper
+      ? yarn === "MilkyWay"
+        ? "#e1e4e8"
+        : "#ffffff"
+      : safeColour(
+          yarns ? displayYarn(stitch.colour, yarns).colour : stitch.colour,
+        );
     cells.push(
-      `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="${safeColour(
-        yarns ? displayYarn(stitch.colour, yarns).colour : stitch.colour
-      )}"/>`
+      `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="${fill}"/>`,
     );
+    if (options.paper && isStar)
+      symbols.push(
+        `<circle cx="${x + cell / 2}" cy="${y + cell / 2}" r="${cell * 0.22}" fill="#182237"/>`,
+      );
     const symbol = decreaseSymbol(stitch.type, x, y, cell, "#1f2937");
     if (symbol) symbols.push(symbol);
   });
@@ -130,7 +144,7 @@ export const chartToSvg = (
     lines.push(
       `<line x1="${c * cell}" y1="0" x2="${c * cell}" y2="${
         numRows * cell
-      }" stroke="${gridColour}" stroke-width="${heavy ? 0.9 : 0.35}"/>`
+      }" stroke="${gridColour}" stroke-width="${heavy ? 0.9 : 0.35}"/>`,
     );
   }
   for (let r = 0; r <= numRows; r++) {
@@ -138,7 +152,7 @@ export const chartToSvg = (
     lines.push(
       `<line x1="0" y1="${r * cell}" x2="${numCols * cell}" y2="${
         r * cell
-      }" stroke="${gridColour}" stroke-width="${heavy ? 0.9 : 0.35}"/>`
+      }" stroke="${gridColour}" stroke-width="${heavy ? 0.9 : 0.35}"/>`,
     );
   }
 
@@ -151,39 +165,50 @@ export const chartToSvg = (
       labelMarks.push(
         `<text x="${x}" y="${
           numRows * cell + fontSize + cell * 0.35
-        }" font-size="${fontSize}" fill="${gridColour}" text-anchor="middle" font-family="ui-monospace, monospace">${c}</text>`
+        }" font-size="${fontSize}" fill="${gridColour}" text-anchor="middle" font-family="ui-monospace, monospace">${c}</text>`,
       );
     }
     // Row numbers up the right-hand side, counting from the cast-on.
     for (let r = emphasisEvery; r <= numRows; r += emphasisEvery) {
       const y = (numRows - r) * cell + cell * 0.85;
       labelMarks.push(
-        `<text x="${numCols * cell + cell * 0.45}" y="${y}" font-size="${fontSize}" fill="${gridColour}" text-anchor="start" font-family="ui-monospace, monospace">${r}</text>`
+        `<text x="${numCols * cell + cell * 0.45}" y="${y}" font-size="${fontSize}" fill="${gridColour}" text-anchor="start" font-family="ui-monospace, monospace">${r}</text>`,
       );
     }
   }
 
   const joins: string[] = [];
-  if (options.sky) for (const {from,to} of segmentsOf(options.sky)) {
-    const a=positions[from.stitch], b=positions[to.stitch];
-    if (!a || !b) continue;
-    let x1=(numCols+a.col-0.5)*cell, x2=(numCols+b.col-0.5)*cell;
-    const y1=(from.offHat ? numRows-a.row+0.5 : numRows+a.row-0.5)*cell;
-    const y2=(to.offHat ? numRows-b.row+0.5 : numRows+b.row-0.5)*cell;
-    const wrap=numCols*cell;
-    if(Math.abs(x2-x1)>wrap/2) { if(x1<x2)x1+=wrap;else x2+=wrap; }
-    for(const shift of [0,-wrap]) joins.push(`<line x1="${x1+shift}" y1="${y1}" x2="${x2+shift}" y2="${y2}" stroke="#97762d" stroke-width="${cell*0.12}"${from.offHat||to.offHat?' stroke-dasharray="3 2"':''}/>`);
-  }
+  if (options.sky)
+    for (const { from, to } of segmentsOf(options.sky)) {
+      const a = positions[from.stitch],
+        b = positions[to.stitch];
+      if (!a || !b) continue;
+      let x1 = (numCols + a.col - 0.5) * cell,
+        x2 = (numCols + b.col - 0.5) * cell;
+      const y1 =
+        (from.offHat ? numRows - a.row + 0.5 : numRows + a.row - 0.5) * cell;
+      const y2 =
+        (to.offHat ? numRows - b.row + 0.5 : numRows + b.row - 0.5) * cell;
+      const wrap = numCols * cell;
+      if (Math.abs(x2 - x1) > wrap / 2) {
+        if (x1 < x2) x1 += wrap;
+        else x2 += wrap;
+      }
+      for (const shift of [0, -wrap])
+        joins.push(
+          `<line x1="${x1 + shift}" y1="${y1}" x2="${x2 + shift}" y2="${y2}" stroke="#97762d" stroke-width="${cell * 0.12}"${from.offHat || to.offHat ? ' stroke-dasharray="3 2"' : ""}/>`,
+        );
+    }
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img">`,
     `<title>${escapeXml(
-      `Knitting chart, ${numCols} stitches by ${numRows} rows`
+      `Knitting chart, ${numCols} stitches by ${numRows} rows`,
     )}</title>`,
     `<rect width="${width}" height="${height}" fill="${background}"/>`,
     `<g>${cells.join("")}</g>`,
     `<g>${lines.join("")}</g>`,
     `<g>${symbols.join("")}</g>`,
-    `<defs><clipPath id="hat"><rect width="${numCols*cell}" height="${numRows*cell}"/></clipPath></defs><g clip-path="url(#hat)">${joins.join("")}</g>`,
+    `<defs><clipPath id="hat"><rect width="${numCols * cell}" height="${numRows * cell}"/></clipPath></defs><g clip-path="url(#hat)">${joins.join("")}</g>`,
     `<g>${labelMarks.join("")}</g>`,
     `</svg>`,
   ].join("");
@@ -207,12 +232,12 @@ export const downloadChartSvg = (
   stitches: Stitch[],
   filename: string,
   yarns?: YarnChoices,
-  sky?: SkyMarks
+  sky?: SkyMarks,
 ): void => {
   const { svg } = chartToSvg(stitches, { yarns, sky });
   triggerDownload(
     new Blob([svg], { type: "image/svg+xml;charset=utf-8" }),
-    `${filename}.svg`
+    `${filename}.svg`,
   );
 };
 
@@ -225,7 +250,7 @@ export const downloadChartPng = async (
   filename: string,
   yarns?: YarnChoices,
   scale = 3,
-  sky?: SkyMarks
+  sky?: SkyMarks,
 ): Promise<void> => {
   const { svg, width, height } = chartToSvg(stitches, { yarns, sky });
   const source = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
@@ -246,7 +271,7 @@ export const downloadChartPng = async (
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, "image/png")
+    canvas.toBlob(resolve, "image/png"),
   );
   if (!blob) throw new Error("Could not rasterise the chart");
   triggerDownload(blob, `${filename}.png`);

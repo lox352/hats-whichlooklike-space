@@ -32,7 +32,7 @@ export const stitchMarkPath = (
   type: StitchType,
   x = 0,
   y = 0,
-  size = 1
+  size = 1,
 ): string | undefined => {
   const left = round(x + inset * size);
   const right = round(x + (1 - inset) * size);

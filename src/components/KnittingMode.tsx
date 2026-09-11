@@ -51,26 +51,26 @@ const KnittingMode: React.FC<KnittingModeProps> = ({
   const index = useMemo(() => indexRows(stitches), [stitches]);
   const position = useMemo(
     () => positionOf(stitches, progress, index),
-    [stitches, progress, index]
+    [stitches, progress, index],
   );
   const run = useMemo(
     () => currentRun(stitches, progress, index),
-    [stitches, progress, index]
+    [stitches, progress, index],
   );
   const ahead = useMemo(
     () => upcomingRuns(stitches, run?.endId ?? progress, index, 2),
-    [stitches, run, progress, index]
+    [stitches, run, progress, index],
   );
   const counts = useMemo(
     () => remainingStitches(stitches, progress),
-    [stitches, progress]
+    [stitches, progress],
   );
 
   const percent = counts.total === 0 ? 0 : (100 * counts.worked) / counts.total;
 
   const step = useCallback(
     (delta: number) => setProgress(progress + delta),
-    [progress, setProgress]
+    [progress, setProgress],
   );
 
   const finishRun = useCallback(() => {

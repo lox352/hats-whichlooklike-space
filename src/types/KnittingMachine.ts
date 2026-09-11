@@ -28,11 +28,14 @@ export interface DesignProblem {
 export const validateDesign = (
   stitchesPerRow: number,
   numberOfRows: number,
-  decreaseMethod: DecreaseMethod
+  decreaseMethod: DecreaseMethod,
 ): DesignProblem[] => {
   const problems: DesignProblem[] = [];
 
-  if (!Number.isInteger(stitchesPerRow) || stitchesPerRow < minimumStitchesPerRow) {
+  if (
+    !Number.isInteger(stitchesPerRow) ||
+    stitchesPerRow < minimumStitchesPerRow
+  ) {
     problems.push({
       field: "stitchesPerRow",
       message: `Use at least ${minimumStitchesPerRow} stitches per row.`,
@@ -72,7 +75,7 @@ class KnittingMachine {
   }
 
   castOnRow(
-    getStitchPosition: (stitchNumber: number) => Point
+    getStitchPosition: (stitchNumber: number) => Point,
   ): KnittingMachine {
     for (let i = 0; i < this.stitchesPerRow; i++) {
       const links = i == 0 ? [] : [i - 1];
@@ -107,7 +110,7 @@ class KnittingMachine {
       })
       .reduce((a, b) => a + b, 0);
     const numberOfTimesToKnitPattern = Math.floor(
-      numberOfStitchesInRow / patternLength
+      numberOfStitchesInRow / patternLength,
     );
 
     for (let i = 0; i < numberOfTimesToKnitPattern; i++) {
@@ -271,7 +274,7 @@ class KnittingMachine {
     if (this.stitchesPerRow % (polygonalBase * 2) !== 0) {
       throw new Error(
         `A pyramidal decrease with base ${polygonalBase} needs a stitch count ` +
-          `divisible by ${polygonalBase * 2}, but got ${this.stitchesPerRow}`
+          `divisible by ${polygonalBase * 2}, but got ${this.stitchesPerRow}`,
       );
     }
     const numberOfDecreases = this.stitchesPerRow / (polygonalBase * 2);
@@ -298,11 +301,11 @@ class KnittingMachine {
 
   private decreaseOneRowHemispherically(
     rowIndex: number,
-    decreaseDistance: number
+    decreaseDistance: number,
   ): void {
     const targetRowCount = Math.ceil(
       this.stitchesPerRow *
-        Math.cos((rowIndex + 0.5) * (Math.PI / 2 / decreaseDistance))
+        Math.cos((rowIndex + 0.5) * (Math.PI / 2 / decreaseDistance)),
     );
 
     const currentRowCount = this.numberOfStitchesInRow();
@@ -321,7 +324,7 @@ class KnittingMachine {
     const randomIndex = Math.floor(this.rng() * (segmentLength - 2));
     const segment: StitchType[] = Array.from(
       { length: randomIndex },
-      () => "k1"
+      () => "k1",
     );
     segment.push("k3tog");
     for (let i = 0; i < segmentLength - randomIndex - 2; i++) {
@@ -336,7 +339,7 @@ class KnittingMachine {
     const segmentLength = currentRowCount / polygonalBase;
     const segment: StitchType[] = Array.from(
       { length: segmentLength - 3 },
-      () => "k1"
+      () => "k1",
     );
     segment.push("k3tog");
     this.knitRow(segment);

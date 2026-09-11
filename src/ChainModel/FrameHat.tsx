@@ -73,7 +73,7 @@ const FrameHat: React.FC<FrameHatProps> = ({ shape, controls }) => {
 
   useEffect(() => {
     const key = `${shape.radius.toFixed(2)}:${shape.height.toFixed(
-      2
+      2,
     )}:${viewport.width}x${viewport.height}`;
     if (framed.current === key) return;
     framed.current = key;

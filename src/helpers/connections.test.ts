@@ -8,8 +8,19 @@ const sky: SkyMarks = {
     {
       abbreviation: "Tri",
       strokes: [
-        { points: [{ stitch: 1, offHat: false }, { stitch: 2, offHat: false }, { stitch: 3, offHat: false }] },
-        { points: [{ stitch: 3, offHat: false }, { stitch: 40, offHat: true }] },
+        {
+          points: [
+            { stitch: 1, offHat: false },
+            { stitch: 2, offHat: false },
+            { stitch: 3, offHat: false },
+          ],
+        },
+        {
+          points: [
+            { stitch: 3, offHat: false },
+            { stitch: 40, offHat: true },
+          ],
+        },
       ],
     },
     { abbreviation: "Dot", strokes: [] },

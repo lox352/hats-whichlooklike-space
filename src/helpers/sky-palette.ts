@@ -16,10 +16,11 @@ export const SkyPalette = {
 
 export type SkyYarn = keyof typeof SkyPalette;
 
-const same = (a: RGB, b: RGB) => a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+const same = (a: RGB, b: RGB) =>
+  a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 
 /** Which of the three yarns a stitch colour is, or undefined if none. */
 export const yarnFor = (colour: RGB): SkyYarn | undefined =>
   (Object.keys(SkyPalette) as SkyYarn[]).find((yarn) =>
-    same(SkyPalette[yarn], colour)
+    same(SkyPalette[yarn], colour),
   );

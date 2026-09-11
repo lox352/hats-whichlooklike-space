@@ -6,12 +6,9 @@ User instruction: continue without approval pauses; push checkpoints to the spac
 
 Inherited Claude's uncommitted projection, geometry, sky data and storage refactor. Completed the nullable-month build fix, civil-time year rollover and leap-day regression coverage, and project README. 166 tests pass; production build and ESLint pass. Initial JS bundle is 7.63 MB (2.54 MB gzip), before planned lazy loading. Browser home, design and 3D generation work; the sky finishes projecting without console errors. Existing slow settling remains for the motion milestone.
 
-## Remaining
+## Status
 
-- Functional: sizing, design URL/session, print/export/instructions, knitting mode, yarn choices, magnitude input, constellation names, lazy time zones.
-- Celestial atlas visual overhaul, accessibility, dialogs, metadata.
-- Instanced knitting, deterministic settling, camera fit, scoped lazy canvas, sky arrival.
-- Guided embroidery and separately persisted segment progress.
+All implementation milestones are complete, with embroidery last as requested. Checkpoints 1–4 are commits `63e792e`, `abcd23d`, `69bef79`, and `1a5ae0a`; each was pushed to the space remote and its Pages deployment succeeded. Earth was not modified.
 
 ## Checkpoint 2 — functional features
 
@@ -32,3 +29,13 @@ Instanced unlit yarn geometry and one curved gold line layer; fixed-step settlin
 Measured a legacy 160×35 hat in the browser: 71 steps, 16.165s settling, 70.4673 world-unit height. Cached/settled rendering: 2 draw calls and 16.67ms average frame interval over 120 frames (60Hz). Earlier baseline frame timing was not instrumented, so no before/after FPS claim. Initial application JS is 247.8KB / 83.08KB gzip; the 3D and time-zone chunks load separately.
 
 Real Rapier tests prove identical positions for different step batching and compare all catalogue stars against brute force on a genuinely settled hat. Four space hats (80×20, 130×25, 160×35, 200×45) were measured in Node; stored in space-hat-measurements.json. Refit the framing coefficient to 0.869, under 1.7% height error on those samples. Browser legacy-hat height exactly matched the independent measurement. Next: guided embroidery.
+
+## Checkpoint 5 (plan milestone 4) — embroidery and final verification
+
+Guided sewing walks each constellation graph through shared endpoints, with stable source segment keys and nearby jumps between disconnected sections. A phone panel gives row/stitch endpoints, segment selection, tick-off, undo, completion and progress rings for all constellations. Current lines are highlighted, completed lines change colour, and off-brim or phantom endpoints are omitted from sewing. Progress persists separately from knitting, and earlier stroke-level progress is supported. Completed constellations can be reviewed and corrected.
+
+Browser walkthrough: selected Triangulum, sewed a segment, undid it, then completed all three segments and reloaded. Triangulum remained 3/3; knitting remained 0.7%, row 1 stitch 32. Verified active line above the panel, Night and Parchment, 320px and 390px phones and 844×390 landscape without document overflow. Progress writes reuse saved geometry to avoid chart and sewing-graph reconstruction. Source was formatted consistently for review.
+
+Print charts now use white Night cells, grey Milky Way cells and dark Star dots, with a matching printed legend; export tests verify the paper palette and constellation lines. The Print button was exercised, but the in-app browser did not expose a native print preview, so pagination has not been visually verified in a system print dialog.
+
+Final suite: 262 tests pass, one opt-in physical measurement test skipped by default (run successfully at checkpoint 4). TypeScript/production build and ESLint pass. Initial JS: 255.25KB / 85.43KB gzip; 3D and exact time-zone polygon data remain larger lazy chunks and Vite reports its size advisory. No baseline FPS or arrival video was recorded; measured performance is documented above rather than inferred. J2000 precession and automatic DST remain intentionally unsupported and documented in README/UI.

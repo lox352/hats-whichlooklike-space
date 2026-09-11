@@ -27,7 +27,7 @@ const generateCircle =
 const getStitches = (
   stitchesPerRow: number,
   numberOfRows: number,
-  decreaseType: DecreaseMethod
+  decreaseType: DecreaseMethod,
 ): Stitch[] => {
   const knittingMachine = new KnittingMachine(stitchesPerRow);
   knittingMachine.castOnRow(generateCircle(stitchesPerRow)).join();

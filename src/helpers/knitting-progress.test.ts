@@ -127,7 +127,9 @@ describe("currentRun", () => {
 
 describe("upcomingRuns", () => {
   it("returns consecutive, non-overlapping runs", () => {
-    const stitches = painted((id) => (Math.floor((id - 1) / 4) % 2 === 0 ? ocean : land));
+    const stitches = painted((id) =>
+      Math.floor((id - 1) / 4) % 2 === 0 ? ocean : land,
+    );
     const index = indexRows(stitches);
     const runs = upcomingRuns(stitches, 0, index, 3);
     expect(runs.length).toBe(3);
@@ -141,7 +143,9 @@ describe("upcomingRuns", () => {
   it("stops cleanly at the end of the hat", () => {
     const stitches = hat();
     const last = stitches[stitches.length - 1].id;
-    expect(upcomingRuns(stitches, last - 1, indexRows(stitches), 5).length).toBeLessThanOrEqual(1);
+    expect(
+      upcomingRuns(stitches, last - 1, indexRows(stitches), 5).length,
+    ).toBeLessThanOrEqual(1);
   });
 });
 

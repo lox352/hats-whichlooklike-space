@@ -87,7 +87,7 @@ const segmentsFor = (rowStitches: Stitch[]): InstructionSegment[] => {
 
 export const writtenInstructions = (
   stitches: Stitch[],
-  index: RowIndex = indexRows(stitches)
+  index: RowIndex = indexRows(stitches),
 ): RowInstruction[] => {
   const byId = new Map(stitches.map((stitch) => [stitch.id, stitch]));
 
@@ -107,10 +107,10 @@ export const writtenInstructions = (
 /** One row as a single line, given a way to name each yarn. */
 export const rowToText = (
   row: RowInstruction,
-  nameOf: (colour: RGB) => string
+  nameOf: (colour: RGB) => string,
 ): string => {
   const parts = row.segments.map(
-    (segment) => `${segment.text} ${nameOf(segment.colour)}`
+    (segment) => `${segment.text} ${nameOf(segment.colour)}`,
   );
   return `Row ${row.row} (${row.stitches} sts): ${parts.join(", ")}`;
 };
@@ -118,7 +118,7 @@ export const rowToText = (
 /** The whole pattern as plain text, for copying or a screen reader. */
 export const instructionsToText = (
   stitches: Stitch[],
-  nameOf: (colour: RGB) => string
+  nameOf: (colour: RGB) => string,
 ): string =>
   writtenInstructions(stitches)
     .map((row) => rowToText(row, nameOf))

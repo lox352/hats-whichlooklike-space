@@ -85,7 +85,7 @@ const catalogueByKey = new Map(
   stars.features.map((feature) => [
     coordinateKey(feature.geometry.coordinates),
     feature.id,
-  ])
+  ]),
 );
 
 /**
@@ -94,7 +94,7 @@ const catalogueByKey = new Map(
  * ever wants to be tighter.
  */
 const milkyWayBand = milkyWay.features.find(
-  (feature) => feature.properties.id === "ol1"
+  (feature) => feature.properties.id === "ol1",
 );
 if (!milkyWayBand) throw new Error("mw_simplified.json has no ol1 contour");
 
@@ -123,12 +123,12 @@ export const catalogueStar = (hip: number): CatalogueStar | undefined =>
 export const colourSpace = (
   hatCoordinates: GlobalCoordinates[],
   orientationParameters: OrientationParameters,
-  options: ProjectionOptions = {}
+  options: ProjectionOptions = {},
 ): { colours: RGB[]; sky: SkyMarks } => {
   const magnitudeLimit = options.magnitudeLimit ?? starMagnitudeLimit;
 
   const skyCoordinates = hatCoordinates.map((coordinate) =>
-    rotateToDestination(coordinate, orientationParameters)
+    rotateToDestination(coordinate, orientationParameters),
   );
   const index = buildSkyIndex(skyCoordinates);
 
@@ -144,10 +144,10 @@ export const colourSpace = (
    */
   const brimLatitude = hatCoordinates.reduce(
     (lowest, { latitude }) => Math.min(lowest, latitude),
-    90
+    90,
   );
   const crown = toUnitVector(
-    rotateToDestination({ latitude: 90, longitude: 0 }, orientationParameters)
+    rotateToDestination({ latitude: 90, longitude: 0 }, orientationParameters),
   );
   const onHatCosine = Math.sin(toRadians(brimLatitude));
   const onHat = (vector: UnitVector) => dot(vector, crown) >= onHatCosine;
@@ -162,7 +162,7 @@ export const colourSpace = (
   const colours: RGB[] = skyCoordinates.map(({ latitude, longitude }) =>
     booleanPointInPolygon([longitude, latitude], milkyWayBand)
       ? SkyPalette.MilkyWay
-      : SkyPalette.Night
+      : SkyPalette.Night,
   );
 
   // 2. The stars.
@@ -196,13 +196,16 @@ export const colourSpace = (
       starStitches.add(stitch);
       return { stitch, offHat: false };
     }
-    const inHatSpace = rotateFromDestination(coordinates, orientationParameters);
+    const inHatSpace = rotateFromDestination(
+      coordinates,
+      orientationParameters,
+    );
     const reflected = rotateToDestination(
       {
         latitude: 2 * brimLatitude - inHatSpace.latitude,
         longitude: inHatSpace.longitude,
       },
-      orientationParameters
+      orientationParameters,
     );
     const stitch = stitchNear(toUnitVector(reflected));
     return stitch < 0 ? undefined : { stitch, offHat: true };
@@ -255,7 +258,7 @@ export const colourSpace = (
 
 /** For tests and diagnostics: which stitch each catalogue star lands on. */
 export const projectCatalogue = (
-  index: SkyIndex
+  index: SkyIndex,
 ): { hip: number; stitch: number; cosine: number }[] =>
   catalogue.map((star) => {
     const { index: stitch, cosine } = index.nearest(star.vector);

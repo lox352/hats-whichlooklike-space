@@ -39,7 +39,7 @@ const stitchCurve = (): THREE.CatmullRomCurve3 => {
     ],
     false,
     "catmullrom",
-    0.5
+    0.5,
   );
 };
 
@@ -55,7 +55,7 @@ export const createStitchGeometry = (): THREE.BufferGeometry => {
     14,
     adjacentStitchDistance * 0.27,
     6,
-    false
+    false,
   );
   geometry.computeVertexNormals();
   return geometry;

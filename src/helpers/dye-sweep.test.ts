@@ -85,7 +85,7 @@ describe("dyeAmount", () => {
 describe("heightsOf", () => {
   it("reads y, treating a missing position as the ground", () => {
     expect(
-      heightsOf([{ x: 0, y: 3, z: 0 }, undefined, { x: 0, y: 7, z: 0 }])
+      heightsOf([{ x: 0, y: 3, z: 0 }, undefined, { x: 0, y: 7, z: 0 }]),
     ).toEqual([3, 0, 7]);
   });
 });

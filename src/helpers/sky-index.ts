@@ -60,7 +60,7 @@ export interface SkyIndex {
  */
 export const nearestByBruteForce = (
   vector: UnitVector,
-  coordinates: GlobalCoordinates[]
+  coordinates: GlobalCoordinates[],
 ): Nearest => {
   let best: Nearest = none;
   coordinates.forEach((coordinate, index) => {
@@ -87,12 +87,15 @@ export const nearestByBruteForce = (
  */
 export const buildSkyIndex = (
   coordinates: GlobalCoordinates[],
-  bandDegrees = 2
+  bandDegrees = 2,
 ): SkyIndex => {
   const size = coordinates.length;
   const bandCount = Math.ceil(180 / bandDegrees) + 1;
   const bandOf = (latitude: number) =>
-    Math.min(Math.max(Math.floor((latitude + 90) / bandDegrees), 0), bandCount - 1);
+    Math.min(
+      Math.max(Math.floor((latitude + 90) / bandDegrees), 0),
+      bandCount - 1,
+    );
 
   // Structure of arrays: the inner loop reads three floats, not an object.
   const xs = new Float64Array(size);
@@ -142,7 +145,8 @@ export const buildSkyIndex = (
 
   const nearest = (vector: UnitVector): Nearest => {
     if (size === 0) return { ...none };
-    const latitude = (Math.asin(Math.min(Math.max(vector[2], -1), 1)) * 180) / Math.PI;
+    const latitude =
+      (Math.asin(Math.min(Math.max(vector[2], -1), 1)) * 180) / Math.PI;
     const home = bandOf(latitude);
     const best: Nearest = { ...none };
 

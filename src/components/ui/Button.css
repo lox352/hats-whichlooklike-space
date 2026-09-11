@@ -13,7 +13,10 @@
   border: 1px solid transparent;
   cursor: pointer;
   text-decoration: none;
-  transition: background-color 0.15s, border-color 0.15s, transform 0.08s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    transform 0.08s;
 }
 
 /* A thumb-sized target on a touch screen; the mouse can have the tighter one. */

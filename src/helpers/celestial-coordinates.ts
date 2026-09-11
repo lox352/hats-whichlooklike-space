@@ -16,7 +16,13 @@ export const daysInMonth = (month: number, year: number): number =>
  * Days since J2000.0 - noon UT on 1 January 2000 - for a moment in UT.
  * Date.UTC does the calendar, leap years included.
  */
-const daysSinceJ2000 = ({ year, month, day, hour, minute }: Required<DateTime>) =>
+const daysSinceJ2000 = ({
+  year,
+  month,
+  day,
+  hour,
+  minute,
+}: Required<DateTime>) =>
   (Date.UTC(year, month - 1, day, hour, minute) - Date.UTC(2000, 0, 1, 12)) /
   86_400_000;
 
@@ -45,11 +51,11 @@ export const greenwichSiderealTime = (utc: Required<DateTime>): number =>
  */
 export const zenithFor = (
   dateTime: DateTime,
-  coordinates: GlobalCoordinates
+  coordinates: GlobalCoordinates,
 ): { ra: number; dec: number } => {
   const utc = { year: new Date().getFullYear(), ...dateTime };
   const localSiderealTime = wrapHours(
-    greenwichSiderealTime(utc) + coordinates.longitude / 15
+    greenwichSiderealTime(utc) + coordinates.longitude / 15,
   );
   return { ra: localSiderealTime, dec: coordinates.latitude };
 };

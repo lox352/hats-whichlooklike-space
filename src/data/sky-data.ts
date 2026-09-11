@@ -29,7 +29,11 @@ type Collection<G extends Point | MultiLineString, P, Id> = Omit<
  * d3-celestial's stars to magnitude 6, stripped to magnitude and colour
  * index. The id is the Hipparcos catalogue number.
  */
-export type StarCatalogue = Collection<Point, { mag: number; bv: string }, number>;
+export type StarCatalogue = Collection<
+  Point,
+  { mag: number; bv: string },
+  number
+>;
 
 /** The IAU constellation figures. `id` is the three-letter abbreviation. */
 export type ConstellationLines = Collection<
@@ -45,5 +49,6 @@ export type MilkyWayContours = FeatureCollection<
 >;
 
 export const stars = starsJson as unknown as StarCatalogue;
-export const constellations = constellationsJson as unknown as ConstellationLines;
+export const constellations =
+  constellationsJson as unknown as ConstellationLines;
 export const milkyWay = milkyWayJson as unknown as MilkyWayContours;

@@ -20,6 +20,10 @@ import { SkyPalette, yarnFor } from "./sky-palette";
  */
 
 const keyPrefix = "pattern-";
+// Reuse geometry across progress writes, so ticking a stitch or segment does
+// not rebuild the chart, exports and constellation graph. Raw-string checks
+// still detect edits from another tab or outside the application.
+const patternCache = new Map<string, { raw: string; pattern: SavedPattern }>();
 
 /*
  * Marks a pattern link as "open this straight into knitting mode".
@@ -109,7 +113,7 @@ const nearestYarn = (colour: RGB): RGB => {
  * still something that can be sewn.
  */
 const liftV1 = (
-  stitchStrings: unknown[]
+  stitchStrings: unknown[],
 ): { stitches: Stitch[]; sky: SkyMarks } => {
   const stitches: Stitch[] = [];
   const strokesByConstellation = new Map<string, Stroke[]>();
@@ -128,7 +132,7 @@ const liftV1 = (
     stitches.push({ ...stitch, colour: nearestYarn(stitch.colour) });
 
     for (const [abbreviation, peers] of Object.entries(
-      starInfo?.connectedStars ?? {}
+      starInfo?.connectedStars ?? {},
     )) {
       for (const peer of peers) {
         if (typeof peer !== "number") continue;
@@ -161,7 +165,7 @@ const liftV1 = (
     sky: {
       stars,
       constellations: [...strokesByConstellation.entries()].map(
-        ([abbreviation, strokes]) => ({ abbreviation, strokes })
+        ([abbreviation, strokes]) => ({ abbreviation, strokes }),
       ),
     },
   };
@@ -170,7 +174,9 @@ const liftV1 = (
 const isSky = (value: unknown): value is SkyMarks => {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as Partial<SkyMarks>;
-  return Array.isArray(candidate.stars) && Array.isArray(candidate.constellations);
+  return (
+    Array.isArray(candidate.stars) && Array.isArray(candidate.constellations)
+  );
 };
 
 const isEmbroidery = (value: unknown): value is EmbroideryProgress => {
@@ -185,16 +191,17 @@ const isEmbroidery = (value: unknown): value is EmbroideryProgress => {
  */
 const migrate = (
   raw: unknown,
-  storageKey: string
+  storageKey: string,
 ): SavedPattern | undefined => {
   if (typeof raw !== "object" || raw === null) return undefined;
   const candidate = raw as Record<string, unknown>;
-  const version =
-    typeof candidate.version === "number" ? candidate.version : 1;
+  const version = typeof candidate.version === "number" ? candidate.version : 1;
 
   let stitches: Stitch[];
   let sky: SkyMarks;
-  const rawStitches = Array.isArray(candidate.stitches) ? candidate.stitches : [];
+  const rawStitches = Array.isArray(candidate.stitches)
+    ? candidate.stitches
+    : [];
   if (version < 2) {
     ({ stitches, sky } = liftV1(rawStitches));
   } else {
@@ -211,7 +218,8 @@ const migrate = (
       : undefined;
 
   const progress =
-    typeof candidate.progress === "number" && Number.isFinite(candidate.progress)
+    typeof candidate.progress === "number" &&
+    Number.isFinite(candidate.progress)
       ? clampProgress(candidate.progress, stitches.length)
       : 0;
 
@@ -236,7 +244,7 @@ const migrate = (
  */
 export const clampProgress = (
   progress: number,
-  stitchCount: number
+  stitchCount: number,
 ): number => {
   if (Number.isNaN(progress)) return 0;
   const highest = Math.max(stitchCount - 1, 0);
@@ -258,7 +266,7 @@ export const percentComplete = (pattern: SavedPattern): number => {
 };
 
 export const readPattern = (
-  patternId: string | undefined
+  patternId: string | undefined,
 ): SavedPattern | undefined => {
   if (!patternId) return undefined;
   const storageKey = storageKeyFor(patternId);
@@ -268,9 +276,16 @@ export const readPattern = (
   } catch {
     return undefined;
   }
-  if (!stored) return undefined;
+  if (!stored) {
+    patternCache.delete(storageKey);
+    return undefined;
+  }
+  const cached = patternCache.get(storageKey);
+  if (cached?.raw === stored) return cached.pattern;
   try {
-    return migrate(JSON.parse(stored), storageKey);
+    const pattern = migrate(JSON.parse(stored), storageKey);
+    if (pattern) patternCache.set(storageKey, { raw: stored, pattern });
+    return pattern;
   } catch {
     return undefined;
   }
@@ -291,16 +306,19 @@ export const listPatterns = (): SavedPattern[] => {
     .sort((a, b) => b.savedAt.localeCompare(a.savedAt));
 };
 
-export type WriteResult = { ok: true } | { ok: false; reason: "quota" };
+export type WriteResult =
+  { ok: true } | { ok: false; reason: "quota" | "unavailable" };
 
 const write = (pattern: SavedPattern): WriteResult => {
   try {
-    localStorage.setItem(pattern.id, JSON.stringify(pattern));
+    const raw = JSON.stringify(pattern);
+    localStorage.setItem(pattern.id, raw);
+    patternCache.set(pattern.id, { raw, pattern });
   } catch (error) {
     if (error instanceof DOMException && error.name === "QuotaExceededError") {
       return { ok: false, reason: "quota" };
     }
-    throw error;
+    return { ok: false, reason: "unavailable" };
   }
   notifyPatternsChanged();
   return { ok: true };
@@ -309,7 +327,7 @@ const write = (pattern: SavedPattern): WriteResult => {
 export const createPattern = (
   stitches: Stitch[],
   sky: SkyMarks,
-  name: string | undefined
+  name: string | undefined,
 ): { result: WriteResult; pattern: SavedPattern } => {
   const now = new Date();
   const pattern: SavedPattern = {
@@ -327,7 +345,7 @@ export const createPattern = (
 
 export const renamePattern = (
   patternId: string,
-  name: string
+  name: string,
 ): WriteResult | undefined => {
   const pattern = readPattern(patternId);
   if (!pattern) return undefined;
@@ -336,7 +354,7 @@ export const renamePattern = (
 
 export const setProgress = (
   patternId: string,
-  progress: number
+  progress: number,
 ): WriteResult | undefined => {
   const pattern = readPattern(patternId);
   if (!pattern) return undefined;
@@ -348,7 +366,7 @@ export const setProgress = (
 
 export const setEmbroidery = (
   patternId: string,
-  embroidery: EmbroideryProgress
+  embroidery: EmbroideryProgress,
 ): WriteResult | undefined => {
   const pattern = readPattern(patternId);
   if (!pattern) return undefined;
@@ -358,6 +376,7 @@ export const setEmbroidery = (
 export const deletePattern = (patternId: string): void => {
   try {
     localStorage.removeItem(storageKeyFor(patternId));
+    patternCache.delete(storageKeyFor(patternId));
   } catch {
     return;
   }

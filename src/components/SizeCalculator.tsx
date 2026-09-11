@@ -52,7 +52,7 @@ const SizeCalculator: React.FC<SizeCalculatorProps> = ({
   onSize,
 }) => {
   const [headCircumference, setHeadCircumference] = useState(
-    defaultHeadCircumference
+    defaultHeadCircumference,
   );
   const [overTheTop, setOverTheTop] = useState(defaultOverTheTop);
 
@@ -69,7 +69,7 @@ const SizeCalculator: React.FC<SizeCalculatorProps> = ({
     const stitches = stitchesPerRowFor(
       headCircumference,
       gauge,
-      decreaseMethod
+      decreaseMethod,
     );
     onSize(
       stitches,
@@ -77,8 +77,8 @@ const SizeCalculator: React.FC<SizeCalculatorProps> = ({
         hatHeightFromArc(overTheTop),
         stitches,
         gauge,
-        decreaseMethod
-      )
+        decreaseMethod,
+      ),
     );
   };
 
@@ -86,11 +86,12 @@ const SizeCalculator: React.FC<SizeCalculatorProps> = ({
     ? round1(circumferenceFor(stitchesPerRow, gauge))
     : null;
   const finishedHeight = gaugeUsable
-    ? round1(totalHeightFor(stitchesPerRow, numberOfRows, gauge, decreaseMethod))
+    ? round1(
+        totalHeightFor(stitchesPerRow, numberOfRows, gauge, decreaseMethod),
+      )
     : null;
   const crownRows = crownRowsFor(stitchesPerRow, decreaseMethod);
   const totalRows = totalRowsFor(stitchesPerRow, numberOfRows, decreaseMethod);
-
 
   return (
     <div className="design-card">
@@ -172,8 +173,8 @@ const SizeCalculator: React.FC<SizeCalculatorProps> = ({
           <>
             {stitchesPerRow} stitches and {numberOfRows} rows of body makes a
             hat <strong>{finishedCircumference}cm</strong> around and{" "}
-            <strong>{finishedHeight}cm</strong> tall. The crown adds{" "}
-            {crownRows} rows on top of the body, {totalRows} in all.
+            <strong>{finishedHeight}cm</strong> tall. The crown adds {crownRows}{" "}
+            rows on top of the body, {totalRows} in all.
           </>
         ) : (
           "Enter your gauge above to see what size this makes."
