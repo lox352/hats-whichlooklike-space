@@ -4,16 +4,18 @@
   justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
-  padding: 22px 0 14px;
+  padding: 26px 0 16px;
   border-bottom: 1px solid var(--rule);
-  margin-bottom: 26px;
+  margin-bottom: 32px;
 }
 
+/* The name of the site, set as a caption: small capitals, wide. */
 .masthead-title {
-  font-family: var(--font-display);
-  font-size: var(--text-base);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
   color: var(--ink);
   text-decoration: none;
 }
@@ -36,13 +38,13 @@
   color: var(--accent);
 }
 
-/* Where you are in the three steps, as a run of map waypoints. */
+/* Where you are in the three steps: frame, expose, print. */
 .steps {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: var(--text-xs);
-  letter-spacing: 0.09em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-faint);
 }
@@ -50,81 +52,74 @@
 .step {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .step-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   border: 1px solid var(--rule-strong);
   background: transparent;
 }
 
 .step-done .step-dot {
-  background: var(--rule-strong);
-  border-color: var(--rule-strong);
+  background: var(--ink-faint);
+  border-color: var(--ink-faint);
 }
 
 .step-current {
   color: var(--ink);
-  font-weight: 650;
+  font-weight: 600;
 }
 
+/* The current step is the one star in the row that is lit. */
 .step-current .step-dot {
   background: var(--accent);
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent),
+    0 0 12px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 .step-line {
-  width: 20px;
+  width: 22px;
   height: 1px;
-  background: var(--rule);
+  background: var(--rule-strong);
 }
 
 .page-title {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .page-lede {
   color: var(--ink-soft);
   font-size: var(--text-md);
-  margin-bottom: 26px;
+  font-weight: 300;
+  margin-bottom: 30px;
   max-width: 54ch;
 }
 
 @media (max-width: 560px) {
   .steps {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
   }
   .step-line {
     width: 10px;
   }
 }
 
-/* The colophon: a line at the foot of every plate. */
+/* The colophon: the line under the print. */
 .colophon {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  margin-top: 56px;
-  padding-top: 16px;
+  margin-top: 64px;
+  padding-top: 18px;
   border-top: 1px solid var(--rule);
   font-size: var(--text-xs);
   color: var(--ink-faint);
-}
-
-.theme-control label {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-}
-
-.theme-control select {
-  min-height: 34px;
 }

@@ -13,10 +13,14 @@ import "./Render.css";
 
 type Stage = "summoning" | "settling" | "charting" | "done";
 
+/*
+ * The status reads as an exposure: the shutter opens, the light comes in,
+ * the image develops.
+ */
 const statusText: Record<Stage, string> = {
   summoning: "Casting on...",
-  settling: "Letting the stitches settle into a hat...",
-  charting: "Charting the stars onto it...",
+  settling: "Shutter open: the stitches settle into a hat...",
+  charting: "Developing: each star lands on the stitch it sits over...",
   done: "Drag to turn the hat; pinch or scroll to look closer.",
 };
 
@@ -120,7 +124,7 @@ const Render: React.FC = () => {
 
   if (stitches.length === 0) {
     return (
-      <PageLayout title="Charting your sky" step="sky">
+      <PageLayout title="Exposing your sky" step="sky">
         <p className="render-status render-status-working">Casting on...</p>
       </PageLayout>
     );
@@ -128,9 +132,9 @@ const Render: React.FC = () => {
 
   return (
     <PageLayout
-      title="Charting your sky"
+      title="Exposing your sky"
       step="sky"
-      lede="The tube settles into a hat, and each star is charted onto the stitch it sits over."
+      lede="The knitted tube settles into a hat, and the sky you chose is exposed onto it, star by star."
     >
       <div className="hat-stage">
         <HatCanvas
@@ -157,13 +161,13 @@ const Render: React.FC = () => {
             size="lg"
             onClick={() => navigate(`/pattern?${searchParams.toString()}`)}
           >
-            Make the chart
+            Develop the print
           </Button>
           <Button
             variant="quiet"
             onClick={() => navigate(`/design?${searchParams.toString()}`)}
           >
-            Back to the design
+            Back to the frame
           </Button>
         </div>
       )}

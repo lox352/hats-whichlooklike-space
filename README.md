@@ -1,8 +1,16 @@
 # Hats Which Look Like Space
 
-Design a knitted hat that looks like the night sky over a place on a night, and
-get a chart you can actually knit from and a guide to embroider from. Live at
+A long exposure of the sky you stood under, knitted into a hat: say where you
+were and when, and get a chart you can actually knit from and a guide to trace
+the constellations from. Live at
 [hats.whichlooklike.space](https://hats.whichlooklike.space).
+
+The site is styled as a deep-sky photograph. The three steps are named as a
+photograph is made - *frame* the sky, *expose* it onto the hat, and take away
+the *print* - and the design lives in `src/index.css`: one dark ground with a
+star field behind it, one variable face (Manrope), and a warm accent that
+blooms. There is no light theme; the print sheet is the only place ink goes
+on white.
 
 ## How it works
 
@@ -11,7 +19,7 @@ physical object and then asking which star each stitch ends up under. Unlike
 its sibling `earth`, which samples a map per stitch, this branch walks the
 star catalogue and puts each star on the stitch nearest it.
 
-1. **Design** (`src/components/Design.tsx`) — choose a head size and gauge (the
+1. **Frame** (`src/components/Design.tsx`) — choose a head size and gauge (the
    stitch count follows from them), then which sky: the sky over a place on a
    night, Polaris, the Southern Cross, or a point by right ascension and
    declination. A night and a place become a point overhead through the
@@ -32,10 +40,10 @@ star catalogue and puts each star on the stitch nearest it.
    (`src/helpers/sky-index.ts`). The constellation figures are resolved to
    their stars and joined up as strokes; a stitch a figure passes through is
    always a star. The hat is knitted in three yarns: Night, Milky Way, Star.
-5. **Chart** (`src/helpers/pattern-layout.ts`) — the tube is flattened into a
+5. **Print** (`src/helpers/pattern-layout.ts`) — the tube is flattened into a
    grid with decrease symbols and the constellation lines drawn over it. It can
-   be saved, ticked off row by row while knitting, and then sewn line by line
-   while embroidering (`src/helpers/embroidery.ts`).
+   be saved, ticked off row by row while knitting, and then traced line by
+   line while embroidering (`src/helpers/embroidery.ts`).
 
 The hat is treated as a sphere all the way down, so the brim is a horizon
 rather than a south pole; that is what the sky wants and what every charted

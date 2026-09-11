@@ -5,17 +5,19 @@
   gap: 8px;
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  font-weight: 550;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   line-height: 1.2;
-  padding: 9px 16px;
+  padding: 9px 18px;
   min-height: 38px;
-  border-radius: var(--radius);
+  border-radius: 999px;
   border: 1px solid transparent;
   cursor: pointer;
   text-decoration: none;
   transition:
     background-color 0.15s,
     border-color 0.15s,
+    box-shadow 0.2s,
     transform 0.08s;
 }
 
@@ -37,31 +39,38 @@
 
 .btn-lg {
   font-size: var(--text-base);
-  padding: 12px 22px;
-  min-height: 46px;
+  padding: 12px 26px;
+  min-height: 48px;
 }
 
-/* Gold leaf, with the night's ink on it whichever plate this is. */
+/* The warm star: filled, and it blooms. */
 .btn-primary {
   background: var(--accent-fill);
   border-color: var(--accent-fill);
   color: var(--on-accent-fill);
+  box-shadow: var(--glow);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-fill-strong);
   border-color: var(--accent-fill-strong);
+  box-shadow: 0 0 36px color-mix(in srgb, var(--warm) 38%, transparent);
 }
 
+.btn-primary:disabled {
+  box-shadow: none;
+}
+
+/* Dark glass with a hairline. */
 .btn-secondary {
-  background: var(--paper-raised);
+  background: color-mix(in srgb, var(--sky-raised) 70%, transparent);
   border-color: var(--rule-strong);
   color: var(--ink);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: color-mix(in srgb, var(--ink) 40%, var(--rule-strong));
+  box-shadow: var(--glow-white);
 }
 
 .btn-danger {
@@ -79,12 +88,15 @@
 .btn-quiet {
   background: none;
   border: none;
+  border-radius: 3px;
   padding: 0;
   min-height: 0;
   color: var(--accent);
   text-decoration: underline;
-  text-underline-offset: 2px;
-  font-weight: 450;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 /*
@@ -99,6 +111,7 @@
 
 .btn-quiet:hover:not(:disabled) {
   color: var(--accent-strong);
+  text-decoration-color: currentColor;
 }
 
 .btn-quiet:active:not(:disabled) {

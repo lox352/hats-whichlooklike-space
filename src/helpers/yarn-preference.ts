@@ -9,7 +9,7 @@ import { SkyPalette } from "./sky-palette";
  * export read a stitch's yarn back from it. So it never changes, and what
  * a stitch looks like is decided here instead, on the way out to the chart,
  * the hat, the printed key and the knitting panel. The defaults are the
- * yarns as the atlas shows them; the ones you actually buy are yours to
+ * yarns as the site shows them; the ones you actually buy are yours to
  * set in their place.
  */
 

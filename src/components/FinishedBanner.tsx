@@ -20,18 +20,19 @@ interface FinishedBannerProps {
 const FinishedBanner: React.FC<FinishedBannerProps> = ({ stitches, sewn }) =>
   sewn ? (
     <div className="finished" role="status">
-      <h2 className="finished-title">The sky, and every line across it.</h2>
+      <h2 className="finished-title">The whole frame, developed.</h2>
       <p className="finished-text">
         {stitches.toLocaleString()} stitches knitted and the constellations
-        sewn on. That is the whole night, done.
+        traced over them in thread. That is the whole night, done.
       </p>
     </div>
   ) : (
     <div className="finished" role="status">
-      <h2 className="finished-title">You knitted the whole sky.</h2>
+      <h2 className="finished-title">You knitted the whole exposure.</h2>
       <p className="finished-text">
         {stitches.toLocaleString()} stitches, and a star on every one that
-        had one over it. Now the constellations: sew the lines that join them.
+        had one over it. Now the constellations: trace the lines that join
+        them in thread.
       </p>
     </div>
   );

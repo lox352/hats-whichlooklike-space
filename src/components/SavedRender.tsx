@@ -16,13 +16,13 @@ const SavedRender: React.FC = () => {
 
   if (!pattern || pattern.stitches.length === 0) {
     return (
-      <PageLayout title="Pattern not found">
+      <PageLayout title="Exposure not found">
         <p>
-          This pattern is no longer saved in this browser. Saved patterns live
+          This exposure is no longer saved in this browser. Saved exposures live
           only on the device that made them.
         </p>
         <Button variant="primary" onClick={() => navigate("/")}>
-          Back to your skies
+          Back to your exposures
         </Button>
       </PageLayout>
     );
@@ -45,7 +45,7 @@ const SavedRender: React.FC = () => {
         aria-live="polite"
         className={`render-status${ready ? "" : " render-status-working"}`}
       >
-        {ready ? "Every white stitch is a star." : "Casting on..."}
+        {ready ? "Every white stitch is a star; the purple is the Milky Way." : "Casting on..."}
       </p>
       <div className="render-actions">
         <Button
@@ -55,7 +55,7 @@ const SavedRender: React.FC = () => {
           Go to the chart
         </Button>
         <Button variant="quiet" onClick={() => navigate("/")}>
-          Back to your skies
+          Back to your exposures
         </Button>
       </div>
     </PageLayout>

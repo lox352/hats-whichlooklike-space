@@ -2,16 +2,97 @@
   margin-bottom: 30px;
 }
 
+/*
+ * The form and the readout side by side, as the dials and the data panel
+ * on a camera body. On a phone the readout drops beneath the form.
+ */
+.design-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: clamp(24px, 5vw, 56px);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .design-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
 .design-section-heading {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
-  font-weight: 650;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ink-faint);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 18px;
+}
+
+.design-section-number {
+  color: var(--accent);
+  margin-right: 6px;
+}
+
+/* The readout: a dark glass panel that stays in view while you set dials. */
+.exposure {
+  position: sticky;
+  top: 20px;
+  background: color-mix(in srgb, var(--sky-raised) 72%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--sky-edge);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 860px) {
+  .exposure {
+    position: static;
+  }
+}
+
+.exposure-data {
+  margin: 0 0 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.exposure-data > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--rule);
-  margin-bottom: 16px;
+}
+
+.exposure-data dt {
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  flex: none;
+}
+
+.exposure-data dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.exposure-status {
+  min-height: 1.4em;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  margin: 0 0 6px;
 }
 
 .design-field {
@@ -51,8 +132,8 @@
 
 /* A card for the calculator, so it reads as a tool rather than more form. */
 .design-card {
-  background: var(--paper-raised);
-  border: 1px solid var(--paper-edge);
+  background: var(--sky-raised);
+  border: 1px solid var(--sky-edge);
   border-radius: var(--radius-lg);
   padding: 16px 18px;
   margin-bottom: 22px;
@@ -62,8 +143,8 @@
 
 .design-card-title {
   font-family: var(--font-display);
-  font-size: var(--text-base);
-  font-weight: 600;
+  font-size: var(--text-md);
+  font-weight: 400;
   margin: 0 0 4px;
 }
 
@@ -91,8 +172,8 @@
   cursor: pointer;
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  font-weight: 650;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-faint);
 }
@@ -133,12 +214,14 @@
 
 .design-actions {
   display: flex;
-  gap: 14px;
-  align-items: center;
-  flex-wrap: wrap;
-  padding-top: 22px;
-  border-top: 1px solid var(--rule);
-  margin-top: 8px;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  padding-top: 14px;
+}
+
+.design-actions .btn-lg {
+  width: 100%;
 }
 
 /* Place search */
@@ -156,9 +239,9 @@
   list-style: none;
   margin: 5px 0 0;
   padding: 4px;
-  border: 1px solid var(--paper-edge);
+  border: 1px solid var(--sky-edge);
   border-radius: var(--radius);
-  background: var(--paper-raised);
+  background: var(--sky-raised);
   box-shadow: var(--shadow);
   position: absolute;
   z-index: 20;
@@ -213,8 +296,8 @@
 .size-group-title {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
-  font-weight: 650;
-  letter-spacing: 0.1em;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-faint);
   margin: 0 0 6px;
@@ -227,9 +310,6 @@
   max-width: 60ch;
 }
 
-@media (pointer: coarse) {
-  }
-
 /* The night and the place: a block of their own within the sky section. */
 .sky-moment {
   padding: 4px 0 0;
@@ -241,11 +321,6 @@
 
 .design-field-button {
   align-self: flex-end;
-}
-
-.sky-status {
-  min-height: 1.4em;
-  font-variant-numeric: tabular-nums;
 }
 
 .design-credit {

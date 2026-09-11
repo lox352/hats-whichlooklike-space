@@ -13,12 +13,13 @@
 }
 
 .progress-ring-track {
-  stroke: var(--paper-sunken);
+  stroke: var(--rule-strong);
 }
 
 .progress-ring-fill {
   stroke: var(--accent);
   stroke-linecap: round;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 60%, transparent));
   transition: stroke-dashoffset 0.4s ease-out;
 }
 

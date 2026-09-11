@@ -5,47 +5,46 @@ html {
 }
 
 /* ============================================================
-   Hats Which Look Like Space — an antique celestial atlas
+   Hats Which Look Like Space — a long exposure
    ------------------------------------------------------------
-   Night is the design, not a dark mode: an engraved plate is
-   indigo ground, warm ink and gold rule. The light theme is the
-   exception - the same plate printed on parchment - and it is
-   built because the print sheet needs a light ground anyway.
+   The site is a deep-sky photograph. The ground is the true
+   black of a sensor with the sky glow of a long exposure rising
+   in it, the type is a light, open sans set wide like the
+   captions under a print, and anything bright blooms a little,
+   the way a star does on film. There is no light theme: a
+   photograph is one thing. The print sheet is the exception,
+   and it is the only place ink goes on white.
 
    The three yarns the hat is knitted in are tokens too, so the
    chart, the legend and the shopping list draw the same colours.
    ============================================================ */
 
 @font-face {
-  font-family: "Cormorant Garamond";
+  font-family: "Manrope";
   font-style: normal;
-  /*
-   * One weight, and a heavy one. Cormorant's hairlines thin out on a dark
-   * ground, so it is used for display sizes only and never lighter than
-   * this; the body and the interface are set in the UI face below.
-   */
-  font-weight: 600;
+  /* One variable file carries every weight from the light display
+     headings to the bold labels. */
+  font-weight: 200 800;
   font-display: swap;
-  src: url("/fonts/cormorant-garamond-latin-600-normal.woff2")
-    format("woff2");
+  src: url("/fonts/manrope-latin-variable.woff2") format("woff2");
 }
 
 :root {
-  /* Ground: indigo, in four depths. Named "paper" so the shared components
-     read the same on both sites; here the paper is night. */
-  --paper: #141b2e;
-  --paper-raised: #1b2439;
-  --paper-sunken: #0e1424;
-  --paper-edge: #2a3550;
+  /* Ground: the sensor's black, then the sky glow, then surfaces that sit
+     a little in front of it. */
+  --sky-deep: #05070f;
+  --sky: #090d1a;
+  --sky-raised: #111829;
+  --sky-edge: #1f2a44;
 
-  /* Ink: warm, like paper showing through an engraved plate. */
-  --ink: #f0e6d2;
-  --ink-soft: #c2b69c;
-  --ink-faint: #8c8470;
+  /* Ink: white with a touch of blue, and its dimmer stops. */
+  --ink: #f2f5ff;
+  --ink-soft: #b3bdd8;
+  --ink-faint: #7c88a8;
 
-  /* Rules, as the engraver cut them. */
-  --rule: #2b3650;
-  --rule-strong: #4a5878;
+  /* Rules: hairlines, the frame of a print. */
+  --rule: #1a2238;
+  --rule-strong: #2c3856;
 
   /* The three yarns, as shown. Kept in step with shownColours in
      helpers/yarn-preference.ts, which is where the chart reads them. */
@@ -53,118 +52,64 @@ html {
   --milky-way: #58348a;
   --star: #f7f4ec;
 
-  /* Gold leaf, in three depths. The accent everywhere. */
-  --gold: #c9a961;
-  --gold-bright: #e4c87f;
-  --gold-deep: #8c6f2e;
-  --danger: #d98a7c;
+  /* The accent is a warm giant: the one star in a frame that is not white. */
+  --warm: #ffd9a0;
+  --warm-bright: #ffe9c4;
+  --warm-deep: #c9a16a;
+  --danger: #ff8a7a;
 
-  --accent: var(--gold);
-  --accent-strong: var(--gold-bright);
-  /* Filled controls stay gold leaf on both plates; text on them is night. */
-  --accent-fill: var(--gold);
-  --accent-fill-strong: var(--gold-bright);
-  --on-accent-fill: #141b2e;
+  --accent: var(--warm);
+  --accent-strong: var(--warm-bright);
+  /* Filled controls are the warm star; text on them is the sky. */
+  --accent-fill: var(--warm);
+  --accent-fill-strong: var(--warm-bright);
+  --on-accent-fill: #0b0e1a;
 
-  /* Constellation figures, as drawn on the chart: the engraver's red ink. */
-  --vermilion: #e0523c;
+  /* Constellation figures, as drawn on the chart: red, as a star chart
+     draws them for night vision, and the one colour that holds against
+     the black, the purple and the white of the three yarns. */
+  --vermilion: #ff5a44;
   --figure: var(--vermilion);
-  --figure-bright: #ff8b70;
+  --figure-bright: #ff9a86;
   --figure-faint: color-mix(in srgb, var(--vermilion) 42%, transparent);
 
-  /* Type */
-  --font-display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype",
-    Georgia, serif;
-  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+  /* Type: one face, from a hairline display weight to a bold label. */
+  --font-display: "Manrope", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-ui: "Manrope", "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
-  /* A modular scale, ratio 1.2, with display sizes a step larger than
-     earth's: Cormorant is small on the body and needs the room. */
+  /* A modular scale, ratio 1.2, with a generous top: the display sizes are
+     set light, and a light face needs size to hold on a dark ground. */
   --text-xs: 0.79rem;
   --text-sm: 0.889rem;
   --text-base: 1rem;
   --text-md: 1.2rem;
   --text-lg: 1.44rem;
   --text-xl: 1.9rem;
-  --text-2xl: 2.3rem;
-  --text-3xl: 2.9rem;
+  --text-2xl: 2.5rem;
+  --text-3xl: 3.4rem;
 
-  --radius: 4px;
-  --radius-lg: 8px;
-  /* On a dark ground a shadow is a glow. */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --radius: 6px;
+  --radius-lg: 12px;
+  /* Shadows are depth; glows are light. Bright things get the glow. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow: 0 2px 6px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.5);
+  --glow: 0 0 28px color-mix(in srgb, var(--warm) 22%, transparent);
+  --glow-white: 0 0 24px rgba(214, 226, 255, 0.16);
 
   --page-max: 68rem;
 
   color-scheme: dark;
   font-family: var(--font-ui);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.6;
   color: var(--ink);
-  background-color: var(--paper);
+  background-color: var(--sky-deep);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/*
- * The same plate on parchment. Reached by the device preferring light, or by
- * asking for it; asking for night wins over the device.
- */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="night"]) {
-    --paper: #e8dcc0;
-    --paper-raised: #f2e9d3;
-    --paper-sunken: #dccfae;
-    --paper-edge: #cdbd97;
-
-    --ink: #2a2416;
-    --ink-soft: #5c5240;
-    --ink-faint: #8a7d63;
-
-    --rule: #cbbb96;
-    --rule-strong: #a99a74;
-
-    --accent: var(--gold-deep);
-    --accent-strong: #6f5623;
-    --danger: #9c3f2e;
-    --figure: #c8432f;
-    --figure-bright: #e0523c;
-    --figure-faint: color-mix(in srgb, #c8432f 45%, transparent);
-
-    --shadow-sm: 0 1px 2px rgba(42, 36, 22, 0.1);
-    --shadow: 0 1px 2px rgba(42, 36, 22, 0.08), 0 6px 16px rgba(42, 36, 22, 0.1);
-    color-scheme: light;
-  }
-}
-
-:root[data-theme="paper"] {
-  --paper: #e8dcc0;
-  --paper-raised: #f2e9d3;
-  --paper-sunken: #dccfae;
-  --paper-edge: #cdbd97;
-
-  --ink: #2a2416;
-  --ink-soft: #5c5240;
-  --ink-faint: #8a7d63;
-
-  --rule: #cbbb96;
-  --rule-strong: #a99a74;
-
-  --accent: var(--gold-deep);
-  --accent-strong: #6f5623;
-  --danger: #9c3f2e;
-  --figure: #c8432f;
-  --figure-bright: #e0523c;
-  --figure-faint: color-mix(in srgb, #c8432f 45%, transparent);
-
-  --shadow-sm: 0 1px 2px rgba(42, 36, 22, 0.1);
-  --shadow: 0 1px 2px rgba(42, 36, 22, 0.08), 0 6px 16px rgba(42, 36, 22, 0.1);
-  color-scheme: light;
 }
 
 * {
@@ -178,28 +123,58 @@ body {
   /* dvh so a phone address bar does not make the page taller than the screen. */
   min-height: 100dvh;
   color: var(--ink);
-  background-color: var(--paper);
   /*
-   * Engraved hatching, not a graticule. The earth site rules its ground like
-   * a map sheet; a plate is shaded with fine diagonal strokes, so faint they
-   * read as the grain of the paper rather than as a pattern. Fixed, so it
-   * is the sheet and not the content.
+   * No background of its own: the sky is painted by the fixed layer below,
+   * and a body background would paint over it, since a negative z-index
+   * child sits beneath its parent's own background.
    */
-  background-image: repeating-linear-gradient(
-    115deg,
-    transparent 0 7px,
-    color-mix(in srgb, var(--ink) 3%, transparent) 7px 8px
-  );
-  background-attachment: fixed;
+  background: transparent;
+}
+
+/*
+ * The frame behind everything: a field of stars under a long exposure's
+ * sky glow, brightest low and to one side as light pollution is, fading
+ * to true black at the top. Fixed, so it is the sky and not the page,
+ * and on its own layer so it never repaints with the content.
+ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--sky-deep);
+  background-image:
+    radial-gradient(
+      120% 70% at 20% 110%,
+      rgba(26, 40, 84, 0.75) 0%,
+      rgba(16, 26, 51, 0.45) 40%,
+      transparent 75%
+    ),
+    radial-gradient(
+      80% 50% at 90% 0%,
+      rgba(20, 30, 60, 0.5) 0%,
+      transparent 60%
+    ),
+    url("/field.svg");
+  background-size:
+    100% 100%,
+    100% 100%,
+    2000px 1400px;
+  background-position:
+    center,
+    center,
+    center top;
+  background-repeat: no-repeat, no-repeat, repeat;
 }
 
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: 0.005em;
+  font-weight: 300;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
   color: var(--ink);
   margin: 0 0 0.5em;
   text-wrap: balance;
@@ -207,23 +182,35 @@ h3 {
 
 h1 {
   font-size: var(--text-3xl);
+  font-weight: 250;
 }
 h2 {
   font-size: var(--text-xl);
 }
 h3 {
   font-size: var(--text-md);
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
-/* Small caps in gold: the running heads of the plate. */
+/* Wide-tracked capitals: the caption under a print, the readout on a body. */
 .eyebrow {
   font-family: var(--font-ui);
   font-size: var(--text-xs);
-  font-weight: 650;
-  letter-spacing: 0.18em;
+  font-weight: 600;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--accent);
-  margin: 0 0 10px;
+  margin: 0 0 12px;
+}
+
+/* Exposure data: the numbers a photograph is captioned with. */
+.readout {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
 }
 
 p {
@@ -234,14 +221,16 @@ p {
 a {
   color: var(--accent);
   text-decoration-thickness: 1px;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 a:hover {
   color: var(--accent-strong);
+  text-decoration-color: currentColor;
 }
 
-/* Inputs should look like fields on a form, not like the browser default. */
+/* Fields are dark glass: a little lighter than the sky, with a hairline. */
 input[type="number"],
 input[type="text"],
 input[type="url"],
@@ -249,11 +238,22 @@ select {
   font: inherit;
   font-size: var(--text-sm);
   color: var(--ink);
-  background: var(--paper-raised);
+  background: color-mix(in srgb, var(--sky-raised) 80%, transparent);
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius);
-  padding: 6px 8px;
-  min-height: 34px;
+  padding: 6px 10px;
+  min-height: 36px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus,
+input[type="url"]:focus,
+select:focus {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--rule-strong));
+  box-shadow: var(--glow);
 }
 
 input[type="number"] {
@@ -348,7 +348,7 @@ hr {
   margin: 2rem 0;
 }
 
-/* Collapsed sections, as entries in an index: a plus that becomes a minus. */
+/* Collapsed sections: a caption you can open, marked with a plus. */
 details > summary {
   cursor: pointer;
   list-style: none;
@@ -374,7 +374,7 @@ details[open] > summary::before {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--gold) 40%, transparent);
+  background: color-mix(in srgb, var(--warm) 35%, transparent);
 }
 
 /* Utilities shared by the print sheet and the screen views. */
@@ -402,8 +402,8 @@ details[open] > summary::before {
   opacity: 0;
   transform: translateY(14px);
   transition:
-    opacity 0.5s ease-out,
-    transform 0.5s ease-out;
+    opacity 0.6s ease-out,
+    transform 0.6s ease-out;
 }
 
 .reveal-shown {
@@ -412,8 +412,8 @@ details[open] > summary::before {
 }
 
 /*
- * A fade between pages, so the three steps feel like one continuous thing
- * rather than four unrelated documents.
+ * A fade between pages, like an image developing: the three steps feel like
+ * one continuous thing rather than four unrelated documents.
  */
 @keyframes page-in {
   from {
@@ -427,7 +427,7 @@ details[open] > summary::before {
 }
 
 .page {
-  animation: page-in 0.28s ease-out both;
+  animation: page-in 0.35s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -449,6 +449,9 @@ details[open] > summary::before {
   }
   body {
     background: white;
-    color: #141b2e;
+    color: #0b0e1a;
+  }
+  body::before {
+    display: none;
   }
 }

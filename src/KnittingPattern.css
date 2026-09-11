@@ -4,19 +4,18 @@
  * so printing uses the SVG chart instead, scaled to the sheet.
  */
 
-/* The chart, as a plate in an atlas. */
+/* The chart, as the print of the exposure. */
 .chart {
   /*
-   * The cells are the three yarns, and they are the same three on either
-   * plate: an inky black, a purple and a white. So the rules between them
-   * cannot be tinted from the plate's ink, which is light on night and dark
-   * on parchment and so vanishes on one yarn or another. They are a fixed
-   * mid grey, the one value that reads on all three, and the every-fifth
-   * counting lines are gold: a ruled scale on an engraved plate rather
-   * than a heavier pen.
+   * The cells are the three yarns: an inky black, a purple and a white. So
+   * the rules between them cannot be tinted from the page's ink, which is
+   * near white and vanishes on the stars. They are a fixed mid grey, the
+   * one value that reads on all three, and the every-fifth counting lines
+   * are the warm accent: a ruled scale over the print rather than a
+   * heavier pen.
    */
   --graticule: #6f6b7a;
-  --graticule-strong: color-mix(in srgb, var(--accent) 85%, #8a8894);
+  --graticule-strong: color-mix(in srgb, var(--accent) 80%, #8a8894);
   display: grid;
   gap: 0;
   /* Hug the chart rather than stretching an 20-column plate across the page,
@@ -27,9 +26,9 @@
   overflow-y: hidden;
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius);
-  background: var(--paper-sunken);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 6px;
+  background: var(--sky-deep);
+  box-shadow: var(--shadow);
+  margin-bottom: 8px;
 }
 
 .chart-cell {
@@ -87,28 +86,29 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: color-mix(in srgb, var(--paper-sunken) 62%, transparent);
+  background: color-mix(in srgb, var(--sky-deep) 62%, transparent);
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 
+/* The next stitch is the brightest star in the frame. */
 .chart-cell-next {
   z-index: 3;
   box-shadow:
-    0 0 0 2px var(--paper),
-    0 0 0 4px var(--gold-bright),
-    0 0 10px 3px color-mix(in srgb, var(--gold) 70%, transparent);
+    0 0 0 2px var(--sky),
+    0 0 0 4px var(--warm-bright),
+    0 0 14px 4px color-mix(in srgb, var(--warm) 80%, transparent);
 }
 
 /*
  * The constellation figures, over the cells and under nothing.
  *
- * Red ink, as an engraver adds the figures to a plate: gold read as one
- * more warm neutral against the cream of the stars and the gold of the
- * counting lines, and vermilion is the one colour that holds against the
- * black, the purple and the white alike. A fine line, with the figures
- * faint while you knit and the one you are sewing bright. Off the brim,
- * dashed: that is a guide to a star that is not on the hat, and nobody
- * should sew to it.
+ * Red, as a star chart draws them to be read by torchlight: warm colours
+ * read as one more neutral against the cream of the stars and the warm
+ * counting lines, and red is the one colour that holds against the black,
+ * the purple and the white alike. A fine line, with the figures faint
+ * while you knit and the one you are sewing bright. Off the brim, dashed:
+ * that is a guide to a star that is not on the hat, and nobody should sew
+ * to it.
  */
 .chart-sky {
   z-index: 4;
@@ -144,13 +144,13 @@
 
 /* A dark halo under the active line so it stays visible across a star. */
 .chart-line-active .chart-line-halo {
-  stroke: var(--paper);
+  stroke: var(--sky);
   stroke-width: 5;
   opacity: 0.85;
 }
 
 .chart-label {
-  background: var(--paper-sunken);
+  background: var(--sky-deep);
   color: var(--ink-faint);
   font-family: var(--font-mono);
   font-size: 7px;
@@ -333,7 +333,7 @@
 }
 
 .yarn-editor {
-  border: 1px solid var(--paper-edge);
+  border: 1px solid var(--sky-edge);
   border-radius: var(--radius);
   padding: 12px 14px;
   margin-top: 10px;
@@ -423,7 +423,7 @@
   margin: 12px 0 0;
   max-height: 420px;
   overflow-y: auto;
-  border: 1px solid var(--paper-edge);
+  border: 1px solid var(--sky-edge);
   border-radius: var(--radius);
 }
 

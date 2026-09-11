@@ -1,15 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import ThemeControl from "../ThemeControl";
 import "./PageLayout.css";
 
 export type Step = "design" | "sky" | "pattern";
 
 const stepOrder: Step[] = ["design", "sky", "pattern"];
+/*
+ * The three steps, named as a photograph is made: you frame the shot, you
+ * expose it, and you get a print.
+ */
 const stepLabels: Record<Step, string> = {
-  design: "Design",
-  sky: "Sky",
-  pattern: "Pattern",
+  design: "Frame",
+  sky: "Expose",
+  pattern: "Print",
 };
 
 interface PageLayoutProps {
@@ -29,7 +32,7 @@ interface PageLayoutProps {
 }
 
 /**
- * The sheet every page is laid out on.
+ * The frame every page is laid out in.
  *
  * The step indicator exists because the flow gave no sense of place: you went
  * from a form to a spinning hat to a grid with no idea how many stages there
@@ -83,8 +86,8 @@ const PageLayout: React.FC<PageLayoutProps> = ({
     {lede && <p className="page-lede screen-only">{lede}</p>}
     {children}
     <footer className="colophon screen-only">
-      <span>Patterns are saved in this browser, on this device.</span>
-      <ThemeControl />
+      <span>Your exposures are kept in this browser, on this device.</span>
+      <span className="readout">hats.whichlooklike.space</span>
     </footer>
   </div>
 );

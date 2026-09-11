@@ -42,7 +42,7 @@ const Pattern: React.FC = () => {
     const { result, pattern } = createPattern(hat.stitches, hat.sky, name);
     if (!result.ok) {
       setProblem(
-        "This browser is out of storage. Delete a pattern from the home page and try again."
+        "This browser is out of storage. Delete an exposure from the home page and try again."
       );
       return;
     }
@@ -51,9 +51,9 @@ const Pattern: React.FC = () => {
 
   return (
     <PageLayout
-      title="Your chart"
+      title="Your print"
       step="pattern"
-      lede="Save it to tick stitches off as you knit, or take it away as a file."
+      lede="The exposure as a chart. Save it to tick stitches off as you knit, or take it away as a file."
     >
       <PatternContents
         stitches={hat.stitches}
@@ -63,13 +63,13 @@ const Pattern: React.FC = () => {
       >
         <div className="render-actions screen-only">
           <Button variant="primary" size="lg" onClick={() => setNaming(true)}>
-            Save this pattern
+            Save this exposure
           </Button>
           <Button
             variant="quiet"
             onClick={() => navigate(`/design?${searchParams.toString()}`)}
           >
-            Change the design
+            Back to the frame
           </Button>
           {problem && (
             <span role="alert" className="render-problem">
@@ -81,8 +81,8 @@ const Pattern: React.FC = () => {
 
       <NameDialog
         open={naming}
-        title="Name this sky"
-        text="So you can find it again on the home page."
+        title="Name this exposure"
+        text="So you can find it again in your exposures."
         initialValue="My sky"
         onConfirm={save}
         onCancel={() => setNaming(false)}

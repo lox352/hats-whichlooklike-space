@@ -12,27 +12,34 @@
   z-index: 10;
   padding: 10px 0 12px;
   border-top: 1px solid var(--rule-strong);
-  /* Fades the chart out behind the panel rather than cutting it off. */
+  /*
+   * Dark glass over the chart: the chart shows through it, blurred, so it
+   * reads as a panel laid on the print rather than a wall the print stops
+   * at, and the gradient fades the top edge in.
+   */
   background: linear-gradient(
     to top,
-    var(--paper) 0%,
-    var(--paper) 72%,
-    color-mix(in srgb, var(--paper) 82%, transparent) 100%
+    color-mix(in srgb, var(--sky) 92%, transparent) 0%,
+    color-mix(in srgb, var(--sky) 88%, transparent) 72%,
+    color-mix(in srgb, var(--sky) 60%, transparent) 100%
   );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .knitting-progress-bar {
   height: 5px;
   border-radius: 3px;
-  background: var(--paper-sunken);
-  border: 1px solid var(--paper-edge);
+  background: var(--sky-deep);
+  border: 1px solid var(--sky-edge);
   overflow: hidden;
   margin-bottom: 10px;
 }
 
 .knitting-progress-fill {
   height: 100%;
-  background: linear-gradient(to right, var(--gold-deep), var(--accent-fill));
+  background: linear-gradient(to right, var(--warm-deep), var(--accent-fill));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
   transition: width 0.25s ease-out;
 }
 
@@ -58,8 +65,8 @@
   color: var(--ink-faint);
   font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  margin-right: 5px;
+  letter-spacing: 0.16em;
+  margin-right: 6px;
 }
 
 /* The instruction that matters: how many of which colour. */
@@ -120,9 +127,9 @@
 
 .knitting-button {
   border: 1px solid var(--rule-strong);
-  background: var(--paper-raised);
+  background: color-mix(in srgb, var(--sky-raised) 80%, transparent);
   color: var(--ink);
-  border-radius: var(--radius);
+  border-radius: 999px;
   cursor: pointer;
   font: inherit;
   font-size: var(--text-sm);
@@ -141,7 +148,7 @@
   cursor: not-allowed;
 }
 
-/* Gold leaf, with the night's ink on it whichever plate this is. */
+/* The warm star, filled, with the sky's ink on it. */
 .knitting-button-primary,
 .knitting-button-run {
   min-height: 52px;
@@ -153,6 +160,7 @@
 .knitting-button-primary {
   background: var(--accent-fill);
   border-color: var(--accent-fill);
+  box-shadow: var(--glow);
 }
 
 .knitting-button-run {

@@ -1,22 +1,23 @@
 /*
  * The stage the hat settles on.
  *
- * The page is already night, so the stage is a plate within it: an arched
- * frame like the mount of an engraving, lit from above so the wool has form,
- * with the stars carrying their own light.
+ * A frame within the frame: the hat sits in the black of the sensor with a
+ * faint vignette, the way the subject of a long exposure sits in its field,
+ * and the stars on it carry their own light. A thin white mount line around
+ * it, as on a print.
  */
 .hat-stage {
-  border: 1px solid var(--paper-edge);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  position: relative;
+  border-radius: var(--radius-lg);
   background: radial-gradient(
-    120% 90% at 50% 0%,
-    color-mix(in srgb, var(--paper-raised) 80%, var(--paper-edge)) 0%,
-    var(--paper-raised) 45%,
-    var(--paper-sunken) 100%
+    80% 70% at 50% 45%,
+    #101a33 0%,
+    var(--sky) 55%,
+    var(--sky-deep) 100%
   );
-  box-shadow:
-    inset 0 1px 12px rgba(0, 0, 0, 0.35),
-    var(--shadow-sm);
+  outline: 1px solid rgba(242, 245, 255, 0.35);
+  outline-offset: -8px;
+  box-shadow: var(--shadow);
   overflow: hidden;
 }
 
@@ -26,7 +27,7 @@
   gap: 10px;
   color: var(--ink-soft);
   font-size: var(--text-sm);
-  margin: 16px 0 0;
+  margin: 18px 0 0;
   min-height: 24px;
 }
 
@@ -37,6 +38,7 @@
   height: 8px;
   border-radius: 50%;
   background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
   animation: render-pulse 1.4s ease-in-out infinite;
   flex: none;
 }

@@ -12,23 +12,35 @@ import {
   renamePattern,
 } from "../helpers/pattern-storage";
 import { embroideryPercent } from "../helpers/embroidery";
+import { indexRows } from "../helpers/knitting-progress";
 import PageLayout from "./ui/PageLayout";
 import Button from "./ui/Button";
 import Dialog from "./ui/Dialog";
 import NameDialog from "./ui/NameDialog";
 import ProgressRing from "./ProgressRing";
-import CelestialPlate from "./CelestialPlate";
 import { useReveal } from "../useReveal";
 import "./Home.css";
 
 const formatSavedAt = (savedAt: string) =>
   new Date(savedAt).toLocaleDateString(undefined, {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
   });
+
+/**
+ * The caption under a print: what was in the frame. Stitches by rows, how
+ * many stars landed on the hat, how many figures are drawn on it.
+ */
+const frameCaption = (pattern: SavedPattern) => {
+  const { rows } = indexRows(pattern.stitches);
+  const across = rows[0]?.length ?? 0;
+  return [
+    `${across} × ${rows.length}`,
+    `${pattern.sky.stars.length} stars`,
+    `${pattern.sky.constellations.length} figures`,
+  ].join(" · ");
+};
 
 /** A section that rises into view the first time it is scrolled to. */
 const RevealSection: React.FC<{ children: React.ReactNode }> = ({
@@ -64,7 +76,7 @@ const PatternCard: React.FC<{
     ? sewingDone
       ? { label: "See it", to: `/pattern/${id}` }
       : {
-          label: sewn > 0 ? "Keep embroidering" : "Embroider the stars",
+          label: sewn > 0 ? "Keep tracing" : "Trace the figures",
           to: `/pattern/${id}?${embroideryParam}=1`,
         }
     : {
@@ -75,19 +87,19 @@ const PatternCard: React.FC<{
   return (
     <li
       ref={ref}
-      className={`pattern-card reveal${shown ? " reveal-shown" : ""}`}
+      className={`frame reveal${shown ? " reveal-shown" : ""}`}
     >
-      <div className="pattern-card-head">
-        <div>
-          <h3 className="pattern-name">{pattern.name ?? "Saved sky"}</h3>
-          <div className="pattern-date">
-            {sewingDone
-              ? "Finished"
-              : knittingDone
-                ? "Knitted, sewing the stars"
-                : formatSavedAt(pattern.savedAt)}
-          </div>
-        </div>
+      {/* The print itself: a dark field with the progress as its exposure. */}
+      <div className="frame-print" aria-hidden="true">
+        <span className="frame-status">
+          {sewingDone
+            ? "Finished"
+            : knittingDone
+              ? "Knitted · tracing the figures"
+              : started
+                ? `${knitted.toFixed(0)}% knitted`
+                : "Not yet started"}
+        </span>
         <div className="pattern-rings">
           <ProgressRing
             percent={knitted}
@@ -99,6 +111,12 @@ const PatternCard: React.FC<{
               label={`${sewn.toFixed(0)}% embroidered`}
             />
           )}
+        </div>
+      </div>
+      <div className="frame-caption">
+        <h3 className="pattern-name">{pattern.name ?? "Saved sky"}</h3>
+        <div className="readout">
+          {frameCaption(pattern)} · {formatSavedAt(pattern.savedAt)}
         </div>
       </div>
       <div className="pattern-card-actions">
@@ -151,44 +169,48 @@ const Home: React.FC = () => {
     <PageLayout
       title="Hats Which Look Like Space"
       showTitle={false}
-      aside={<span className="masthead-aside">A celestial atlas</span>}
+      aside={<span className="masthead-aside">A long exposure, knitted</span>}
     >
-      {/* The masthead already carries the site name, so the hero is the pitch. */}
+      {/*
+       * The masthead already carries the site name, so the hero is the
+       * pitch: one line of display type over the sky, like the title frame
+       * of a planetarium show.
+       */}
       <section className="hero">
-        <div className="hero-copy">
-          <p className="eyebrow">A moment · a place · a sky</p>
-          <h1 className="hero-title">Knit the sky you stood under.</h1>
-          <p className="hero-lede">
-            Choose a night and a place. The stars that were overhead are
-            charted onto a hat: knitted in three yarns, then the constellations
-            sewn on in thread. You get a chart to knit from and a guide to sew
-            from.
-          </p>
-          <div className="hero-actions">
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => navigate("/design")}
-            >
-              Chart your sky
-            </Button>
-          </div>
+        <p className="eyebrow">A place · a moment · a long exposure</p>
+        <h1 className="hero-title">Knit the sky you stood under.</h1>
+        <p className="hero-lede">
+          Say where you were and when. The stars overhead that night are
+          exposed onto a hat: knitted in three yarns, with the constellations
+          traced over them in thread. You get a chart to knit from and a guide
+          to sew from.
+        </p>
+        <div className="hero-actions">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => navigate("/design")}
+          >
+            Frame your sky
+          </Button>
+          <span className="readout hero-readout">
+            f/∞ · one night · three yarns
+          </span>
         </div>
-        <CelestialPlate className="hero-plate" />
       </section>
 
       <RevealSection>
-        <h2 className="section-heading">Your skies</h2>
+        <h2 className="section-heading">Your exposures</h2>
         {savedPatterns.length === 0 ? (
           <div className="empty-state">
             <p>
-              Nothing saved yet. Patterns you save live in this browser, on this
-              device, so they will be here when you come back, but they do not
-              travel with you.
+              Nothing in the frame yet. Skies you save are kept in this
+              browser, on this device, so they will be here when you come
+              back, but they do not travel with you.
             </p>
           </div>
         ) : (
-          <ul className="pattern-list">
+          <ul className="gallery">
             {savedPatterns.map((pattern) => (
               <PatternCard
                 key={pattern.id}
@@ -203,7 +225,7 @@ const Home: React.FC = () => {
 
       <NameDialog
         open={renaming !== null}
-        title="Rename this sky"
+        title="Rename this exposure"
         initialValue={renaming?.name ?? "Saved sky"}
         onConfirm={(name) => {
           if (renaming) renamePattern(renaming.id, name);
@@ -214,7 +236,7 @@ const Home: React.FC = () => {
 
       <Dialog
         open={deleting !== null}
-        title="Delete this sky?"
+        title="Delete this exposure?"
         text={
           <>
             {deleting?.name ?? "This pattern"} will be gone for good. Saved

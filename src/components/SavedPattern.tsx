@@ -138,13 +138,13 @@ const SavedPattern: React.FC = () => {
 
   if (!savedPattern) {
     return (
-      <PageLayout title="Pattern not found">
+      <PageLayout title="Exposure not found">
         <p>
-          This pattern is no longer saved in this browser. Saved patterns live
+          This exposure is no longer saved in this browser. Saved exposures live
           only on the device that made them.
         </p>
         <Button variant="primary" onClick={() => navigate("/")}>
-          Back to your skies
+          Back to your exposures
         </Button>
       </PageLayout>
     );
@@ -188,11 +188,11 @@ const SavedPattern: React.FC = () => {
             {knittingDone ? (
               sewingDone ? (
                 <Button variant="primary" size="lg" onClick={() => navigate("/design")}>
-                  Chart another sky
+                  Expose another sky
                 </Button>
               ) : (
                 <Button variant="primary" size="lg" onClick={() => setMode("embroidering")}>
-                  {sewn > 0 ? "Keep embroidering" : "Embroider the constellations"}
+                  {sewn > 0 ? "Keep tracing" : "Trace the constellations"}
                 </Button>
               )
             ) : (
@@ -207,12 +207,12 @@ const SavedPattern: React.FC = () => {
             ) : (
               groups.length > 0 && (
                 <Button variant="quiet" onClick={() => setMode("embroidering")}>
-                  Embroider early
+                  Trace early
                 </Button>
               )
             )}
             <Button variant="quiet" onClick={() => navigate("/")}>
-              Back to your skies
+              Back to your exposures
             </Button>
             <span className="progress-summary">
               <ProgressRing percent={knitted} label={`${knitted.toFixed(0)}% knitted`} />
@@ -220,7 +220,7 @@ const SavedPattern: React.FC = () => {
               {groups.length > 0 && (
                 <>
                   <ProgressRing percent={sewn} label={`${sewn.toFixed(0)}% embroidered`} />
-                  {sewn.toFixed(1)}% sewn
+                  {sewn.toFixed(1)}% traced
                 </>
               )}
             </span>

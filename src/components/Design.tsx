@@ -75,6 +75,12 @@ const problemFor = (
   field: DesignProblem["field"]
 ) => problems.find((problem) => problem.field === field)?.message;
 
+/** The moment as a readout: ISO-ish, fixed width, as a camera stamps it. */
+const formatMomentReadout = (moment: SkyMoment) => {
+  const two = (n: number) => String(n).padStart(2, "0");
+  return `${moment.year}-${two(moment.month)}-${two(moment.day)} ${two(moment.hour)}:${two(moment.minute)}`;
+};
+
 const monthNames = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -265,11 +271,15 @@ const Design: React.FC = () => {
 
   return (
     <PageLayout
-      title="Design your sky"
+      title="Frame your sky"
       step="design"
-      lede="Say how big the head is, then which night and which place the sky is from."
+      lede="Say where you stood and when, and how big the head is. The exposure is worked out from that."
     >
-      <h2 className="design-section-heading">Size</h2>
+      <div className="design-layout">
+      <div className="design-form">
+      <h2 className="design-section-heading">
+        <span className="design-section-number">01</span> The frame
+      </h2>
 
       <SizeCalculator
         gauge={gauge}
@@ -299,7 +309,7 @@ const Design: React.FC = () => {
       </div>
 
       <h2 className="design-section-heading" style={{ marginTop: "22px" }}>
-        The sky
+        <span className="design-section-number">02</span> The sky
       </h2>
 
       <div className="design-field">
@@ -454,15 +464,6 @@ const Design: React.FC = () => {
             </div>
           )}
 
-          <p className="design-hint sky-status" aria-live="polite">
-            {!zonesReady
-              ? "Working out the local time…"
-              : zoneLookup?.error ||
-                instants.error ||
-                (instant && zone
-                  ? `${zone.replace(/_/g, " ")}, ${formatOffset(instant.offset)} · overhead: right ascension ${longitudeToRaHours(overhead.longitude).toFixed(1)}h, declination ${overhead.latitude.toFixed(1)}°`
-                  : "")}
-          </p>
           <p className="design-hint design-credit">
             Time zones from the OpenStreetMap boundaries, © OpenStreetMap contributors.
           </p>
@@ -511,7 +512,7 @@ const Design: React.FC = () => {
         }`}
       >
         <h2 className="design-section-heading" style={{ marginTop: "22px" }}>
-          The stars
+          <span className="design-section-number">03</span> The stars
         </h2>
 
         <InputField
@@ -543,7 +544,7 @@ const Design: React.FC = () => {
         )}
 
         <h2 className="design-section-heading" style={{ marginTop: "26px" }}>
-          Shaping
+          <span className="design-section-number">04</span> Shaping
         </h2>
 
         <div className="design-field">
@@ -564,16 +565,82 @@ const Design: React.FC = () => {
         </div>
       </div>
 
-      <div className="design-actions">
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={handleKnitAndChart}
-          disabled={mode === "moment" && !skyReady}
-        >
-          Knit and chart
-        </Button>
-        <ShareDesignLink />
+      </div>
+
+      {/*
+       * The readout: what the exposure will be, as the data panel on the
+       * back of a camera. It is where the status lives, and where the
+       * shutter is.
+       */}
+      <aside className="exposure" aria-label="Exposure">
+        <p className="eyebrow">Exposure</p>
+        <dl className="exposure-data">
+          <div>
+            <dt>Frame</dt>
+            <dd>{design.stitchesPerRow} × {design.numberOfRows}</dd>
+          </div>
+          {mode === "moment" && source ? (
+            <>
+              <div>
+                <dt>Place</dt>
+                <dd>
+                  {placeLabel ??
+                    `${source.place.latitude.toFixed(2)}°, ${source.place.longitude.toFixed(2)}°`}
+                </dd>
+              </div>
+              <div>
+                <dt>Moment</dt>
+                <dd>{momentValid ? formatMomentReadout(source.moment) : "—"}</dd>
+              </div>
+              <div>
+                <dt>Clock</dt>
+                <dd>
+                  {instant && zone
+                    ? `${zone.replace(/_/g, " ")} ${formatOffset(instant.offset)}`
+                    : "—"}
+                </dd>
+              </div>
+            </>
+          ) : (
+            <div>
+              <dt>Aimed at</dt>
+              <dd>
+                {mode === "polaris" ? "Polaris" : mode === "crux" ? "The Southern Cross" : "A point"}
+                {" · "}
+                {design.orientation.targetDestination}
+              </dd>
+            </div>
+          )}
+          <div>
+            <dt>Overhead</dt>
+            <dd>
+              RA {longitudeToRaHours(overhead.longitude).toFixed(1)}h · Dec {overhead.latitude.toFixed(1)}°
+            </dd>
+          </div>
+          <div>
+            <dt>Faintest</dt>
+            <dd>mag {design.orientation.magnitudeLimit ?? 4}</dd>
+          </div>
+        </dl>
+        <p className="exposure-status" aria-live="polite">
+          {mode === "moment"
+            ? !zonesReady
+              ? "Working out the local time…"
+              : zoneLookup?.error || instants.error || (instant && zone ? "Ready to expose." : "")
+            : "Ready to expose."}
+        </p>
+        <div className="design-actions">
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleKnitAndChart}
+            disabled={mode === "moment" && !skyReady}
+          >
+            Expose the sky
+          </Button>
+          <ShareDesignLink />
+        </div>
+      </aside>
       </div>
     </PageLayout>
   );

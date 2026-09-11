@@ -31,7 +31,7 @@ const ShareDesignLink: React.FC = () => {
   return (
     <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
       <Button variant="quiet" onClick={copy}>
-        Copy a link to this design
+        Copy a link to this frame
       </Button>
       <span
         aria-live="polite"

@@ -12,7 +12,7 @@ interface ConstellationIndexProps {
  *
  * The identities were always computed and stored - every line is keyed by
  * its constellation - but for a long time nothing read them, so a hat was a
- * field of anonymous lines. This is the index of the plate.
+ * field of anonymous lines. This is the caption that names them.
  */
 const ConstellationIndex: React.FC<ConstellationIndexProps> = ({ sky }) => {
   const [open, setOpen] = useState(false);

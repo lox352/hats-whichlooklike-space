@@ -1,17 +1,17 @@
 .dialog {
-  border: 1px solid var(--paper-edge);
+  border: 1px solid var(--sky-edge);
   border-radius: var(--radius-lg);
-  background: var(--paper-raised);
+  background: var(--sky-raised);
   color: var(--ink);
   padding: 0;
   max-width: 420px;
   width: calc(100% - 32px);
-  box-shadow: 0 12px 40px rgba(34, 32, 28, 0.28);
+  box-shadow: var(--shadow);
 }
 
 .dialog::backdrop {
-  background: rgba(34, 32, 28, 0.45);
-  backdrop-filter: blur(1.5px);
+  background: rgba(5, 7, 15, 0.6);
+  backdrop-filter: blur(3px);
 }
 
 .dialog-body {
@@ -41,5 +41,5 @@
   gap: 8px;
   padding: 14px 22px 18px;
   border-top: 1px solid var(--rule);
-  background: color-mix(in srgb, var(--paper-sunken) 45%, transparent);
+  background: color-mix(in srgb, var(--sky-deep) 55%, transparent);
 }
