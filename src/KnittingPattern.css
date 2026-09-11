@@ -7,12 +7,16 @@
 /* The chart, as a plate in an atlas. */
 .chart {
   /*
-   * On the earth chart the rules are darker than the paper. Here they must
-   * be lighter than the night, and the every-fifth counting lines are gold:
-   * a ruled scale on an engraved plate rather than a heavier pen.
+   * The cells are the three yarns, and they are the same three on either
+   * plate: an inky black, a purple and a white. So the rules between them
+   * cannot be tinted from the plate's ink, which is light on night and dark
+   * on parchment and so vanishes on one yarn or another. They are a fixed
+   * mid grey, the one value that reads on all three, and the every-fifth
+   * counting lines are gold: a ruled scale on an engraved plate rather
+   * than a heavier pen.
    */
-  --graticule: color-mix(in srgb, var(--ink) 16%, transparent);
-  --graticule-strong: color-mix(in srgb, var(--gold) 55%, transparent);
+  --graticule: #6f6b7a;
+  --graticule-strong: color-mix(in srgb, var(--accent) 85%, #8a8894);
   display: grid;
   gap: 0;
   /* Hug the chart rather than stretching an 20-column plate across the page,
@@ -98,9 +102,13 @@
 /*
  * The constellation figures, over the cells and under nothing.
  *
- * Gold on the night, a fine line, with the figures faint while you knit and
- * the one you are sewing bright. Off the brim, dashed: that is a guide to a
- * star that is not on the hat, and nobody should sew to it.
+ * Red ink, as an engraver adds the figures to a plate: gold read as one
+ * more warm neutral against the cream of the stars and the gold of the
+ * counting lines, and vermilion is the one colour that holds against the
+ * black, the purple and the white alike. A fine line, with the figures
+ * faint while you knit and the one you are sewing bright. Off the brim,
+ * dashed: that is a guide to a star that is not on the hat, and nobody
+ * should sew to it.
  */
 .chart-sky {
   z-index: 4;
@@ -110,7 +118,7 @@
 
 .chart-line line {
   stroke: var(--figure);
-  stroke-width: 1;
+  stroke-width: 1.25;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
@@ -125,11 +133,12 @@
 }
 
 .chart-sky-embroidering .chart-line-sewn line {
-  stroke: color-mix(in srgb, var(--ink) 60%, transparent);
+  /* Done: it steps back to the grey of the rules, on any yarn. */
+  stroke: #9a96a6;
 }
 
 .chart-line-active line {
-  stroke: var(--gold-bright);
+  stroke: var(--figure-bright);
   stroke-width: 2;
 }
 
@@ -174,11 +183,25 @@
   width: 100%;
   height: 100%;
   fill: none;
-  stroke: color-mix(in srgb, var(--ink) 78%, transparent);
-  stroke-width: 1;
   stroke-linecap: round;
   stroke-linejoin: round;
   pointer-events: none;
+}
+
+/*
+ * A mark sits on whichever yarn the crown happens to be, so it is drawn
+ * twice: a cream line over a thin night halo, which reads on black, on
+ * purple and on white, on either plate.
+ */
+.chart-mark path {
+  stroke: #f0e6d2;
+  stroke-width: 1;
+}
+
+.chart-mark .chart-mark-halo {
+  stroke: #0c0a12;
+  stroke-width: 2.5;
+  opacity: 0.75;
 }
 
 .chart-caption {

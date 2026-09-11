@@ -117,6 +117,7 @@ const StitchBox: React.FC<{
             viewBox={`0 0 ${cellSize} ${cellSize}`}
             aria-hidden="true"
           >
+            <path className="chart-mark-halo" d={mark} vectorEffect="non-scaling-stroke" />
             <path d={mark} vectorEffect="non-scaling-stroke" />
           </svg>
         )}
@@ -393,7 +394,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
       </div>
       <p className="chart-caption">
         {numCols} stitches across, {numRows} rows. Read from the bottom right,
-        working right to left; scroll sideways to see the whole round. The gold
+        working right to left; scroll sideways to see the whole round. The red
         lines are the constellations, sewn on after the knitting; a dashed line
         runs off the brim to a star that is not on the hat.
       </p>

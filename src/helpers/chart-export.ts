@@ -117,7 +117,7 @@ export const chartToSvg = (
     const isStar = options.sky?.stars.includes(stitch.id) ?? yarn === "Star";
     const fill = options.paper
       ? yarn === "MilkyWay"
-        ? "#e1e4e8"
+        ? "#e4dcef"
         : "#ffffff"
       : safeColour(
           yarns ? displayYarn(stitch.colour, yarns).colour : stitch.colour,
@@ -196,7 +196,7 @@ export const chartToSvg = (
       }
       for (const shift of [0, -wrap])
         joins.push(
-          `<line x1="${x1 + shift}" y1="${y1}" x2="${x2 + shift}" y2="${y2}" stroke="#97762d" stroke-width="${cell * 0.12}"${from.offHat || to.offHat ? ' stroke-dasharray="3 2"' : ""}/>`,
+          `<line x1="${x1 + shift}" y1="${y1}" x2="${x2 + shift}" y2="${y2}" stroke="#c8432f" stroke-width="${cell * 0.12}"${from.offHat || to.offHat ? ' stroke-dasharray="3 2"' : ""}/>`,
         );
     }
   const svg = [

@@ -44,9 +44,12 @@
 @media (max-width: 720px) {
   .hero {
     grid-template-columns: 1fr;
+    padding-bottom: 32px;
   }
+  /* On a phone the plate would push the saved skies a screen down. It is
+     decoration; the copy is the pitch. */
   .hero-plate {
-    max-width: 300px;
+    display: none;
   }
 }
 

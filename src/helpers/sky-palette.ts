@@ -3,10 +3,14 @@ import { RGB } from "../types/RGB";
 /**
  * The three yarns a space hat is knitted in.
  *
- * Night is the ground; the Milky Way is one pale band, not a graded ramp; a
+ * Night is the ground; the Milky Way is one band, not a graded ramp; a
  * star is a stitch of white. It used to be five computed blues for the
  * galaxy plus the two ends, up to seven shades for one hat, and the ramp
  * only ever showed its outermost level anyway.
+ *
+ * These values are written into every saved pattern and read back to tell
+ * the yarns apart, so they are an identity and never change. What each
+ * yarn looks like on screen is decided in yarn-preference.ts.
  */
 export const SkyPalette = {
   Night: [11, 16, 32] as RGB,

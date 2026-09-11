@@ -2,15 +2,15 @@ import { RGB } from "../types/RGB";
 import { SkyPalette } from "./sky-palette";
 
 /**
- * Which real yarn stands in for each of the earth's colours.
+ * Which real yarn stands in for each of the sky's three colours.
  *
- * The matching palette is deliberately not editable. Colours are chosen by
- * nearest neighbour against the globe raster, so changing the values would
- * change which stitches come out as land or sea and distort the map. The
- * earth's colours are fixed; what is yours is the yarn you knit them in.
- *
- * So this is a display mapping applied on the way out, to the chart, the
- * printed key and the knitting panel. The pattern data is untouched.
+ * The pattern palette in sky-palette.ts is an identity, not a look: it is
+ * what is written into every saved pattern, and the star count and the
+ * export read a stitch's yarn back from it. So it never changes, and what
+ * a stitch looks like is decided here instead, on the way out to the chart,
+ * the hat, the printed key and the knitting panel. The defaults are the
+ * yarns as the atlas shows them; the ones you actually buy are yours to
+ * set in their place.
  */
 
 export interface Yarn {
@@ -24,14 +24,27 @@ export interface Yarn {
 export const yarnKey = (colour: RGB): string =>
   `${colour[0]},${colour[1]},${colour[2]}`;
 
+/*
+ * How the three yarns look by default. Night is an inky black, only just
+ * off true black so the chart's rules still read on it; the Milky Way is a
+ * rich purple, which a real sky never is and a knitted one should be; a
+ * star is warm white. These must stay in step with the tokens of the same
+ * names in index.css.
+ */
+export const shownColours = {
+  Night: [12, 10, 18] as RGB,
+  MilkyWay: [88, 52, 138] as RGB,
+  Star: [247, 244, 236] as RGB,
+} as const;
+
 export const skyColours: { key: string; label: string; colour: RGB }[] = [
-  { key: yarnKey(SkyPalette.Night), label: "Night", colour: SkyPalette.Night },
+  { key: yarnKey(SkyPalette.Night), label: "Night", colour: shownColours.Night },
   {
     key: yarnKey(SkyPalette.MilkyWay),
     label: "Milky Way",
-    colour: SkyPalette.MilkyWay,
+    colour: shownColours.MilkyWay,
   },
-  { key: yarnKey(SkyPalette.Star), label: "Star", colour: SkyPalette.Star },
+  { key: yarnKey(SkyPalette.Star), label: "Star", colour: shownColours.Star },
 ];
 
 export type YarnChoices = Record<string, Yarn>;

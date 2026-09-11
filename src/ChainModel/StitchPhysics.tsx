@@ -6,6 +6,7 @@ import { SkyMarks } from "../types/SkyMarks";
 import { OrientationParameters } from "../types/OrientationParameters";
 import { colourNodes } from "../helpers/node-colouring";
 import { dyeOrderFromHeights } from "../helpers/dye-sweep";
+import { displayYarn, readYarns } from "../helpers/yarn-preference";
 import {
   adjacentStitchDistance,
   verticalStitchDistance,
@@ -72,12 +73,16 @@ export default function StitchPhysics({
   const sweeping = useRef(false);
   const ready = useRef(false);
   const initialised = useRef(false);
-  const pack = (source: Stitch[]) =>
-    new Float32Array(
+  // The hat is shown in the yarns as they are shown on the chart, not in the
+  // pattern's identity colours, so the two agree.
+  const pack = (source: Stitch[]) => {
+    const yarns = readYarns();
+    return new Float32Array(
       source
         .filter((s) => s.id > 0)
-        .flatMap((s) => s.colour.map((c) => c / 255)),
+        .flatMap((s) => displayYarn(s.colour, yarns).colour.map((c) => c / 255)),
     );
+  };
   useEffect(() => {
     if (initialised.current) return;
     initialised.current = true;
