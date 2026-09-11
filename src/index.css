@@ -50,7 +50,7 @@ html {
      helpers/yarn-preference.ts, which is where the chart reads them. */
   --night: #0c0a12;
   --milky-way: #58348a;
-  --star: #f7f4ec;
+  --star: #f4f7ff;
 
   /* The accent is a warm giant: the one star in a frame that is not white. */
   --warm: #ffd9a0;
@@ -65,13 +65,12 @@ html {
   --accent-fill-strong: var(--warm-bright);
   --on-accent-fill: #0b0e1a;
 
-  /* Constellation figures, on the chart and on the hat alike: a teal that
-     is the complement of the Milky Way's purple and holds against the
-     black and the white of the other two yarns. The hat reads this token,
-     so the two never drift apart. */
-  --figure: #2fe0c8;
-  --figure-bright: #9cf5e8;
-  --figure-faint: color-mix(in srgb, var(--figure) 45%, transparent);
+  /* Constellation figures, on the chart and on the hat alike: the same
+     white as the stars they join, as a star chart draws them. The hat
+     reads this token, so the two never drift apart. The one being sewn
+     is picked out in the warm accent instead. */
+  --figure: var(--star);
+  --figure-faint: color-mix(in srgb, var(--figure) 42%, transparent);
 
   /* Type: one face, from a hairline display weight to a bold label. */
   --font-display: "Manrope", "Avenir Next", "Segoe UI", system-ui, sans-serif;

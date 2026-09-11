@@ -6,7 +6,7 @@ import { segmentsOf } from "../helpers/connections";
 
 /**
  * The colour the chart draws the figures in, read from the stylesheet so
- * the hat and the chart cannot disagree. The fallback is the same teal,
+ * the hat and the chart cannot disagree. The fallback is the same white,
  * for a canvas mounted somewhere without the stylesheet.
  */
 const figureColour = (): string =>
@@ -14,7 +14,7 @@ const figureColour = (): string =>
     getComputedStyle(document.documentElement)
       .getPropertyValue("--figure")
       .trim()) ||
-  "#2fe0c8";
+  "#f4f7ff";
 /**
  * The constellation figures on the settled hat, as one set of line segments.
  *

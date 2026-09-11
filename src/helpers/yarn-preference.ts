@@ -28,13 +28,13 @@ export const yarnKey = (colour: RGB): string =>
  * How the three yarns look by default. Night is an inky black, only just
  * off true black so the chart's rules still read on it; the Milky Way is a
  * rich purple, which a real sky never is and a knitted one should be; a
- * star is warm white. These must stay in step with the tokens of the same
- * names in index.css.
+ * star is white, with the touch of blue a star has on a long exposure.
+ * These must stay in step with the tokens of the same names in index.css.
  */
 export const shownColours = {
   Night: [12, 10, 18] as RGB,
   MilkyWay: [88, 52, 138] as RGB,
-  Star: [247, 244, 236] as RGB,
+  Star: [244, 247, 255] as RGB,
 } as const;
 
 export const skyColours: { key: string; label: string; colour: RGB }[] = [

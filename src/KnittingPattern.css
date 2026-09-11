@@ -11,11 +11,11 @@
    * the rules between them cannot be tinted from the page's ink, which is
    * near white and vanishes on the stars. They are a fixed mid grey, the
    * one value that reads on all three, and the every-fifth counting lines
-   * are the warm accent: a ruled scale over the print rather than a
-   * heavier pen.
+   * a lighter grey: a heavier rule, not another colour, so the only
+   * colours on the chart are the yarns and the warm mark of where you are.
    */
   --graticule: #6f6b7a;
-  --graticule-strong: color-mix(in srgb, var(--accent) 80%, #8a8894);
+  --graticule-strong: #aaa7b6;
   display: grid;
   gap: 0;
   /* Hug the chart rather than stretching an 20-column plate across the page,
@@ -102,12 +102,13 @@
 /*
  * The constellation figures, over the cells and under nothing.
  *
- * Teal, the same teal the lines are drawn in on the hat: warm colours read
- * as one more neutral against the cream of the stars and the warm counting
- * lines, and teal is the complement of the purple and holds against the
- * black and the white alike. A fine line, with the figures faint while
- * you knit and the one you are sewing bright. Off the brim, dashed: that
- * is a guide to a star that is not on the hat, and nobody should sew to it.
+ * The same white as the stars, as a star chart draws them: a line is a
+ * join between two stars, not a thing of its own colour, and white holds
+ * against the black and the purple. Where it crosses a star cell it
+ * vanishes into it, which is right - that is where it ends. A fine line,
+ * with the figures faint while you knit and the one you are sewing in the
+ * warm accent. Off the brim, dashed: that is a guide to a star that is not
+ * on the hat, and nobody should sew to it.
  */
 .chart-sky {
   z-index: 4;
@@ -126,18 +127,21 @@
   stroke-dasharray: 3 3;
 }
 
-/* While sewing, what is not in hand steps back. */
+/*
+ * While sewing, the figures appear as you sew them: what is still to do
+ * is faint, what is done is the full white of the thread, and the line
+ * in hand is the warm accent.
+ */
 .chart-sky-embroidering .chart-line-pending line {
   stroke: var(--figure-faint);
 }
 
 .chart-sky-embroidering .chart-line-sewn line {
-  /* Done: it steps back to the grey of the rules, on any yarn. */
-  stroke: #9a96a6;
+  stroke: var(--figure);
 }
 
 .chart-line-active line {
-  stroke: var(--figure-bright);
+  stroke: var(--accent);
   stroke-width: 2;
 }
 
@@ -234,7 +238,7 @@
  * purple and on white, on either plate.
  */
 .chart-mark path {
-  stroke: #f0e6d2;
+  stroke: var(--star);
   stroke-width: 1;
 }
 
