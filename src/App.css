@@ -5,3 +5,14 @@
   padding: 0rem;
   text-align: center;
 }
+.page { width: min(1100px, 100%); margin: auto; padding: 24px; text-align: left; box-sizing: border-box; }
+.hat-canvas { height: 420px; width: 100%; }
+.design-card { padding: 24px 0; border-bottom: 1px solid #777; margin-bottom: 24px; }
+.design-row,.actions { display:flex; flex-wrap:wrap; gap:16px; align-items:end; }
+.design-field-label {display:block;}
+.page input,.page select {font:inherit;max-width:100%;padding:10px;box-sizing:border-box;}
+.page label {display:block;margin:8px 0;}
+.share-link input {width:100%;}
+.chart-extras {display:grid;gap:12px;margin:24px 0;}
+.print-only {display:none;}
+@media print { .screen-only,button,.share-link,.eyebrow {display:none!important;} .print-only {display:block;} .print-sheet svg {width:100%;height:auto;} .page {padding:0;width:100%;} body {background:white!important;color:#141b2e!important;} }

@@ -22,5 +22,5 @@ export const colourNodes = (
   const hatCoordinates = positions.map((position) =>
     getGlobalCoordinates(position, maxY)
   );
-  return colourSpace(hatCoordinates, orientationParameters);
+  return colourSpace(hatCoordinates, orientationParameters, { magnitudeLimit: orientationParameters.magnitudeLimit });
 };

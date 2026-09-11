@@ -1,116 +1,32 @@
-import React, { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import ChainModel from "../ChainModel/ChainModel";
-import { Stitch } from "../types/Stitch";
-import { useNavigate } from "react-router-dom";
-import { OrientationParameters } from "../types/OrientationParameters";
-import { SkyMarks } from "../types/SkyMarks";
-
-interface RenderProps {
-  stitches: Stitch[];
-  setStitches: React.Dispatch<React.SetStateAction<Stitch[]>>;
-  sky: SkyMarks;
-  setSky: (sky: SkyMarks) => void;
-  orientationParameters: OrientationParameters;
-}
-
-const Render: React.FC<RenderProps> = ({
-  stitches,
-  setStitches,
-  sky,
-  setSky,
-  orientationParameters,
-}) => {
-  const [anyStichRendered, setAnyStitchRendered] = React.useState(false);
-  const [simulationActive, setSimulationActive] = React.useState(false);
-  const [simulationCompleted, setSimulationCompleted] = React.useState(false);
-  const [patternGenerating, setPatternGenerating] = React.useState(false);
-  const [dyingCompleted, setDyingCompleted] = React.useState(false);
-  const simulationRunCount = React.useRef(0);
-
-  React.useEffect(() => {
-    if (simulationActive) {
-      simulationRunCount.current += 1;
-    }
-
-    if (simulationRunCount.current === 1 && !simulationActive) {
-      setSimulationCompleted(true);
-      setTimeout(() => {
-        setDyingCompleted(true);
-      }, 0);
-    }
-  }, [simulationActive]);
-
+import { getStitches } from "../helpers/stitches";
+import { designFromSearchParams, designToSearchParams } from "../helpers/design-url";
+import { cacheHat, readHat } from "../helpers/design-session";
+import { emptySky } from "../types/SkyMarks";
+import { validateDesign } from "../types/KnittingMachine";
+import Button from "./ui/Button";
+export default function Render() {
+  const [params] = useSearchParams();
+  const design = useMemo(() => designFromSearchParams(params), [params]);
+  const cached = useMemo(() => readHat(design), [design]);
+  const errors = validateDesign(design.stitchesPerRow,design.numberOfRows,design.decreaseMethod);
+  const [stitches,setStitches] = useState(() => cached?.stitches ?? (errors.length ? [] : getStitches(design.stitchesPerRow,design.numberOfRows,design.decreaseMethod)));
+  const [sky,setSky] = useState(cached?.sky ?? emptySky);
+  const [active,setActive] = useState(false);
+  const [started,setStarted] = useState(false);
+  const [ready,setReady] = useState(!!cached);
   const navigate = useNavigate();
-
-  const generatePattern = () => {
-    setPatternGenerating(true);
-  };
-
-  React.useEffect(() => {
-    if (patternGenerating) {
-      navigate("/pattern");
-    }
-  }, [navigate, patternGenerating]);
-
-  useEffect(() => {
-    if (stitches.length === 0) {
-      navigate("/");
-    }
-  }, [stitches, navigate]);
-
-  const thereAreStitches = stitches.length > 0;
-  if (!thereAreStitches) {
-    return null;
-  }
-
-  return (
-    <div style={{ textAlign: "left", padding: "20px" }}>
-      <h1 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>
-        Dying Your Hat
-      </h1>
-      <div style={{ height: "350px" }}>
-        <ChainModel
-          stitches={stitches}
-          setStitches={setStitches}
-          sky={sky}
-          setSky={setSky}
-          orientationParameters={orientationParameters}
-          simulationActive={simulationActive}
-          setSimulationActive={setSimulationActive}
-          onAnyStitchRendered={() => {
-            setAnyStitchRendered(true);
-          }}
-        />
-      </div>
-      <i>
-        {!anyStichRendered
-          ? "Summoning stitches..."
-          : !simulationCompleted
-          ? "Letting stitches settle..."
-          : !dyingCompleted
-          ? "We're almost there..."
-          : "Pinch and zoom to see the pattern in more detail"}
-      </i>
-      {dyingCompleted && (
-        <div style={{ marginTop: "10px" }}>
-          <button
-            style={{
-              backgroundColor: "#3f51b5",
-              color: "white",
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-            disabled={simulationActive}
-            onClick={generatePattern}
-          >
-            {patternGenerating ? "Generating pattern..." : "Generate Pattern"}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default Render;
+  useEffect(() => { if(active) setStarted(true); else if(started) setReady(true); }, [active,started]);
+  useEffect(() => { if(ready) cacheHat(design,stitches,sky); }, [ready,design,stitches,sky]);
+  const query = designToSearchParams(design).toString();
+  return <main className="page"><a href="#/" className="eyebrow">Hats which look like space</a><h1>Charting your sky</h1>
+    {errors.length ? <><p role="alert">{errors.map(e=>e.message).join(" ")}</p><Button onClick={()=>navigate(`/design?${query}`)}>Edit design</Button></> : <>
+      <div className="hat-canvas"><ChainModel stitches={stitches} setStitches={cached ? undefined : setStitches} sky={sky} setSky={setSky} orientationParameters={design.orientation} simulationActive={active} setSimulationActive={cached ? undefined : setActive}/></div>
+      <p role="status">{ready ? "Your sky is ready. Drag to turn the hat; pinch to zoom." : "Letting the stitches settle into a hat…"}</p>
+      <div className="actions"><Button disabled={!ready} onClick={()=>navigate(`/pattern?${query}`)}>Open knitting chart</Button><Button variant="quiet" onClick={()=>navigate(`/design?${query}`)}>Edit design</Button></div>
+      <label className="share-link">Share this design<input readOnly value={`${window.location.origin}${window.location.pathname}#/design?${query}`} onFocus={e=>e.target.select()}/></label>
+    </>}
+  </main>;
+}

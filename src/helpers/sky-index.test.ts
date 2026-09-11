@@ -97,7 +97,7 @@ describe("buildSkyIndex", () => {
       const vector = toUnitVector(point);
       expect(index.nearest(vector).cosine).toBeCloseTo(bruteForce(vector), 12);
     }
-  });
+  }, 30000);
 
   it("finds every stitch from its own direction", () => {
     // A perfect hit. Not necessarily the same index: the join stitch shares

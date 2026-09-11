@@ -12,3 +12,9 @@ Inherited Claude's uncommitted projection, geometry, sky data and storage refact
 - Celestial atlas visual overhaul, accessibility, dialogs, metadata.
 - Instanced knitting, deterministic settling, camera fit, scoped lazy canvas, sky arrival.
 - Guided embroidery and separately persisted segment progress.
+
+## Checkpoint 2 — functional features
+
+Implemented measurement sizing with no negative ease; sky/year inputs and explicit UTC offset; URL designs with magnitude; session cache containing both stitches and sky; saved knitting mode with undo, row/run controls and reload persistence; three editable named yarns; swatch-based yarn estimates; written rows; SVG/PNG/print exports including constellation guides; all 89 figure names. Time-zone metadata stripped with exact geometry retained and lookup loaded lazily, cached by location. Initial JS reduced to 4.12 MB (1.28 MB gzip), with 3.49 MB zone data separate.
+
+Validation: 240 tests, build and lint pass. Browser journey: Polaris design → generation → chart → named save → knit a 31-stitch run → reload; resumed at row 1, stitch 32 with knitting mode retained. Heavy independent nearest-neighbour reference test now has a 30-second allowance to accommodate simultaneous WebGL verification.

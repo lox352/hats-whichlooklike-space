@@ -1,4 +1,6 @@
-import React, { useMemo } from "react";
+import { useYarns } from "./useYarns";
+import { displayYarn } from "./helpers/yarn-preference";
+import React, { useMemo, useEffect } from "react";
 import { Stitch } from "./types/Stitch";
 import { segmentsOf } from "./helpers/connections";
 import { SkyMarks } from "./types/SkyMarks";
@@ -8,6 +10,7 @@ interface KnittingPatternProps {
   stitches: Stitch[];
   sky: SkyMarks;
   progress: number;
+  followProgress?: boolean;
 }
 
 interface StitchPosition {
@@ -87,10 +90,14 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
   stitches,
   sky,
   progress,
+  followProgress,
 }) => {
+  const { yarns } = useYarns();
+  const displayed = useMemo(() => stitches.map(s => ({...s,colour:displayYarn(s.colour,yarns).colour})),[stitches,yarns]);
+  useEffect(() => { if(!followProgress)return; const cell=document.querySelector(`[id^="stitch-${progress+1}-row-"]`); if(!cell)return; const rect=cell.getBoundingClientRect(); const panel=document.querySelector(".knitting-panel")?.getBoundingClientRect(); const bottom=(panel?.top ?? window.innerHeight)-50; if(rect.bottom>bottom || rect.top<70) window.scrollBy({top:rect.top-bottom+70,behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth"}); },[progress,followProgress]);
   const filteredStitches = useMemo(
-    () => stitches.filter((stitch) => stitch.id !== 0),
-    [stitches]
+    () => displayed.filter((stitch) => stitch.id !== 0),
+    [displayed]
   );
 
   const connections = useMemo(() => segmentsOf(sky), [sky]);
