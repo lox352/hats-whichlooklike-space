@@ -57,7 +57,7 @@ const ChartPrintSheet: React.FC<ChartPrintSheetProps> = ({
         dangerouslySetInnerHTML={{ __html: chart.svg }}
       />
       <p className="print-meta">
-        Blank cells: Night · pale cells: Milky Way · dots: Star. Red lines are
+        Blank cells: Night · pale cells: Milky Way · dots: Star. Teal lines are
         sewn after knitting. Dashed lines beyond the brim are guides only.
       </p>
       <div className="print-legend">

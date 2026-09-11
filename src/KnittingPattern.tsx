@@ -479,7 +479,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
       )}
       <p className="chart-caption">
         {numCols} stitches across, {numRows} rows. Read from the bottom right,
-        working right to left; scroll sideways to see the whole round. The red
+        working right to left; scroll sideways to see the whole round. The teal
         lines are the constellations, sewn on after the knitting; a dashed line
         runs off the brim to a star that is not on the hat.
       </p>

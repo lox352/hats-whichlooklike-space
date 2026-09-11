@@ -3,6 +3,18 @@ import * as THREE from "three";
 import { Stitch } from "../types/Stitch";
 import { SkyMarks } from "../types/SkyMarks";
 import { segmentsOf } from "../helpers/connections";
+
+/**
+ * The colour the chart draws the figures in, read from the stylesheet so
+ * the hat and the chart cannot disagree. The fallback is the same teal,
+ * for a canvas mounted somewhere without the stylesheet.
+ */
+const figureColour = (): string =>
+  (typeof document !== "undefined" &&
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--figure")
+      .trim()) ||
+  "#2fe0c8";
 /**
  * The constellation figures on the settled hat, as one set of line segments.
  *
@@ -56,8 +68,8 @@ export default function ConstellationLines({
   useEffect(() => () => geometry.dispose(), [geometry]);
   return (
     <lineSegments geometry={geometry}>
-      {/* Gold leaf, and not tone-mapped, so it stays gold under any light. */}
-      <lineBasicMaterial color="#c9a961" toneMapped={false} />
+      {/* The chart's own colour, and not tone-mapped, so it stays it under any light. */}
+      <lineBasicMaterial color={figureColour()} toneMapped={false} />
     </lineSegments>
   );
 }

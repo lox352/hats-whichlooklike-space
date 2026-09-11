@@ -71,7 +71,7 @@
 
 /* The constellation the next stitch is in: a place, not a count. */
 .knitting-region b {
-  color: #b8dcff;
+  color: var(--accent);
   font-size: var(--text-base);
 }
 

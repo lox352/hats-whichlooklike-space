@@ -65,13 +65,13 @@ html {
   --accent-fill-strong: var(--warm-bright);
   --on-accent-fill: #0b0e1a;
 
-  /* Constellation figures, as drawn on the chart: red, as a star chart
-     draws them for night vision, and the one colour that holds against
-     the black, the purple and the white of the three yarns. */
-  --vermilion: #ff5a44;
-  --figure: var(--vermilion);
-  --figure-bright: #ff9a86;
-  --figure-faint: color-mix(in srgb, var(--vermilion) 42%, transparent);
+  /* Constellation figures, on the chart and on the hat alike: a teal that
+     is the complement of the Milky Way's purple and holds against the
+     black and the white of the other two yarns. The hat reads this token,
+     so the two never drift apart. */
+  --figure: #2fe0c8;
+  --figure-bright: #9cf5e8;
+  --figure-faint: color-mix(in srgb, var(--figure) 45%, transparent);
 
   /* Type: one face, from a hairline display weight to a bold label. */
   --font-display: "Manrope", "Avenir Next", "Segoe UI", system-ui, sans-serif;

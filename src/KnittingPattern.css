@@ -102,13 +102,12 @@
 /*
  * The constellation figures, over the cells and under nothing.
  *
- * Red, as a star chart draws them to be read by torchlight: warm colours
- * read as one more neutral against the cream of the stars and the warm
- * counting lines, and red is the one colour that holds against the black,
- * the purple and the white alike. A fine line, with the figures faint
- * while you knit and the one you are sewing bright. Off the brim, dashed:
- * that is a guide to a star that is not on the hat, and nobody should sew
- * to it.
+ * Teal, the same teal the lines are drawn in on the hat: warm colours read
+ * as one more neutral against the cream of the stars and the warm counting
+ * lines, and teal is the complement of the purple and holds against the
+ * black and the white alike. A fine line, with the figures faint while
+ * you knit and the one you are sewing bright. Off the brim, dashed: that
+ * is a guide to a star that is not on the hat, and nobody should sew to it.
  */
 .chart-sky {
   z-index: 4;
@@ -118,7 +117,7 @@
 
 .chart-line line {
   stroke: var(--figure);
-  stroke-width: 1.25;
+  stroke-width: 1.4;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
@@ -151,10 +150,10 @@
 
 /*
  * The constellation regions. The sky is tiled, so every cell belongs to
- * one, and the one being looked at is outlined: a cool blue, nothing like
- * the red of the figures or the warm ring on the next stitch, drawn as
- * one shape around all its cells. Under the figures, so a line is never
- * hidden by it.
+ * one, and the one being looked at is outlined in the warm accent - the
+ * colour of "where you are", which the next stitch's ring already wears -
+ * drawn as one shape around all its cells, heavier than the counting
+ * lines. Under the figures, so a line is never hidden by it.
  */
 .chart-labelled .chart-cell {
   cursor: crosshair;
@@ -164,10 +163,10 @@
   z-index: 3;
   pointer-events: none;
   fill: none;
-  stroke: #8ec5ff;
-  stroke-width: 1.5;
+  stroke: var(--accent);
+  stroke-width: 2;
   stroke-linecap: square;
-  filter: drop-shadow(0 0 3px rgba(142, 197, 255, 0.7));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 80%, transparent));
 }
 
 .chart-region-caption {
@@ -178,7 +177,7 @@
 }
 
 .chart-region-name {
-  color: #b8dcff;
+  color: var(--accent);
   font-weight: 600;
 }
 

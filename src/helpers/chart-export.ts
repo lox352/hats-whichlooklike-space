@@ -196,7 +196,7 @@ export const chartToSvg = (
       }
       for (const shift of [0, -wrap])
         joins.push(
-          `<line x1="${x1 + shift}" y1="${y1}" x2="${x2 + shift}" y2="${y2}" stroke="#c8432f" stroke-width="${cell * 0.12}"${from.offHat || to.offHat ? ' stroke-dasharray="3 2"' : ""}/>`,
+          `<line x1="${x1 + shift}" y1="${y1}" x2="${x2 + shift}" y2="${y2}" stroke="#149c8b" stroke-width="${cell * 0.12}"${from.offHat || to.offHat ? ' stroke-dasharray="3 2"' : ""}/>`,
         );
     }
   const svg = [
