@@ -90,6 +90,9 @@ const KnittingMode: React.FC<KnittingModeProps> = ({
       if (
         target &&
         (target.tagName === "INPUT" ||
+          target.tagName === "BUTTON" ||
+          target.tagName === "SELECT" ||
+          target.tagName === "A" ||
           target.tagName === "TEXTAREA" ||
           target.isContentEditable)
       ) {

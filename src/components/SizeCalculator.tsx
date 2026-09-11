@@ -161,7 +161,7 @@ const SizeCalculator: React.FC<SizeCalculatorProps> = ({
         </div>
       </div>
 
-      <div style={{ marginTop: "4px" }}>
+      <div className="actions">
         <Button variant="secondary" onClick={apply} disabled={!gaugeUsable}>
           Work out my stitches
         </Button>

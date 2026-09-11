@@ -4,6 +4,7 @@ import { SkyMarks, StrokePoint } from "../types/SkyMarks";
 export interface Segment {
   abbreviation: string;
   strokeIndex: number;
+  segmentIndex: number;
   from: StrokePoint;
   to: StrokePoint;
 }
@@ -21,6 +22,7 @@ export const segmentsOf = (sky: SkyMarks): Segment[] =>
       stroke.points.slice(1).map((to, i) => ({
         abbreviation,
         strokeIndex,
+        segmentIndex: i,
         from: stroke.points[i],
         to,
       }))

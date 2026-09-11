@@ -25,7 +25,7 @@ export default function Render() {
     {errors.length ? <><p role="alert">{errors.map(e=>e.message).join(" ")}</p><Button onClick={()=>navigate(`/design?${query}`)}>Edit design</Button></> : <>
       <div className="hat-canvas"><ChainModel stitches={stitches} setStitches={cached ? undefined : setStitches} sky={sky} setSky={setSky} orientationParameters={design.orientation} simulationActive={active} setSimulationActive={cached ? undefined : setActive}/></div>
       <p role="status">{ready ? "Your sky is ready. Drag to turn the hat; pinch to zoom." : "Letting the stitches settle into a hat…"}</p>
-      <div className="actions"><Button disabled={!ready} onClick={()=>navigate(`/pattern?${query}`)}>Open knitting chart</Button><Button variant="quiet" onClick={()=>navigate(`/design?${query}`)}>Edit design</Button></div>
+      <div className="actions"><Button variant="primary" disabled={!ready} onClick={()=>navigate(`/pattern?${query}`)}>Open knitting chart</Button><Button variant="quiet" onClick={()=>navigate(`/design?${query}`)}>Edit design</Button></div>
       <label className="share-link">Share this design<input readOnly value={`${window.location.origin}${window.location.pathname}#/design?${query}`} onFocus={e=>e.target.select()}/></label>
     </>}
   </main>;

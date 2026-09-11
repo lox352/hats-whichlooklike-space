@@ -74,6 +74,6 @@ export default function Design() {
       {mode !== "moment" && <label>Place this point at<select value={design.orientation.targetDestination} onChange={e => setDesign({...design,orientation:{...design.orientation,targetDestination:e.target.value as "crown"|"front"|"rim"}})}><option value="crown">Crown</option><option value="front">Front</option><option value="rim">Rim</option></select></label>}
     </section>}
     {errors.map(e => <p role="alert" key={e.field}>{e.message}</p>)}
-    <Button onClick={chart} disabled={errors.length>0 || (mode === "moment" && (!validMoment || zoneBusy || (!!problem && !manualOffset)))}>Knit and chart</Button>
+    <Button variant="primary" onClick={chart} disabled={errors.length>0 || (mode === "moment" && (!validMoment || zoneBusy || (!!problem && !manualOffset)))}>Knit and chart</Button>
   </main>;
 }

@@ -1,178 +1,23 @@
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { listPatterns, patternsChangedEvent, percentComplete, renamePattern, deletePattern, bareIdFor } from "../helpers/pattern-storage";
 import { SavedPattern } from "../types/SavedPattern";
-import {
-  deletePattern,
-  listPatterns,
-  patternsChangedEvent,
-  percentComplete,
-  renamePattern,
-} from "../helpers/pattern-storage";
-
-const buttonStyle = {
-  backgroundColor: "#3f51b5",
-  color: "white",
-  padding: "5px 10px",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer",
-  marginRight: "5px",
-  marginTop: "5px",
-};
-
-const deleteButtonStyle = {
-  ...buttonStyle,
-  backgroundColor: "#f44336",
-};
-
-const PreviousPatterns: React.FC<{ patterns: SavedPattern[] }> = ({
-  patterns,
-}) => {
-  const navigate = useNavigate();
-
-  if (patterns.length === 0) {
-    return null;
-  }
-  
-  return (
-    <div style={{ marginTop: "40px" }}>
-      <h2 style={{ fontSize: "2rem", marginBottom: "20px" }}>
-        Previous Patterns
-      </h2>
-      <ul style={{ listStyleType: "none", padding: 0 }}>
-        {patterns.map((pattern) => {
-          const id = pattern.id.replace("pattern-", "");
-          return (
-            <li
-              key={id}
-              style={{
-                marginBottom: "10px",
-                borderBottom: "1px solid white",
-                paddingBottom: "10px",
-              }}
-            >
-              <h3
-                style={{
-                  fontSize: "1.5rem",
-                  marginBottom: "0px",
-                  marginTop: "0px",
-                  display: "inline-block",
-                }}
-              >
-                {pattern.name ?? "Saved Pattern"}
-              </h3>
-              <div>
-                Saved on{" "}
-                {new Date(parseInt(id)).toLocaleDateString(undefined, {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "numeric",
-                  hour12: true,
-                })}
-              </div>
-              <button
-                style={buttonStyle}
-                onClick={() => navigate(`/pattern/${id}`)}
-              >
-                View Pattern
-              </button>
-              <button
-                style={{ ...buttonStyle }}
-                onClick={() => navigate(`/render/${id}`)}
-              >
-                Visualise Hat
-              </button>
-              <button
-                style={{ ...buttonStyle }}
-                onClick={() => {
-                  const newName = prompt(
-                    "Enter new name for the pattern:",
-                    pattern.name ?? "Saved Pattern"
-                  );
-                  // null is the prompt being cancelled, not a new name.
-                  if (newName !== null && newName !== pattern.name) {
-                    renamePattern(pattern.id, newName);
-                  }
-                }}
-              >
-                Rename
-              </button>
-              <button
-                style={deleteButtonStyle}
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      "Are you sure you want to delete this pattern?"
-                    )
-                  ) {
-                    deletePattern(id);
-                  }
-                }}
-              >
-                Delete
-              </button>
-              <div style={{ marginTop: "5px", fontStyle: "italic" }}>
-                {percentComplete(pattern).toFixed(2)}% completed
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-};
-
-
-const Home: React.FC = () => {
-  const navigate = useNavigate();
-  const [savedPatterns, setSavedPatterns] = React.useState<SavedPattern[]>(
-    listPatterns
-  );
-
-  const handleBegin = () => {
-    navigate("/design");
-  };
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setSavedPatterns(listPatterns());
-    };
-
-    window.addEventListener(patternsChangedEvent, handleStorageChange);
-
-    return () => {
-      window.removeEventListener(patternsChangedEvent, handleStorageChange);
-    };
-  }, []);
-
-  return (
-    <div style={{ textAlign: "left", padding: "20px" }}>
-      <h1 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>
-        Hats Which Look Like Space
-      </h1>
-      <p style={{ fontSize: "1rem", marginBottom: "20px" }}>
-        Knit a hat which looks like the night sky. Begin by designing your hat, then
-        render it, and finally generate the pattern.
-      </p>
-      <button
-        style={{
-          backgroundColor: "#3f51b5",
-          color: "white",
-          padding: "10px 20px",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-        onClick={handleBegin}
-      >
-        Begin
-      </button>
-      <PreviousPatterns patterns={savedPatterns} />
-    </div>
-  );
-};
-
-export default Home;
+import Button from "./ui/Button";
+import NameDialog from "./ui/NameDialog";
+import Dialog from "./ui/Dialog";
+import ProgressRing from "./ProgressRing";
+import "./Home.css";
+export default function Home() {
+ const navigate=useNavigate();const [patterns,setPatterns]=useState(listPatterns);
+ const [renaming,setRenaming]=useState<SavedPattern>();const [deleting,setDeleting]=useState<SavedPattern>();const [problem,setProblem]=useState("");
+ useEffect(()=>{const refresh=()=>setPatterns(listPatterns());window.addEventListener(patternsChangedEvent,refresh);window.addEventListener("storage",refresh);return()=>{window.removeEventListener(patternsChangedEvent,refresh);window.removeEventListener("storage",refresh);};},[]);
+ return <main className="page home"><header className="masthead"><span className="eyebrow">Which look like space</span><span className="edition">A celestial knitting atlas</span></header>
+ <section className="hero"><div className="hero-copy"><p className="eyebrow">A moment. A place. A sky.</p><h1>Keep a little<br/>of the night.</h1><p className="hero-intro">The stars above you, made into a hat. Choose a moment to remember. Knit its sky, then trace the constellations in thread.</p><Button variant="primary" size="lg" onClick={()=>navigate("/design")}>Chart your sky <span aria-hidden="true">↗</span></Button><p className="hero-note">A pattern made for your head, your yarn, your sky.</p></div>
+ <div className="celestial-plate" aria-hidden="true"><svg viewBox="0 0 500 500"><defs><pattern id="engraving" width="5" height="5" patternTransform="rotate(35)" patternUnits="userSpaceOnUse"><path d="M0 0V5" stroke="currentColor" strokeWidth="0.4"/></pattern></defs><circle cx="250" cy="250" r="230" fill="url(#engraving)" opacity=".25"/><circle cx="250" cy="250" r="222"/><circle cx="250" cy="250" r="207"/><circle cx="250" cy="250" r="180"/><ellipse cx="250" cy="250" rx="100" ry="180"/><ellipse cx="250" cy="250" rx="180" ry="75"/><path d="M30 250H470M250 30V470M110 110L390 390M110 390L390 110" opacity=".3"/><g className="plate-figure"><path d="M146 152L195 182L245 215L290 190L350 226L329 311L284 348M245 215L217 277L167 311M217 277L260 301L329 311"/>{[[146,152],[195,182],[245,215],[290,190],[350,226],[329,311],[284,348],[217,277],[167,311],[260,301]].map(([x,y],i)=><g key={i}><circle cx={x} cy={y} r={i%3===0?5:3}/><path d={`M${x-9} ${y}h18M${x} ${y-9}v18`} opacity=".55"/></g>)}</g><text x="250" y="19">N</text><text x="481" y="254">E</text><text x="250" y="492">S</text><text x="18" y="254">W</text></svg><p>THE SKY BECOMES THE STITCH</p></div></section>
+ <ol className="craft-steps"><li><span>01 / Observe</span><h2>Find your moment</h2><p>A birthday, a first meeting, a night worth keeping.</p></li><li><span>02 / Knit</span><h2>Work the night sky</h2><p>Three yarns, a fitted pattern, one stitch at a time.</p></li><li><span>03 / Trace</span><h2>Join the stars</h2><p>Embroider the constellation lines onto your finished hat.</p></li></ol>
+ {patterns.length>0&&<section className="saved-hats"><div className="section-heading"><p className="eyebrow">Your observations</p><h2>Skies in the making</h2></div><ul>{patterns.map(p=><li key={p.id}><ProgressRing percent={percentComplete(p)} label={`${percentComplete(p).toFixed(0)}% knitted`}/><div className="saved-title"><h3>{p.name??"Untitled sky"}</h3><p>{new Date(p.savedAt).toLocaleDateString()} · {percentComplete(p).toFixed(1)}% knitted</p></div><div className="actions"><Button onClick={()=>navigate(`/pattern/${bareIdFor(p.id)}?knitting=1`)}>Keep knitting</Button><Button variant="quiet" onClick={()=>navigate(`/pattern/${bareIdFor(p.id)}`)}>Chart</Button><Button variant="quiet" onClick={()=>navigate(`/render/${bareIdFor(p.id)}`)}>View hat</Button><Button variant="quiet" onClick={()=>setRenaming(p)}>Rename</Button><Button variant="danger" onClick={()=>setDeleting(p)}>Delete</Button></div></li>)}</ul></section>}
+ <p role="status">{problem}</p><footer className="footer"><span>Made of stars. Made by you.</span><span>Patterns are saved in this browser.</span></footer>
+ <NameDialog open={!!renaming} title="Rename your sky" initialValue={renaming?.name} onCancel={()=>setRenaming(undefined)} onConfirm={name=>{if(renaming){const result=renamePattern(renaming.id,name);if(!result?.ok)setProblem("Could not save the name. Storage may be full.");}setRenaming(undefined);}}/>
+ <Dialog open={!!deleting} title="Delete this pattern?" text="This removes the chart and its progress from this browser. Download a copy first if you want to keep it." confirmLabel="Delete pattern" confirmVariant="danger" onCancel={()=>setDeleting(undefined)} onConfirm={()=>{if(deleting)deletePattern(deleting.id);setDeleting(undefined);}}/>
+ </main>;
+}

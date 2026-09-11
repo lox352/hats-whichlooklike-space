@@ -1,6 +1,7 @@
 import "./App.css";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { YarnProvider } from "./YarnContext";
+import ThemeControl from "./components/ThemeControl";
 import Home from "./components/Home";
 import Design from "./components/Design";
 import Render from "./components/Render";
@@ -12,5 +13,5 @@ export default function App() {
     <Route path="/" element={<Home/>}/><Route path="/design" element={<Design/>}/>
     <Route path="/render" element={<Render/>}/><Route path="/render/:patternId" element={<SavedRender/>}/>
     <Route path="/pattern" element={<Pattern/>}/><Route path="/pattern/:patternId" element={<SavedPattern/>}/>
-  </Routes></HashRouter></YarnProvider>;
+  </Routes><ThemeControl/></HashRouter></YarnProvider>;
 }
