@@ -11,7 +11,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "predev": "node scripts/prepare-timezones.mjs",
+    "prebuild": "node scripts/prepare-timezones.mjs",
+    "pretest": "node scripts/prepare-timezones.mjs"
   },
   "homepage": "https://hats.whichlooklike.space",
   "dependencies": {
@@ -20,6 +23,8 @@
     "@react-three/rapier": "^1.5.0",
     "@turf/boolean-point-in-polygon": "^7.1.0",
     "@turf/helpers": "^7.1.0",
+    "astronomy-engine": "^2.1.19",
+    "browser-geo-tz": "^0.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.1.0",
@@ -29,8 +34,10 @@
   "devDependencies": {
     "@dimforge/rapier3d-compat": "0.14.0",
     "@eslint/js": "^9.15.0",
+    "@types/geobuf": "^3.0.4",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^22.20.2",
+    "@types/pbf": "^3.0.5",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/seedrandom": "^3.0.8",
@@ -40,6 +47,7 @@
     "eslint": "^9.15.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
+    "geo-tz": "^8.1.8",
     "gh-pages": "^6.2.0",
     "globals": "^15.12.0",
     "jsdom": "^29.1.1",

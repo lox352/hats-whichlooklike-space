@@ -12,7 +12,7 @@ This is the independent space branch. Earth shares the knitting fundamentals but
 
 Stars are matched to stitches using spherical nearest-neighbour search. This corrects the old distortion near the pole and longitude seam, so newly generated charts differ from older charts. Saved charts retain their stored geometry and constellation links through a versioned local-storage migration.
 
-The sky catalogue uses J2000 coordinates without precession. Time-zone polygons describe standard offsets; daylight-saving time is not inferred. Saved patterns live in this browser, not an account.
+The sky catalogue uses J2000 coordinates without precession. Local clock times use exact geographic IANA zones and the browser’s date-aware timezone rules, including daylight saving. Skipped times are rejected; repeated times offer first/second occurrence. Keep browsers updated for changes to national timekeeping rules. Saved patterns live in this browser, not an account.
 
 ## Making a hat
 

@@ -39,3 +39,9 @@ Browser walkthrough: selected Triangulum, sewed a segment, undid it, then comple
 Print charts now use white Night cells, grey Milky Way cells and dark Star dots, with a matching printed legend; export tests verify the paper palette and constellation lines. The Print button was exercised, but the in-app browser did not expose a native print preview, so pagination has not been visually verified in a system print dialog.
 
 Final suite: 262 tests pass, one opt-in physical measurement test skipped by default (run successfully at checkpoint 4). TypeScript/production build and ESLint pass. Initial JS: 255.25KB / 85.43KB gzip; 3D and exact time-zone polygon data remain larger lazy chunks and Vite reports its size advisory. No baseline FPS or arrival video was recorded; measured performance is documented above rather than inferred. J2000 precession and automatic DST remain intentionally unsupported and documented in README/UI.
+
+## Automatic daylight saving
+
+Replaced standard-offset polygons with comprehensive IANA geographic zones from geo-tz 8.1.8. Exact boundaries are prepared from the lockfile into independently fetched 256KiB pieces, hosted with the app; no approximate zone lookup or external location service. The initial timezone index is ~919KB before transfer compression. Browser Intl applies rules at the requested date. Invalid/skipped local times are blocked; repeated times offer first/second occurrence. The UTC-offset checkbox is removed. Boundary attribution is linked in the form.
+
+293 tests pass, build/lint pass. Browser verified New York winter/summer, spring gap, autumn fold. Automated coverage includes London, Sydney, Lord Howe’s 30-minute changes, Chatham/Kathmandu fractional offsets, Phoenix without DST, historical US transition rules and Samoa’s skipped day. Exact browser chunk lookups match geo-tz at 11 locations. Timekeeping freshness follows the browser’s IANA database.

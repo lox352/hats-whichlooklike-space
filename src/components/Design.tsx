@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { defaultHatDesign } from "../types/HatDesign";
 import {
@@ -12,7 +12,12 @@ import {
   longitudeToRaHours,
   zenithFor,
 } from "../helpers/celestial-coordinates";
-import { findTimeZone, utcAtOffset } from "../helpers/time-zone-helper";
+import {
+  findTimeZones,
+  formatOffset,
+  instantsForLocalTime,
+  validLocalTime,
+} from "../helpers/time-zone-helper";
 import { DecreaseMethod, validateDesign } from "../types/KnittingMachine";
 import SizeCalculator from "./SizeCalculator";
 import NumberField from "./ui/NumberField";
@@ -38,72 +43,76 @@ export default function Design() {
     };
   });
   const [place, setPlace] = useState({ latitude: 0, longitude: 0 });
-  const [offset, setOffset] = useState(0);
-  const [manualOffset, setManualOffset] = useState(false);
-  const [zoneBusy, setZoneBusy] = useState(false);
+  const placeKey = `${place.latitude},${place.longitude}`;
+  const [zoneResult, setZoneResult] = useState<{
+    key: string;
+    zones: string[];
+    error?: string;
+  }>();
+  const [chosenZone, setChosenZone] = useState("");
+  const [occurrence, setOccurrence] = useState(0);
+  const [retry, setRetry] = useState(0);
   const [problem, setProblem] = useState("");
   const [advanced, setAdvanced] = useState(false);
+  const zoneBusy = mode === "moment" && zoneResult?.key !== placeKey;
+  const zones = zoneResult?.key === placeKey ? zoneResult.zones : [];
+  const zone = zones.includes(chosenZone) ? chosenZone : zones[0];
+  const validMoment = validLocalTime(moment);
+  const time = useMemo(() => {
+    if (!validMoment || !zone) return { instants: [], error: "" };
+    try {
+      const instants = instantsForLocalTime(moment, zone);
+      return {
+        instants,
+        error: instants.length
+          ? ""
+          : "This local time was skipped when the clocks moved forward. Choose a time before or after the clock change.",
+      };
+    } catch {
+      return {
+        instants: [],
+        error:
+          "Your browser cannot read this time zone. Please update your browser and retry.",
+      };
+    }
+  }, [moment, zone, validMoment]);
+  const instant = time.instants[Math.min(occurrence, time.instants.length - 1)];
   useEffect(() => {
-    if (mode !== "moment" || manualOffset) return;
+    if (mode !== "moment") return;
     let cancelled = false;
-    setZoneBusy(true);
     const timer = setTimeout(() => {
-      findTimeZone(place)
-        .then((value) => {
-          if (!cancelled) {
-            setOffset(value);
-            setProblem("");
-          }
+      findTimeZones(place)
+        .then((zones) => {
+          if (!cancelled) setZoneResult({ key: placeKey, zones });
         })
         .catch((error) => {
-          if (!cancelled) setProblem(String(error.message));
-        })
-        .finally(() => {
-          if (!cancelled) setZoneBusy(false);
+          if (!cancelled)
+            setZoneResult({
+              key: placeKey,
+              zones: [],
+              error: String(error.message),
+            });
         });
     }, 250);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [place, mode, manualOffset]);
+  }, [place, placeKey, mode, retry]);
   const errors = validateDesign(
     design.stitchesPerRow,
     design.numberOfRows,
     design.decreaseMethod,
   );
-  const validMoment =
-    Number.isInteger(moment.year) &&
-    moment.year >= 1900 &&
-    moment.year <= 2100 &&
-    Number.isInteger(moment.month) &&
-    moment.month >= 1 &&
-    moment.month <= 12 &&
-    Number.isInteger(moment.day) &&
-    Number.isInteger(moment.hour) &&
-    Number.isInteger(moment.minute) &&
-    place.latitude >= -90 &&
-    place.latitude <= 90 &&
-    place.longitude >= -180 &&
-    place.longitude <= 180 &&
-    offset >= -12 &&
-    offset <= 14 &&
-    moment.day >= 1 &&
-    moment.day <= daysInMonth(moment.month, moment.year) &&
-    moment.hour >= 0 &&
-    moment.hour < 24 &&
-    moment.minute >= 0 &&
-    moment.minute < 60;
   const chart = () => {
     if (
       errors.length ||
-      (mode === "moment" &&
-        (!validMoment || zoneBusy || (!!problem && !manualOffset)))
+      (mode === "moment" && (!validMoment || zoneBusy || !instant))
     )
       return;
     let orientation = design.orientation;
     if (mode === "moment") {
-      const sky = zenithFor(utcAtOffset(moment, offset), place);
+      const sky = zenithFor(instant!.utc, place);
       orientation = {
         ...orientation,
         coordinates: {
@@ -178,9 +187,10 @@ export default function Design() {
                     key={field}
                     label={field[0].toUpperCase() + field.slice(1)}
                     value={moment[field]}
-                    onChange={(value) =>
-                      setMoment({ ...moment, [field]: value })
-                    }
+                    onChange={(value) => {
+                      setMoment({ ...moment, [field]: value });
+                      setOccurrence(0);
+                    }}
                     min={
                       field === "year"
                         ? 1900
@@ -228,32 +238,75 @@ export default function Design() {
               Use current location
             </Button>
             <p>
-              Time-zone boundaries give the standard offset. If daylight saving
-              applied at that moment, enter the actual UTC offset.
+              <a href="data-credits.html" target="_blank" rel="noreferrer">
+                Time-zone map: © OpenStreetMap contributors
+              </a>
             </p>
-            <label>
-              <input
-                type="checkbox"
-                checked={manualOffset}
-                onChange={(e) => {
-                  setManualOffset(e.target.checked);
-                  setZoneBusy(false);
+            <p>
+              Enter the local clock time at this place. Daylight saving is
+              included automatically for your chosen date.
+            </p>
+            {zone && (
+              <p className="zone-status" aria-live="polite">
+                {zone.replace(/_/g, " ")}
+                {instant ? ` · ${formatOffset(instant.offset)}` : ""}
+              </p>
+            )}
+            {zones.length > 1 && (
+              <label>
+                Time zone at this location
+                <select
+                  value={zone}
+                  onChange={(e) => {
+                    setChosenZone(e.target.value);
+                    setOccurrence(0);
+                  }}
+                >
+                  {zones.map((z) => (
+                    <option key={z} value={z}>
+                      {z.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </select>
+                <span>
+                  This location lies on overlapping time-zone boundaries. Choose
+                  the place whose clock you used.
+                </span>
+              </label>
+            )}
+            {time.instants.length > 1 && (
+              <label>
+                The clocks moved back, so this time happened twice.
+                <select
+                  value={occurrence}
+                  onChange={(e) => setOccurrence(Number(e.target.value))}
+                >
+                  {time.instants.map((candidate, i) => (
+                    <option key={candidate.timestamp} value={i}>
+                      {i === 0
+                        ? "First occurrence, before the clocks moved back"
+                        : "Second occurrence, after the clocks moved back"}{" "}
+                      ({formatOffset(candidate.offset)})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <p role="status">
+              {zoneBusy
+                ? "Finding the local time zone…"
+                : zoneResult?.error || time.error || problem}
+            </p>
+            {zoneResult?.error && !zoneBusy && (
+              <Button
+                onClick={() => {
+                  setZoneResult(undefined);
+                  setRetry(retry + 1);
                 }}
-              />{" "}
-              Set UTC offset myself
-            </label>
-            <NumberField
-              label="UTC offset (hours)"
-              value={offset}
-              onChange={setOffset}
-              min={-12}
-              max={14}
-              step={0.25}
-              disabled={!manualOffset}
-            />
-            <p aria-live="polite">
-              {zoneBusy ? "Finding the time zone…" : problem}
-            </p>
+              >
+                Retry time-zone lookup
+              </Button>
+            )}
           </>
         ) : (
           <div className="design-row">
@@ -376,8 +429,7 @@ export default function Design() {
         onClick={chart}
         disabled={
           errors.length > 0 ||
-          (mode === "moment" &&
-            (!validMoment || zoneBusy || (!!problem && !manualOffset)))
+          (mode === "moment" && (!validMoment || zoneBusy || !instant))
         }
       >
         Knit and chart
