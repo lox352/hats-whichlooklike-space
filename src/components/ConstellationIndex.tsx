@@ -16,8 +16,15 @@ interface ConstellationIndexProps {
  */
 const ConstellationIndex: React.FC<ConstellationIndexProps> = ({ sky }) => {
   const [open, setOpen] = useState(false);
-  const names = sky.constellations
-    .map((constellation) => constellationName(constellation.abbreviation))
+  /*
+   * The regions when the hat has them - every constellation whose sky is on
+   * the hat, figure or not - and otherwise the figures that are drawn.
+   */
+  const abbreviations = sky.regions
+    ? [...new Set(Object.values(sky.regions))]
+    : sky.constellations.map((constellation) => constellation.abbreviation);
+  const names = abbreviations
+    .map(constellationName)
     .sort((a, b) => a.localeCompare(b));
 
   if (names.length === 0) return null;

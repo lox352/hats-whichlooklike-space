@@ -69,6 +69,12 @@
   margin-right: 6px;
 }
 
+/* The constellation the next stitch is in: a place, not a count. */
+.knitting-region b {
+  color: #b8dcff;
+  font-size: var(--text-base);
+}
+
 /* The instruction that matters: how many of which colour. */
 .knitting-run {
   display: flex;

@@ -91,5 +91,11 @@ export const constellationNames: Record<string, string> = {
   Vol: "Volans",
   Vul: "Vulpecula",
 };
+/*
+ * The figures come in 89, with Serpens as Caput and Cauda; the regions come
+ * in 88, with Serpens as one constellation in two pieces. Both spell it Ser.
+ */
 export const constellationName = (abbreviation: string) =>
-  constellationNames[abbreviation] ?? abbreviation;
+  abbreviation === "Ser"
+    ? "Serpens"
+    : (constellationNames[abbreviation] ?? abbreviation);

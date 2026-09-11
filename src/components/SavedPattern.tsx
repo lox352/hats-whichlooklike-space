@@ -236,6 +236,7 @@ const SavedPattern: React.FC = () => {
       {mode === "knitting" && (
         <KnittingMode
           stitches={savedPattern.stitches}
+          sky={savedPattern.sky}
           progress={savedPattern.progress}
           setProgress={commitProgress}
           onStop={() => setMode("reading")}

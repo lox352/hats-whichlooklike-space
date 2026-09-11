@@ -14,8 +14,11 @@ import { EmbroideryProgress, SkyMarks } from "./SkyMarks";
  * 2 - stitches are plain objects; the sky (stars and constellation strokes)
  *     lives beside them in `sky`; `savedAt` is typed honestly as an ISO
  *     string; embroidery progress is recorded; `version` is explicit.
+ * 3 - `sky.regions` labels every stitch with its IAU constellation. Older
+ *     entries are read as they are; they have no way of saying which sky
+ *     they were pointed at, so they stay unlabelled.
  */
-export const currentPatternVersion = 2;
+export const currentPatternVersion = 3;
 
 export interface SavedPattern {
   version: number;

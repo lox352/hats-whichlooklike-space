@@ -1,0 +1,354 @@
+{
+  "And": {
+    "meaning": "the Chained Maiden",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#and"
+  },
+  "Ant": {
+    "meaning": "the Air Pump",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#ant"
+  },
+  "Aps": {
+    "meaning": "the Bird of Paradise",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#aps"
+  },
+  "Aqr": {
+    "meaning": "the Water Bearer",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#aqr"
+  },
+  "Aql": {
+    "meaning": "the Eagle",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#aql"
+  },
+  "Ara": {
+    "meaning": "the Altar",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#ara"
+  },
+  "Ari": {
+    "meaning": "the Ram",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#ari"
+  },
+  "Aur": {
+    "meaning": "the Charioteer",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#aur"
+  },
+  "Boo": {
+    "meaning": "the Herdsman",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#boo"
+  },
+  "Cae": {
+    "meaning": "the Engraving Tool",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cae"
+  },
+  "Cam": {
+    "meaning": "the Giraffe",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cam"
+  },
+  "Cnc": {
+    "meaning": "the Crab",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cnc"
+  },
+  "CVn": {
+    "meaning": "the Hunting Dogs",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cvn"
+  },
+  "CMa": {
+    "meaning": "the Great Dog",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cma"
+  },
+  "CMi": {
+    "meaning": "the Lesser Dog",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cmi"
+  },
+  "Cap": {
+    "meaning": "the Sea Goat",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cap"
+  },
+  "Car": {
+    "meaning": "the Keel",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#car"
+  },
+  "Cas": {
+    "meaning": "the Seated Queen",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cas"
+  },
+  "Cen": {
+    "meaning": "the Centaur",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cen"
+  },
+  "Cep": {
+    "meaning": "the King",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cep"
+  },
+  "Cet": {
+    "meaning": "the Sea Monster",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cet"
+  },
+  "Cha": {
+    "meaning": "the Chameleon",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cha"
+  },
+  "Cir": {
+    "meaning": "the Drawing Compass",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cir"
+  },
+  "Col": {
+    "meaning": "the Dove",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#col"
+  },
+  "Com": {
+    "meaning": "the Bernice's Hair",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#com"
+  },
+  "CrA": {
+    "meaning": "the Southern Crown",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cra"
+  },
+  "CrB": {
+    "meaning": "the Northern Crown",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#crb"
+  },
+  "Crv": {
+    "meaning": "the Crow",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#crv"
+  },
+  "Crt": {
+    "meaning": "the Cup",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#crt"
+  },
+  "Cru": {
+    "meaning": "the Southern Cross",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cru"
+  },
+  "Cyg": {
+    "meaning": "the Swan",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#cyg"
+  },
+  "Del": {
+    "meaning": "the Dolphin",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#del"
+  },
+  "Dor": {
+    "meaning": "the Swordfish",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#dor"
+  },
+  "Dra": {
+    "meaning": "the Dragon",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#dra"
+  },
+  "Equ": {
+    "meaning": "the Little Horse",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#equ"
+  },
+  "Eri": {
+    "meaning": "the River",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#eri"
+  },
+  "For": {
+    "meaning": "the Furnace",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#for"
+  },
+  "Gem": {
+    "meaning": "the Twins",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#gem"
+  },
+  "Gru": {
+    "meaning": "the Crane",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#gru"
+  },
+  "Her": {
+    "meaning": "the Hercules",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#her"
+  },
+  "Hor": {
+    "meaning": "the Clock",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#hor"
+  },
+  "Hya": {
+    "meaning": "the Female Water Snake",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#hya"
+  },
+  "Hyi": {
+    "meaning": "the Male Water Snake",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#hyi"
+  },
+  "Ind": {
+    "meaning": "the Indian",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#ind"
+  },
+  "Lac": {
+    "meaning": "the Lizard",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#lac"
+  },
+  "Leo": {
+    "meaning": "the Lion",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#leo"
+  },
+  "LMi": {
+    "meaning": "the Lesser Lion",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#lmi"
+  },
+  "Lep": {
+    "meaning": "the Hare",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#lep"
+  },
+  "Lib": {
+    "meaning": "the Scales",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#lib"
+  },
+  "Lup": {
+    "meaning": "the Wolf",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#lup"
+  },
+  "Lyn": {
+    "meaning": "the Lynx",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#lyn"
+  },
+  "Lyr": {
+    "meaning": "the Lyre",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#lyr"
+  },
+  "Men": {
+    "meaning": "the Table Mountain",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#men"
+  },
+  "Mic": {
+    "meaning": "the Microscope",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#mic"
+  },
+  "Mon": {
+    "meaning": "the Unicorn",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#mon"
+  },
+  "Mus": {
+    "meaning": "the Fly",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#mus"
+  },
+  "Nor": {
+    "meaning": "the Carpenter's Square",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#nor"
+  },
+  "Oct": {
+    "meaning": "the Octant",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#oct"
+  },
+  "Oph": {
+    "meaning": "the Serpent Bearer",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#oph"
+  },
+  "Ori": {
+    "meaning": "the Hunter",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#ori"
+  },
+  "Pav": {
+    "meaning": "the Peacock",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#pav"
+  },
+  "Peg": {
+    "meaning": "the Winged Horse",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#peg"
+  },
+  "Per": {
+    "meaning": "the Hero",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#per"
+  },
+  "Phe": {
+    "meaning": "the Phoenix",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#phe"
+  },
+  "Pic": {
+    "meaning": "the Painter's Easel",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#pic"
+  },
+  "Psc": {
+    "meaning": "the Fishes",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#pse"
+  },
+  "PsA": {
+    "meaning": "the Southern Fish",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#psa"
+  },
+  "Pup": {
+    "meaning": "the Stern",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#pup"
+  },
+  "Pyx": {
+    "meaning": "the Mariner Compass",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#pyx"
+  },
+  "Ret": {
+    "meaning": "the Reticle",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#ret"
+  },
+  "Sge": {
+    "meaning": "the Arrow",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#sge"
+  },
+  "Sgr": {
+    "meaning": "the Archer",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#sgr"
+  },
+  "Sco": {
+    "meaning": "the Scorpion",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#sco"
+  },
+  "Scl": {
+    "meaning": "the Sculptor",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#scl"
+  },
+  "Sct": {
+    "meaning": "the Shield",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#sct"
+  },
+  "Ser": {
+    "meaning": "the Serpent",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#ser"
+  },
+  "Sex": {
+    "meaning": "the Sextant",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#sex"
+  },
+  "Tau": {
+    "meaning": "the Bull",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#tau"
+  },
+  "Tel": {
+    "meaning": "the Telescope",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#tel"
+  },
+  "Tri": {
+    "meaning": "the Triangle",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#tri"
+  },
+  "TrA": {
+    "meaning": "the Southern Triangle",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#tra"
+  },
+  "Tuc": {
+    "meaning": "the Toucan",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#tuc"
+  },
+  "UMa": {
+    "meaning": "the Great Bear",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#uma"
+  },
+  "UMi": {
+    "meaning": "the Little Bear",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#umi"
+  },
+  "Vel": {
+    "meaning": "the Sails",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#vel"
+  },
+  "Vir": {
+    "meaning": "the Maiden",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#vir"
+  },
+  "Vol": {
+    "meaning": "the Flying Fish",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#vol"
+  },
+  "Vul": {
+    "meaning": "the Fox",
+    "url": "https://iauarchive.eso.org/public/themes/constellations/#vul"
+  }
+}

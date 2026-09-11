@@ -149,6 +149,47 @@
   opacity: 0.85;
 }
 
+/*
+ * The constellation regions. The sky is tiled, so every cell belongs to
+ * one, and the one being looked at is outlined: a cool blue, nothing like
+ * the red of the figures or the warm ring on the next stitch, drawn as
+ * one shape around all its cells. Under the figures, so a line is never
+ * hidden by it.
+ */
+.chart-labelled .chart-cell {
+  cursor: crosshair;
+}
+
+.chart-region {
+  z-index: 3;
+  pointer-events: none;
+  fill: none;
+  stroke: #8ec5ff;
+  stroke-width: 1.5;
+  stroke-linecap: square;
+  filter: drop-shadow(0 0 3px rgba(142, 197, 255, 0.7));
+}
+
+.chart-region-caption {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  min-height: 1.6em;
+  margin: 0 0 6px;
+}
+
+.chart-region-name {
+  color: #b8dcff;
+  font-weight: 600;
+}
+
+.chart-region-meaning {
+  color: var(--ink-soft);
+}
+
+.chart-region-count {
+  color: var(--ink-faint);
+}
+
 .chart-label {
   background: var(--sky-deep);
   color: var(--ink-faint);

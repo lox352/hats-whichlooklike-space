@@ -14,6 +14,13 @@ export interface SkyMarks {
   /** Ids of the stitches carrying a star. */
   stars: number[];
   constellations: ConstellationMarks[];
+  /**
+   * The IAU constellation each knitted stitch is in, by stitch id - the
+   * empty sky between stars included, since the sky is tiled with no gaps.
+   * Absent from hats charted before this was recorded; nothing else about
+   * them can say where they were pointed, so they simply go unlabelled.
+   */
+  regions?: Record<number, string>;
 }
 
 export interface ConstellationMarks {

@@ -87,7 +87,13 @@ name and is ambiguous on its own.
 - The star catalogue (`src/assets/stars.6.json`) is d3-celestial's, to
   magnitude 6, in J2000 coordinates; no precession is applied, which is under
   a sixth of a stitch. Constellation lines are the IAU figures, 89 of them
-  because Serpens is in two parts. Time-zone boundaries are from
-  OpenStreetMap, © OpenStreetMap contributors.
+  because Serpens is in two parts. Every stitch is also labelled with the
+  IAU constellation region its sky is in (`src/helpers/constellation-regions.ts`):
+  the J2000 direction is precessed to 1875 and looked up in Roman's table of
+  the boundaries, checked against Astropy at four thousand points by
+  `scripts/constellation-reference.py`. Time-zone boundaries are from
+  OpenStreetMap, © OpenStreetMap contributors. Daylight saving is the
+  zone's business: a clock time the clocks repeated is taken the first time
+  round and one they skipped is carried forward, and the frame page says so.
 - Sibling branches build the same machinery for different subjects: `earth`
   (a map of the world) and `pictures`.

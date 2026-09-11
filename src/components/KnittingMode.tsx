@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from "react";
 import { Stitch } from "../types/Stitch";
+import { SkyMarks } from "../types/SkyMarks";
+import { currentRegion, regionInfo } from "../helpers/constellation-guide";
 import { RGB } from "../types/RGB";
 import {
   currentRun,
@@ -15,6 +17,7 @@ import { cssColour, displayYarn } from "../helpers/yarn-preference";
 
 interface KnittingModeProps {
   stitches: Stitch[];
+  sky: SkyMarks;
   progress: number;
   /** Absolute progress, already clamped by the caller. */
   setProgress: (progress: number) => void;
@@ -38,6 +41,7 @@ interface KnittingModeProps {
  */
 const KnittingMode: React.FC<KnittingModeProps> = ({
   stitches,
+  sky,
   progress,
   setProgress,
   onStop,
@@ -67,6 +71,8 @@ const KnittingMode: React.FC<KnittingModeProps> = ({
   );
 
   const percent = counts.total === 0 ? 0 : (100 * counts.worked) / counts.total;
+  // The constellation whose sky the next stitch is in.
+  const region = regionInfo(currentRegion(sky, progress, counts.total) ?? "");
 
   const step = useCallback(
     (delta: number) => setProgress(progress + delta),
@@ -159,6 +165,13 @@ const KnittingMode: React.FC<KnittingModeProps> = ({
           <span className="knitting-label">Left</span>
           <b>{counts.remaining}</b>
         </span>
+        {region && (
+          <span className="knitting-region" aria-live="polite">
+            <span className="knitting-label">In</span>
+            <b>{region.name}</b>
+            <span>, {region.meaning}</span>
+          </span>
+        )}
       </div>
 
       {position.finished ? (

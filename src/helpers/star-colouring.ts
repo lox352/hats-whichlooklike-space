@@ -1,6 +1,7 @@
 import { Position } from "geojson";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { constellations, milkyWay, stars } from "../data/sky-data";
+import { constellationAt } from "./constellation-regions";
 import { GlobalCoordinates } from "../types/GlobalCoordinates";
 import { OrientationParameters } from "../types/OrientationParameters";
 import { RGB } from "../types/RGB";
@@ -253,7 +254,18 @@ export const colourSpace = (
   const starList = [...starStitches].sort((a, b) => a - b);
   for (const stitch of starList) colours[stitch] = SkyPalette.Star;
 
-  return { colours, sky: { stars: starList, constellations: marks } };
+  // 3. The label on every stitch: which constellation's sky it faces.
+  const regions = Object.fromEntries(
+    skyCoordinates
+      .map((coordinate, id) => [id, coordinate] as const)
+      .filter(([id]) => id > 0)
+      .map(([id, coordinate]) => [id, constellationAt(coordinate)]),
+  );
+
+  return {
+    colours,
+    sky: { stars: starList, constellations: marks, regions },
+  };
 };
 
 /** For tests and diagnostics: which stitch each catalogue star lands on. */

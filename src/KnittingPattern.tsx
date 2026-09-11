@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Stitch } from "./types/Stitch";
 import { SkyMarks } from "./types/SkyMarks";
 import { layOutStitches, StitchPosition } from "./helpers/pattern-layout";
@@ -7,6 +7,12 @@ import { segmentKey } from "./helpers/embroidery";
 import { useYarns } from "./useYarns";
 import { cssColour, displayYarn, YarnChoices } from "./helpers/yarn-preference";
 import { stitchMarkPath } from "./helpers/stitch-marks";
+import {
+  currentRegion,
+  regionCounts,
+  regionInfo,
+  regionOutline,
+} from "./helpers/constellation-guide";
 import "./KnittingPattern.css";
 
 interface KnittingPatternProps {
@@ -61,6 +67,8 @@ const StitchBox: React.FC<{
   openTop: boolean;
   openLeft: boolean;
   yarns: YarnChoices;
+  /** The constellation this stitch's sky is in, if the hat knows. */
+  region?: string;
 }> = React.memo(
   ({
     stitch,
@@ -72,6 +80,7 @@ const StitchBox: React.FC<{
     openTop,
     openLeft,
     yarns,
+    region,
   }) => {
     const mark = stitchMarkPath(stitch.type, 0, 0, cellSize);
     return (
@@ -105,6 +114,7 @@ const StitchBox: React.FC<{
           .join(" ")}
         data-next-stitch={isNext ? "true" : undefined}
         data-stitch={stitch.id}
+        data-region={region}
         style={{
           gridRow: numRows + position.row,
           gridColumn: numCols + position.col,
@@ -228,6 +238,17 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
   const gridRef = useRef<HTMLDivElement>(null);
   const nextStitchId = followProgress ? progress + 1 : undefined;
 
+  /*
+   * Which constellation to show. The sky is tiled, so every stitch is in
+   * one, and the chart can say which: hovering names the region under the
+   * pointer, a tap pins it (a second tap on it lets go), and while knitting
+   * the region of the next stitch is shown when nothing else is asked for.
+   */
+  const [hoveredRegion, setHoveredRegion] = useState<string>();
+  const [pinnedRegion, setPinnedRegion] = useState<string>();
+  const regionOf = (target: EventTarget) =>
+    (target as Element).closest<HTMLElement>("[data-region]")?.dataset.region;
+
   const filteredStitches = useMemo(
     () => stitches.filter((stitch) => stitch.id !== 0),
     [stitches]
@@ -241,6 +262,21 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
   const segments = useMemo(() => segmentsOf(sky), [sky]);
   const sewn = useMemo(() => new Set(sewnSegments ?? []), [sewnSegments]);
   const embroidering = activeSegment !== undefined || sewnSegments !== undefined;
+
+  const counts = useMemo(() => regionCounts(stitches, sky), [stitches, sky]);
+  const knittingRegion = followProgress
+    ? currentRegion(sky, progress, filteredStitches.length)
+    : undefined;
+  const shownRegion = hoveredRegion ?? pinnedRegion ?? knittingRegion;
+  const shown = shownRegion ? regionInfo(shownRegion) : undefined;
+  const shownCount = counts.find((c) => c.abbreviation === shownRegion);
+  const outline = useMemo(
+    () =>
+      sky.regions && shownRegion
+        ? regionOutline(sky.regions, positions, numRows, numCols, cellSize, shownRegion)
+        : "",
+    [sky.regions, shownRegion, positions, numRows, numCols]
+  );
 
   /*
    * Which squares of the grid have a stitch in them, so a cell can tell
@@ -330,8 +366,19 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
     <div>
       <div
         id="printable-section"
-        className="chart"
+        className={`chart${sky.regions ? " chart-labelled" : ""}`}
         ref={gridRef}
+        onPointerOver={(event) => {
+          // A finger has no hover; on touch the tap below does the work.
+          if (event.pointerType === "touch") return;
+          setHoveredRegion(regionOf(event.target));
+        }}
+        onPointerLeave={() => setHoveredRegion(undefined)}
+        onClick={(event) => {
+          const region = regionOf(event.target);
+          if (!region) return;
+          setPinnedRegion((pinned) => (pinned === region ? undefined : region));
+        }}
         style={{
           gridTemplateRows: `repeat(${numRows + 1}, ${cellSize}px)`,
           gridTemplateColumns: `repeat(${numCols + 1}, ${cellSize}px)`,
@@ -353,6 +400,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
               openTop={!filled.has(`${position.row - 1},${position.col}`)}
               openLeft={!filled.has(`${position.row},${position.col - 1}`)}
               yarns={yarns}
+              region={sky.regions?.[stitch.id]}
             />
           );
         })}
@@ -382,6 +430,17 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
             </Label>
           );
         })}
+        {outline && (
+          <svg
+            className="chart-region"
+            width={numCols * cellSize}
+            height={numRows * cellSize}
+            style={{ gridArea: `1 / 1 / ${numRows + 1} / ${numCols + 1}` }}
+            aria-hidden="true"
+          >
+            <path d={outline} />
+          </svg>
+        )}
         <SkyLines
           segments={segments}
           positions={positions}
@@ -392,6 +451,32 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
           embroidering={embroidering}
         />
       </div>
+      {sky.regions && (
+        <p className="chart-region-caption screen-only" aria-live="polite">
+          {shown ? (
+            <>
+              <span className="chart-region-name">{shown.name}</span>
+              <span className="chart-region-meaning">, {shown.meaning}</span>
+              {shownCount && (
+                <span className="chart-region-count">
+                  {" "}
+                  · {shownCount.stitches} stitches, {shownCount.stars}{" "}
+                  {shownCount.stars === 1 ? "star" : "stars"}
+                </span>
+              )}
+              {shownRegion === pinnedRegion && hoveredRegion === undefined && (
+                <span className="chart-region-count"> · tap again to let go</span>
+              )}
+              {" "}
+              <a href={shown.url} target="_blank" rel="noreferrer">
+                IAU guide
+              </a>
+            </>
+          ) : (
+            "Every stitch is in a constellation. Point at the chart, or tap it, to see which."
+          )}
+        </p>
+      )}
       <p className="chart-caption">
         {numCols} stitches across, {numRows} rows. Read from the bottom right,
         working right to left; scroll sideways to see the whole round. The red
