@@ -3,6 +3,17 @@ import { Stitch } from "../types/Stitch";
 import { SavedPattern } from "../types/SavedPattern";
 import { segmentsOf } from "./connections";
 import { constellationName } from "../data/constellation-names";
+
+/*
+ * The embroidery, as work to be done.
+ *
+ * The chart records the constellations as strokes of points; a needle wants
+ * them as lines from star to star, one constellation at a time, in an order
+ * that keeps the thread moving. This turns the one into the other, and keeps
+ * the tally of which lines are sewn.
+ */
+
+/** One line to sew, star to star, within a constellation. */
 export interface SewingSegment {
   key: string;
   abbreviation: string;
@@ -11,6 +22,7 @@ export interface SewingSegment {
   from: number;
   to: number;
 }
+/** A constellation's lines, in sewing order. */
 export interface SewingGroup {
   abbreviation: string;
   name: string;
@@ -22,7 +34,16 @@ export const segmentKey = (s: {
   strokeIndex: number;
   segmentIndex: number;
 }) => `${s.abbreviation}:${s.strokeIndex}:${s.segmentIndex}`;
-/** Stable source identities; only the traversal direction changes when ordering. */
+/**
+ * Every constellation on the hat with its lines in sewing order.
+ *
+ * Lines that run off the brim are counted but not offered: there is no star
+ * to sew to. The rest are chained so each line starts where the last ended
+ * where the figure allows, starting from a loose end if it has one, and
+ * otherwise jumping to the nearest unsewn line - so the needle travels as
+ * little as the figure permits. A line's identity is its place in the
+ * source figure; only the direction it is sewn in changes with the order.
+ */
 export function sewingGroups(sky: SkyMarks, stitches: Stitch[]): SewingGroup[] {
   const byId = new Map(stitches.filter((s) => s.id > 0).map((s) => [s.id, s]));
   const groups = new Map<string, SewingGroup>();

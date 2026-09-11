@@ -7,6 +7,7 @@ import { settleTimeStep, solverIterations } from "../constants";
 import { predictHatShape } from "../helpers/hat-shape";
 import FrameHat, { OrbitLike } from "./FrameHat";
 import StitchPhysics, { StitchPhysicsProps } from "./StitchPhysics";
+/** The stage's props are the physics' props, plus what the stage adds. */
 export type ChainModelProps = Omit<
   StitchPhysicsProps,
   "orientationParameters" | "reducedMotion"
@@ -14,13 +15,14 @@ export type ChainModelProps = Omit<
   orientationParameters?: StitchPhysicsProps["orientationParameters"];
   onFrameMetrics?: (metrics: { drawCalls: number; frameMs: number }) => void;
 };
+/** Reports draw calls and frame time every 120 frames, for the diagnostics. */
 function FrameMetrics({
   onReport,
 }: {
   onReport?: ChainModelProps["onFrameMetrics"];
 }) {
-  const count = useRef(0),
-    total = useRef(0);
+  const count = useRef(0);
+  const total = useRef(0);
   useFrame(({ gl }, delta) => {
     total.current += delta * 1000;
     count.current++;
@@ -35,6 +37,14 @@ function FrameMetrics({
   });
   return null;
 }
+/**
+ * The 3D stage: camera, controls, and the physics world the hat settles in.
+ *
+ * The camera is placed once, from the size the hat is predicted to be, and
+ * then left alone; nothing moves it but the person looking. The canvas is
+ * transparent so the stage's own ground shows through. Rapier is paused and
+ * stepped by the Settler, so the settle is the same on every machine.
+ */
 export default function ChainModel({
   orientationParameters = defaultOrientationParameters,
   onFrameMetrics,

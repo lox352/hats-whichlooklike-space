@@ -1,5 +1,17 @@
 import { init } from "browser-geo-tz";
 import source from "../data/timezone-source.json";
+
+/*
+ * Which time zones a point on the ground is in, from exact boundaries.
+ *
+ * The design page used to import a six-megabyte GeoJSON of every zone and
+ * test the point against all of them on every keystroke. The boundaries are
+ * still exact - the same OpenStreetMap data, via browser-geo-tz - but they
+ * sit in public/timezones as quarter-megabyte pieces, and only the pieces
+ * holding the place asked about are fetched, once, when the time fields are
+ * first used. Nothing here runs until then, so the page's first paint pays
+ * nothing for it.
+ */
 const base = `${import.meta.env.BASE_URL}timezones/${source.version}/`;
 const chunks = new Map<number, Promise<ArrayBuffer>>();
 const chunk = (number: number) => {
@@ -21,8 +33,11 @@ const chunk = (number: number) => {
   }
   return pending;
 };
-// Fetch only the small pieces containing this location's exact boundaries.
-// This also works on hosts without HTTP Range support; no full-world download.
+/**
+ * The bytes between two offsets of the boundary file, from whichever pieces
+ * hold them. Pieces rather than an HTTP range request, because a static host
+ * such as GitHub Pages does not honour ranges reliably.
+ */
 export async function boundaryRange(
   start: number,
   end: number,
@@ -58,4 +73,5 @@ const lookup = init(
         throw error;
       })),
 );
+/** The IANA zones at a latitude and longitude, most likely first. */
 export const zonesAt = lookup.find;

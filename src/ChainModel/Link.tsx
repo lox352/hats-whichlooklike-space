@@ -1,3 +1,7 @@
+/*
+ * A rope joint between two stitches: they may come no further apart than the
+ * yarn between them allows, and no closer than they like.
+ */
 import { useRopeJoint, RapierRigidBody } from "@react-three/rapier";
 
 export default function Link({

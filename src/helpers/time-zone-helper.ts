@@ -1,6 +1,18 @@
 import { GlobalCoordinates } from "../types/GlobalCoordinates";
 import { DateTime, daysInMonth } from "./celestial-coordinates";
+
+/*
+ * From a clock time at a place to an instant.
+ *
+ * The place gives its time zone (see time-zone-location), and the zone's
+ * rules - as the browser's own Intl implementation knows them, daylight
+ * saving included - turn the clock reading into a moment in UT. Two things
+ * are refused rather than guessed: a time the clocks skipped going forward,
+ * which never happened, and a time they repeated going back, which happened
+ * twice and needs to be asked which.
+ */
 const zoneCache = new Map<string, string[]>();
+/** The zones a place is in, usually one; more than one on a boundary. */
 export async function findTimeZones(
   coordinates: GlobalCoordinates,
 ): Promise<string[]> {
@@ -21,6 +33,7 @@ export async function findTimeZones(
   zoneCache.set(key, result);
   return result;
 }
+/** Whether a clock reading is a date and time that exists on the calendar. */
 export const validLocalTime = (value: DateTime) => {
   const year = value.year ?? new Date().getFullYear();
   return (
@@ -78,6 +91,7 @@ const formatter = (zone: string) => {
   }
   return value;
 };
+/** A zone's offset from UT, in hours, at an instant - DST and all. */
 export function offsetAt(timestamp: number, zone: string): number {
   const parts = Object.fromEntries(
     formatter(zone)
@@ -97,6 +111,7 @@ export function offsetAt(timestamp: number, zone: string): number {
     3600000
   );
 }
+/** An offset as people write it: UTC+12:00, UTC−03:30. */
 export const formatOffset = (offset: number) => {
   const minutes = Math.round(Math.abs(offset) * 60);
   return `UTC${offset < 0 ? "−" : "+"}${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
@@ -106,9 +121,15 @@ export interface LocalInstant {
   utc: DateTime;
   offset: number;
 }
-/** Invert Intl's IANA rules and round-trip every candidate. Never normalise a
- * skipped civil time or silently collapse a repeated hour. Sampling both sides
- * covers ordinary DST, half-hour transitions and date-line jumps. */
+/**
+ * Every instant a clock reading could mean in a zone: one as a rule, none
+ * when the clocks skipped it, two when they repeated it.
+ *
+ * Intl only goes one way, from an instant to a clock reading, so this tries
+ * each offset the zone uses within two days either side and keeps the ones
+ * that read back as the time asked for. That covers ordinary daylight
+ * saving, the half-hour zones, and the date-line changes.
+ */
 export function instantsForLocalTime(
   value: DateTime,
   zone: string,
@@ -133,6 +154,11 @@ export function instantsForLocalTime(
       utc: fromTimestamp(candidate.timestamp),
     }));
 }
+/**
+ * The one UT instant for a clock reading at a place, or a reason there is
+ * not exactly one. The design page handles those cases itself; this is for
+ * callers that want a single answer or an error.
+ */
 export async function calculateUtc(
   value: DateTime,
   coordinates: GlobalCoordinates,

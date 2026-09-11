@@ -21,15 +21,34 @@ import Link from "./Link";
 export interface StitchPhysicsProps {
   stitches: Stitch[];
   sky: SkyMarks;
+  /**
+   * Present when the hat is to be settled and charted; absent for a saved
+   * hat, which is shown as it was with no simulation at all.
+   */
   setStitches?: (stitches: Stitch[]) => void;
   setSky?: (sky: SkyMarks) => void;
   orientationParameters: OrientationParameters;
   simulationActive: boolean;
   setSimulationActive?: (active: boolean) => void;
+  /** The sky has finished arriving on the hat. */
   onReady?: () => void;
   onMetrics?: (metrics: SettleMetrics) => void;
   reducedMotion: boolean;
 }
+
+/**
+ * The hat as a physical object, and the sky arriving on it.
+ *
+ * Every stitch is a rigid body joined to its neighbours by rope joints, and
+ * the Settler steps the world until the tube has relaxed into a hat. Once it
+ * is still, the resting positions go to the projection, which decides which
+ * stitch each star sits on; the colours then sweep onto the instanced mesh
+ * from the crown down over a couple of seconds, so you watch the night fall
+ * on the hat rather than seeing it appear in one frame.
+ *
+ * The colours live in a Float32Array shared with the mesh rather than in
+ * React state: one update per frame, not one per stitch.
+ */
 export default function StitchPhysics({
   stitches,
   sky,
@@ -45,12 +64,13 @@ export default function StitchPhysics({
   const stitchRefs = useRef<React.RefObject<RapierRigidBody>[]>([]);
   if (!stitchRefs.current.length)
     stitchRefs.current = stitches.map(() => createRef<RapierRigidBody>());
+  // Stitch 0 is the phantom start of the helix and is never drawn.
   const drawn = useMemo(() => stitches.filter((s) => s.id > 0), [stitches]);
-  const targetColours = useRef<Float32Array | null>(null),
-    order = useRef<Float32Array | null>(null),
-    progress = useRef(0),
-    sweeping = useRef(false),
-    ready = useRef(false);
+  const targetColours = useRef<Float32Array | null>(null);
+  const order = useRef<Float32Array | null>(null);
+  const progress = useRef(0);
+  const sweeping = useRef(false);
+  const ready = useRef(false);
   const initialised = useRef(false);
   const pack = (source: Stitch[]) =>
     new Float32Array(
@@ -71,6 +91,8 @@ export default function StitchPhysics({
       onReady?.();
     }
   }, [drawn.length, onReady, setSimulationActive, setStitches, stitches]);
+  // The sweep: advance the dye front, clamped so a stalled frame cannot
+  // carry it to the end in one jump.
   useFrame((_, delta) => {
     if (!sweeping.current || ready.current) return;
     progress.current = reducedMotion

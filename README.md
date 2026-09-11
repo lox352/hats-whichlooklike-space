@@ -1,23 +1,85 @@
-# Hats which look like space
+# Hats Which Look Like Space
 
-Turn a place and moment into a knittable night sky. Knit with Night, Milky Way and Star yarns, then embroider the constellation lines.
+Design a knitted hat that looks like the night sky over a place on a night, and
+get a chart you can actually knit from and a guide to embroider from. Live at
+[hats.whichlooklike.space](https://hats.whichlooklike.space).
 
-## Development
+## How it works
 
-Run `npm ci`, then `npm run dev`. Validate with `npm test`, `npm run build` and `npm run lint`.
+The colourwork is not drawn — it is *derived*, by simulating the hat as a
+physical object and then asking which star each stitch ends up under. Unlike
+its sibling `earth`, which samples a map per stitch, this branch walks the
+star catalogue and puts each star on the stitch nearest it.
 
-This is the independent space branch. Earth shares the knitting fundamentals but uses a different projection and repository. Push explicitly with `git push space HEAD:refs/heads/space`; the GitHub Pages workflow deploys that branch.
+1. **Design** (`src/components/Design.tsx`) — choose a head size and gauge (the
+   stitch count follows from them), then which sky: the sky over a place on a
+   night, Polaris, the Southern Cross, or a point by right ascension and
+   declination. A night and a place become a point overhead through the
+   place's time zone (`src/helpers/time-zone-helper.ts`, loaded lazily) and
+   sidereal time (`src/helpers/celestial-coordinates.ts`).
+2. **Knit** (`src/types/KnittingMachine.ts`) — a virtual knitting machine casts
+   on, joins the round, knits the body and works the decreases, emitting a
+   `Stitch[]` where each stitch records the stitches it was knitted into. The
+   knitting is a helix, not a stack of closed rings, so rows wrap at a seam.
+3. **Settle** (`src/ChainModel/`) — every stitch becomes a Rapier rigid body,
+   linked to its neighbours by rope joints. Gravity points *up*, so the tube
+   relaxes into a hat shape. The simulation is stepped deterministically so
+   the settled shape does not depend on the machine.
+4. **Chart the sky** (`src/helpers/star-colouring.ts`) — once the simulation
+   comes to rest, each stitch's resting position is turned into a direction,
+   the sky is rotated so the chosen point lands where asked, and every
+   catalogue star is put on its nearest stitch by great-circle distance
+   (`src/helpers/sky-index.ts`). The constellation figures are resolved to
+   their stars and joined up as strokes; a stitch a figure passes through is
+   always a star. The hat is knitted in three yarns: Night, Milky Way, Star.
+5. **Chart** (`src/helpers/pattern-layout.ts`) — the tube is flattened into a
+   grid with decrease symbols and the constellation lines drawn over it. It can
+   be saved, ticked off row by row while knitting, and then sewn line by line
+   while embroidering (`src/helpers/embroidery.ts`).
 
-## Projection and saved patterns
+The hat is treated as a sphere all the way down, so the brim is a horizon
+rather than a south pole; that is what the sky wants and what every charted
+hat has had.
 
-Stars are matched to stitches using spherical nearest-neighbour search. This corrects the old distortion near the pole and longitude seam, so newly generated charts differ from older charts. Saved charts retain their stored geometry and constellation links through a versioned local-storage migration.
+## Running it
 
-The sky catalogue uses J2000 coordinates without precession. Local clock times use exact geographic IANA zones and the browser’s date-aware timezone rules, including daylight saving. Skipped times are rejected; repeated times offer first/second occurrence. Keep browsers updated for changes to national timekeeping rules. Saved patterns live in this browser, not an account.
+```bash
+npm install
+npm run dev
+```
 
-## Making a hat
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Vite dev server |
+| `npm test` | Vitest unit tests |
+| `npm run test:watch` | Vitest in watch mode |
+| `npm run build` | Type-check and build to `dist/` |
+| `npm run lint` | ESLint |
+| `npm run preview` | Serve the production build |
 
-Choose a head measurement or stitch count, set your sky, and generate a preview. Designs are shareable in the URL. Save a chart to track knitting by stitch or row, then follow the embroidery guide one constellation at a time. Sewing has its own progress, undo, and highlighted stitch endpoints. Lines beyond the brim are guides and are excluded from sewing.
+The settle's fitted constants come from measured hats; re-measure with
+`SPACE_MEASURE=1 npm test -- src/helpers/settling.test.ts` (about ninety
+seconds) if the physics tuning changes.
 
-Name your three yarns, estimate yardage from a measured swatch, and download SVG or PNG charts. Printing uses white paper, grey Milky Way cells, dark star dots, and constellation guides.
+## Deployment
 
-See `PROGRESS.md` for completed checkpoints and verification. The optional physical measurement suite runs with `SPACE_MEASURE=1 npm test -- src/helpers/settling.test.ts` and takes about 90 seconds.
+Pushing to the `space` branch triggers `.github/workflows/deploy.yml`, which
+runs the tests, builds, and publishes to the `gh-pages` branch. **A push to
+`space` is a production deploy.** The remote is named `space`; push with
+`git push space HEAD:refs/heads/space`, since `space` is also a local branch
+name and is ambiguous on its own.
+
+## Notes
+
+- Saved patterns live in `localStorage` on the device that made them. All
+  reads and writes go through `src/helpers/pattern-storage.ts`, which versions
+  the stored shape and migrates older entries on read — including patterns
+  saved before the sky was stored beside the stitches — so a corrupt or
+  outdated entry cannot break the pages that list them.
+- The star catalogue (`src/assets/stars.6.json`) is d3-celestial's, to
+  magnitude 6, in J2000 coordinates; no precession is applied, which is under
+  a sixth of a stitch. Constellation lines are the IAU figures, 89 of them
+  because Serpens is in two parts. Time-zone boundaries are from
+  OpenStreetMap, © OpenStreetMap contributors.
+- Sibling branches build the same machinery for different subjects: `earth`
+  (a map of the world) and `pictures`.
