@@ -1,55 +1,44 @@
 import React from "react";
-import { Stitch, stringify } from "../types/Stitch";
+import { Stitch } from "../types/Stitch";
 import KnittingPattern from "../KnittingPattern";
-import { SavedPattern } from "../types/SavedPattern";
+import { SkyMarks } from "../types/SkyMarks";
+import { createPattern } from "../helpers/pattern-storage";
 
 interface PatternProps {
   stitches: Stitch[];
+  sky: SkyMarks;
 }
 
 const saveToLocalStorage = (
   stitches: Stitch[],
+  sky: SkyMarks,
   setPatternSaved: React.Dispatch<boolean>
 ) => {
   const patternName = prompt("Please enter a name for your pattern:");
   if (patternName === null) {
     return;
   }
-  const patternId = Date.now().toString();
-  const storageKey = `pattern-${patternId}`;
-  const savedPattern: SavedPattern = {
-    id: storageKey,
-    name: patternName ?? undefined,
-    savedAt: new Date(),
-    stitches: stitches.map(stringify),
-    progress: 0,
-  };
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(savedPattern));
-  } catch (e) {
-    if (e instanceof DOMException && e.name === "QuotaExceededError") {
-      alert(
-        "Local storage is full. Please delete a pattern from the home page and try again."
-      );
-      return;
-    } else {
-      throw e;
-    }
+  const { result, pattern } = createPattern(stitches, sky, patternName);
+  if (!result.ok) {
+    alert(
+      "Local storage is full. Please delete a pattern from the home page and try again."
+    );
+    return;
   }
-  window.location.hash = `#/pattern/${patternId}`;
+  window.location.hash = `#/pattern/${pattern.id.replace(/^pattern-/, "")}`;
   setPatternSaved(true);
   alert(
     "Stitches saved to local storage! This pattern may be accessed at any time from the homepage."
   );
 };
 
-const Pattern: React.FC<PatternProps> = ({ stitches }) => {
+const Pattern: React.FC<PatternProps> = ({ stitches, sky }) => {
   const [patternSaved, setPatternSaved] = React.useState(false);
 
   return (
     <div style={{ textAlign: "left", padding: "20px" }}>
       <h1 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>Hat Pattern</h1>
-      <KnittingPattern stitches={stitches} progress={0} />
+      <KnittingPattern stitches={stitches} sky={sky} progress={0} />
       <div style={{ textAlign: "right" }}>
         <button
           style={{
@@ -79,7 +68,7 @@ const Pattern: React.FC<PatternProps> = ({ stitches }) => {
               borderRadius: "4px",
               cursor: "pointer",
             }}
-            onClick={() => saveToLocalStorage(stitches, setPatternSaved)}
+            onClick={() => saveToLocalStorage(stitches, sky, setPatternSaved)}
           >
             Save Pattern
           </button>

@@ -9,9 +9,11 @@ import Pattern from "./components/Pattern";
 import SavedPattern from "./components/SavedPattern";
 import SavedRender from "./components/SavedRender";
 import { defaultOrientationParameters } from "./types/OrientationParameters";
+import { emptySky, SkyMarks } from "./types/SkyMarks";
 
 function App() {
   const [stitches, setStitches] = useState<Stitch[]>([]);
+  const [sky, setSky] = useState<SkyMarks>(emptySky);
   const [orientationParameters, setOrientationParameters] = useState(
     defaultOrientationParameters
   );
@@ -36,12 +38,14 @@ function App() {
             <Render
               stitches={stitches}
               setStitches={setStitches}
+              sky={sky}
+              setSky={setSky}
               orientationParameters={orientationParameters}
             />
           }
         />
         <Route path="/render/:patternId" element={<SavedRender />} />
-        <Route path="/pattern" element={<Pattern stitches={stitches} />} />
+        <Route path="/pattern" element={<Pattern stitches={stitches} sky={sky} />} />
         <Route path="/pattern/:patternId" element={<SavedPattern />} />
       </Routes>
     </Router>

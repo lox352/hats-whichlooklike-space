@@ -1,50 +1,19 @@
-# React + TypeScript + Vite
+# Hats which look like space
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Turn a place and moment into a knittable night sky. Knit with Night, Milky Way and Star yarns, then embroider the constellation lines.
 
-Currently, two official plugins are available:
+## Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Run `npm ci`, then `npm run dev`. Validate with `npm test`, `npm run build` and `npm run lint`.
 
-## Expanding the ESLint configuration
+This is the independent space branch. Earth shares the knitting fundamentals but uses a different projection and repository. Push explicitly with `git push space HEAD:refs/heads/space`; the GitHub Pages workflow deploys that branch.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Projection and saved patterns
 
-- Configure the top-level `parserOptions` property like this:
+Stars are matched to stitches using spherical nearest-neighbour search. This corrects the old distortion near the pole and longitude seam, so newly generated charts differ from older charts. Saved charts retain their stored geometry and constellation links through a versioned local-storage migration.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+The sky catalogue uses J2000 coordinates without precession. Time-zone polygons describe standard offsets; daylight-saving time is not inferred. Saved patterns live in this browser, not an account.
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Work in progress
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+See `PROGRESS.md` for checkpoints and verification. Embroidery is scheduled after the rendering and motion work.

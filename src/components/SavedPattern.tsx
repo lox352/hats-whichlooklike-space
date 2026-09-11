@@ -2,14 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { SavedPattern as Pattern } from "../types/SavedPattern";
 import KnittingPattern from "../KnittingPattern";
-import { destringify } from "../types/Stitch";
-
-const getPattern = (patternId: string | undefined) => {
-  const savedPattern = patternId
-    ? localStorage.getItem(`pattern-${patternId}`)
-    : undefined;
-  return savedPattern ? (JSON.parse(savedPattern) as Pattern) : undefined;
-};
+import {
+  patternsChangedEvent,
+  readPattern,
+  setProgress,
+} from "../helpers/pattern-storage";
 
 interface RecordingProgressProps {
   recordStitches: (delta: number | "addRow" | "takeRow") => void;
@@ -109,20 +106,19 @@ const SavedPattern: React.FC = () => {
   const { patternId } = useParams();
 
   const [recordingProgress, setRecordingProgress] = React.useState(false);
-  const [savedPattern, setSavedPattern] = useState<Pattern | undefined>(
-    getPattern(patternId)
+  const [savedPattern, setSavedPattern] = useState<Pattern | undefined>(() =>
+    readPattern(patternId)
   );
 
   useEffect(() => {
     const handleStorageChange = () => {
-      const newSavedPattern = getPattern(patternId);
-      setSavedPattern(newSavedPattern);
+      setSavedPattern(readPattern(patternId));
     };
 
-    window.addEventListener("storageUpdated", handleStorageChange);
+    window.addEventListener(patternsChangedEvent, handleStorageChange);
 
     return () => {
-      window.removeEventListener("storageUpdated", handleStorageChange);
+      window.removeEventListener(patternsChangedEvent, handleStorageChange);
     };
   }, [patternId]);
 
@@ -134,27 +130,26 @@ const SavedPattern: React.FC = () => {
     const progress = savedPattern.progress;
     let newProgress = progress;
     if (delta === "addRow") {
-      const nextRowStitch = savedPattern.stitches.map(destringify)
+      const nextRowStitch = savedPattern.stitches
         .slice(progress)
         .find((stitch) => stitch.links.slice(0, -1).includes(progress))?.id;
-      if (!nextRowStitch) {
+      if (nextRowStitch === undefined) {
         alert("No next row stitch found");
         return;
       }
       newProgress = nextRowStitch;
     } else if (delta === "takeRow") {
-      const currentStitch = destringify(savedPattern.stitches[progress]);
-      newProgress = currentStitch.links.slice(-2, -1)[0];
+      // The stitch below this one is its second-to-last link; a stitch with
+      // only one link has no row below it, so stay put rather than reset.
+      const currentStitch = savedPattern.stitches[progress];
+      newProgress = currentStitch?.links.slice(-2, -1)[0] ?? progress;
     } else {
       newProgress += delta;
     }
 
-    newProgress = Math.max(newProgress ?? 0, 0);
-    localStorage.setItem(
-      savedPattern.id,
-      JSON.stringify({ ...savedPattern, progress: newProgress })
-    );
-    window.dispatchEvent(new CustomEvent("storageUpdated"));
+    // setProgress clamps to the pattern, so this can neither go negative nor
+    // run past the last stitch.
+    setProgress(savedPattern.id, newProgress);
   };
 
   if (!savedPattern) {
@@ -168,7 +163,8 @@ const SavedPattern: React.FC = () => {
       </h1>
 
       <KnittingPattern
-        stitches={savedPattern.stitches.map(destringify)}
+        stitches={savedPattern.stitches}
+        sky={savedPattern.sky}
         progress={savedPattern.progress}
       />
       {!recordingProgress && (

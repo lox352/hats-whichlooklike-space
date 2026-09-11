@@ -1,5 +1,6 @@
 import React from "react";
 import { OrientationParameters } from "../types/OrientationParameters";
+import { longitudeToRaHours, raHoursToLongitude } from "../helpers/celestial-coordinates";
 
 interface CoordinatesInputProps {
     orientationParameters: OrientationParameters;
@@ -20,10 +21,10 @@ const CoordinatesInput: React.FC<CoordinatesInputProps> = ({
             ...orientationParameters,
             coordinates: { ...coordinates, latitude },
         });
-    const setLongitude = (rightAssention: number) =>
+    const setLongitude = (rightAscension: number) =>
         setOrientationParameters({
             ...orientationParameters,
-            coordinates: { ...coordinates, longitude: rightAssention * 15 - 180 },
+            coordinates: { ...coordinates, longitude: raHoursToLongitude(rightAscension) },
         });
     return (
         <div
@@ -42,7 +43,7 @@ const CoordinatesInput: React.FC<CoordinatesInputProps> = ({
                     alignItems: "flex-start",
                 }}
             >
-                Declension (degrees)
+                Declination (degrees)
                 <input
                     type="number"
                     value={coordinates.latitude}
@@ -61,10 +62,10 @@ const CoordinatesInput: React.FC<CoordinatesInputProps> = ({
                     alignItems: "flex-start",
                 }}
             >
-                Right assention (hours)
+                Right ascension (hours)
                 <input
                     type="number"
-                    value={(coordinates.longitude + 180) / 15}
+                    value={longitudeToRaHours(coordinates.longitude)}
                     min="0"
                     max="24"
                     step="0.1"

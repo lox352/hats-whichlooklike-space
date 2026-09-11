@@ -7,10 +7,13 @@ import StitchPhysics from "./StitchPhysics";
 import * as THREE from "three";
 import { verticalStitchDistance } from "../constants";
 import { defaultOrientationParameters, OrientationParameters } from "../types/OrientationParameters";
+import { SkyMarks } from "../types/SkyMarks";
 
 interface ChainModelProps {
   stitches: Stitch[];
   setStitches?: React.Dispatch<React.SetStateAction<Stitch[]>>;
+  sky: SkyMarks;
+  setSky?: (sky: SkyMarks) => void;
   orientationParameters?: OrientationParameters;
   simulationActive: boolean;
   setSimulationActive?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -20,6 +23,8 @@ interface ChainModelProps {
 const ChainModel: React.FC<ChainModelProps> = ({
   stitches,
   setStitches,
+  sky,
+  setSky,
   orientationParameters = defaultOrientationParameters,
   simulationActive,
   setSimulationActive,
@@ -51,6 +56,8 @@ const ChainModel: React.FC<ChainModelProps> = ({
         <StitchPhysics
           stitchesRef={stitchesRef}
           setStitches={setStitches}
+          sky={sky}
+          setSky={setSky}
           orientationParameters={orientationParameters}
           simulationActive={simulationActive}
           setSimulationActive={setSimulationActive}

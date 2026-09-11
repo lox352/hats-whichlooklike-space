@@ -1,8 +1,7 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { SavedPattern as Pattern } from "../types/SavedPattern";
 import ChainModel from "../ChainModel/ChainModel";
-import { destringify } from "../types/Stitch";
+import { readPattern } from "../helpers/pattern-storage";
 
 const SavedRender: React.FC = () => {
   const navigate = useNavigate();
@@ -14,11 +13,10 @@ const SavedRender: React.FC = () => {
   if (!patternId) {
     return "Could not find pattern";
   }
-  const patternJson = localStorage.getItem(`pattern-${patternId}`);
-  if (!patternJson) {
+  const pattern = readPattern(patternId);
+  if (!pattern) {
     return "Could not find pattern";
   }
-  const pattern: Pattern = JSON.parse(patternJson);
 
   const thereAreStitches = pattern.stitches.length > 0;
   if (!thereAreStitches) {
@@ -30,7 +28,8 @@ const SavedRender: React.FC = () => {
       <h1 style={{ fontSize: "2.5rem", marginBottom: "20px" }}>Pre-dyed Hat</h1>
       <div style={{ height: "350px" }}>
         <ChainModel
-          stitches={pattern.stitches.map(destringify)}
+          stitches={pattern.stitches}
+          sky={pattern.sky}
           simulationActive={false}
           onAnyStitchRendered={() => {
             setAnyStitchRendered(true);

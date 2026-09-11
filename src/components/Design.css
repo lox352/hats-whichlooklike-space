@@ -62,3 +62,9 @@
     border-radius: 4px;
     cursor: pointer;
 }
+/* A rule the machine will not accept, said next to the field it is about. */
+.design-problem {
+  color: #f0a3a3;
+  font-size: 0.9rem;
+  margin: 4px 0 12px;
+}

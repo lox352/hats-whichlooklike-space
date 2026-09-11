@@ -12,8 +12,17 @@ import DestinationType from "../types/DestinationType";
 import { OrientationParameters } from "../types/OrientationParameters";
 import { calculateUtc, DateTime } from "../helpers/time-zone-helper";
 import { GlobalCoordinates } from "../types/GlobalCoordinates";
-import { calculateRightAscensionAndDeclension } from "../helpers/celestial-coordinates";
+import {
+  calculateRightAscensionAndDeclension,
+  daysInMonth,
+  raHoursToLongitude,
+} from "../helpers/celestial-coordinates";
 import InputField from "./InputField";
+import {
+  DecreaseMethod,
+  DesignProblem,
+  validateDesign,
+} from "../types/KnittingMachine";
 import CoordinatesInput from "./CoordinatesInput";
 import ToggleAdvancedOptions from "./ToggleAdvancedOptions";
 import "./Design.css";
@@ -70,7 +79,7 @@ const Design: React.FC<PatternProps> = ({
         ...prev,
         coordinates: {
           latitude: dec,
-          longitude: ((ra * 15 + 180) % 360) - 180,
+          longitude: raHoursToLongitude(ra),
         },
       }));
     }
@@ -88,8 +97,10 @@ const Design: React.FC<PatternProps> = ({
     }
   };
 
+  const lastDayOfMonth = daysInMonth(month ?? 1, now.getFullYear());
+
   const handleDayChange = (value: number | null) => {
-    if (value === null || (value >= 1 && value <= 31)) {
+    if (value === null || (value >= 1 && value <= lastDayOfMonth)) {
       setDay(value);
     }
   };
@@ -97,6 +108,9 @@ const Design: React.FC<PatternProps> = ({
   const handleMonthChange = (value: number) => {
     if (value >= 1 && value <= 12) {
       setMonth(value);
+      // The 31st of March is not the 31st of April.
+      const last = daysInMonth(value, now.getFullYear());
+      if (day !== null && day > last) setDay(last);
     }
   };
 
@@ -113,17 +127,13 @@ const Design: React.FC<PatternProps> = ({
   };
 
   const [locationType, setLocationType] = useState<LocationType>("Derived");
-  const [decreaseMethod, setDecreaseMethod] = useState<
-    "Hemispherical" | "Pyramidal"
-  >("Pyramidal");
+  const [decreaseMethod, setDecreaseMethod] =
+    useState<DecreaseMethod>("Pyramidal");
 
   const handleDecreaseMethodChange = (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    const selectedDecreaseMethod = e.target.value as
-      | "Hemispherical"
-      | "Pyramidal";
-    setDecreaseMethod(selectedDecreaseMethod);
+    setDecreaseMethod(e.target.value as DecreaseMethod);
   };
 
   const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -168,13 +178,13 @@ const Design: React.FC<PatternProps> = ({
     });
   };
 
+  // The machine's own rules, so the page cannot disagree with it.
+  const problems = validateDesign(stitchesPerRow, numberOfRows, decreaseMethod);
+  const problemWith = (field: DesignProblem["field"]) =>
+    problems.find((problem) => problem.field === field)?.message;
+
   const handleViewAndColour = () => {
-    if (decreaseMethod === "Pyramidal" && stitchesPerRow % 10 !== 0) {
-      alert(
-        "The number of stitches per row to be divisible by 10. Change the decrease method to 'Hemispherial' under 'Advanced Options' or choose a different number of stitches per row."
-      );
-      return;
-    }
+    if (problems.length > 0) return;
     setStitches(getStitches(stitchesPerRow, numberOfRows, decreaseMethod));
     navigate("/render");
   };
@@ -190,15 +200,25 @@ const Design: React.FC<PatternProps> = ({
         value={stitchesPerRow}
         valueSetter={setStitchesPerRow}
       />
+      {problemWith("stitchesPerRow") && (
+        <p className="design-problem" role="alert">
+          {problemWith("stitchesPerRow")}
+        </p>
+      )}
       <InputField
         label="Number of rows before decreasing"
         value={numberOfRows}
         valueSetter={setNumberOfRows}
       />
+      {problemWith("numberOfRows") && (
+        <p className="design-problem" role="alert">
+          {problemWith("numberOfRows")}
+        </p>
+      )}
       {locationType === "Derived" && (
         <>
           <h2 className="design-h2">Customise Your Night Sky</h2>
-          Knit a the night sky above your head at a specific time and place.
+          Knit the night sky above your head at a specific time and place.
           <h3 className="design-h3">Choose a Date</h3>
           <div className="design-input-group">
             <label>
@@ -206,7 +226,7 @@ const Design: React.FC<PatternProps> = ({
               <input
                 type="number"
                 min="1"
-                max="31"
+                max={lastDayOfMonth}
                 step="1"
                 value={day ?? ""}
                 onChange={(e) =>
@@ -347,7 +367,7 @@ const Design: React.FC<PatternProps> = ({
           <select value={locationType} onChange={handleLocationChange}>
             <option value="Derived">Derived From Place and Time</option>
             <option value="North Star">North Star (Polaris)</option>
-            <option value="Southern Cross">Southern Cros (Crux)</option>
+            <option value="Southern Cross">Southern Cross (Crux)</option>
             <option value="Current Location">Current Location</option>
             <option value="Custom Location">Custom Location</option>
           </select>

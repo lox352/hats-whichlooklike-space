@@ -9,7 +9,8 @@ import { adjacentStitchDistance, verticalStitchDistance } from "../constants";
 import { useFrame } from "@react-three/fiber";
 import { OrientationParameters } from "../types/OrientationParameters";
 import { Line } from "@react-three/drei";
-import { constructConnections } from "../helpers/connections";
+import { Segment, segmentsOf } from "../helpers/connections";
+import { SkyMarks } from "../types/SkyMarks";
 
 function createChevronTexture() {
   const size = 256; // Texture resolution
@@ -46,6 +47,9 @@ const chevronTexture = createChevronTexture();
 interface StitchPhysicsProps {
   stitchesRef: React.MutableRefObject<Stitch[]>;
   setStitches?: React.Dispatch<React.SetStateAction<Stitch[]>>;
+  /** Where the stars and constellations are, once the sky has been charted. */
+  sky: SkyMarks;
+  setSky?: (sky: SkyMarks) => void;
   orientationParameters: OrientationParameters;
   simulationActive: boolean;
   setSimulationActive?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -55,6 +59,8 @@ interface StitchPhysicsProps {
 const StitchPhysics: React.FC<StitchPhysicsProps> = ({
   stitchesRef,
   setStitches,
+  sky,
+  setSky,
   orientationParameters,
   simulationActive,
   setSimulationActive,
@@ -69,8 +75,8 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
     stitchRefs.current = stitches.map(() => React.createRef());
   }
 
-  const [connections, setConnections] = useState<[number, number][]>(
-    constructConnections(stitches)
+  const [connections, setConnections] = useState<Segment[]>(() =>
+    segmentsOf(sky)
   );
 
   const colourRefs = useRef<React.MutableRefObject<Float32Array>[]>([]);
@@ -121,7 +127,7 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
         stitchRef.current!.translation()
       );
 
-      const [colours, starInformation] = await colourNodes(
+      const { colours, sky: chartedSky } = colourNodes(
         positions,
         orientationParameters
       );
@@ -130,25 +136,16 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
         colourRef.current.set(colours[i]!.map((c) => c / 255));
       });
 
-      const connectionsSet = constructConnections(
-        starInformation.map((info, i) => ({
-          ...stitches[i],
-          starInfo: info,
-        }))
-      );
-
-      setConnections(connectionsSet);
+      setConnections(segmentsOf(chartedSky));
+      setSky?.(chartedSky);
 
       setStitches((stitches) =>
         stitches.map((stitch, i) => ({
           ...stitch,
           colour: colours[i]!,
           position: positions[i]!,
-          starInfo: starInformation[i]!,
         }))
       );
-
-      console.log("Colouring finished");
     })();
   });
 
@@ -223,8 +220,11 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
           );
         })
       )}
-      {connections &&
-        Array.from(connections).map(([source, target]) => {
+      {connections.map(({ abbreviation, strokeIndex, from, to }, i) => {
+          // A line running off the brim has nowhere to go in three dimensions.
+          if (from.offHat || to.offHat) return null;
+          const source = from.stitch;
+          const target = to.stitch;
           if (source === target) return null;
           const stitchRef = stitchRefs.current[source];
           const linkedStitchRef = stitchRefs.current[target];
@@ -237,7 +237,7 @@ const StitchPhysics: React.FC<StitchPhysicsProps> = ({
           } = linkedStitchRef.current!.translation();
           return (
             <Line
-              key={`connection-${source}-${target}`}
+              key={`${abbreviation}-${strokeIndex}-${i}`}
               points={[
                 [x1, y1, z1],
                 [x2, y2, z2],

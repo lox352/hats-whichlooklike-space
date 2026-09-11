@@ -4,16 +4,7 @@ import { multiPolygon, point } from "@turf/helpers";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
 import { Position } from "geojson";
 
-interface DateTime {
-  day: number;
-  month: number;
-  hour: number;
-  minute: number;
-}
-
-const daysInMonth = (month: number, year: number): number => {
-  return new Date(year, month, 0).getDate();
-};
+import { DateTime } from "./celestial-coordinates";
 
 const calculateUtc = (
   dateTime: DateTime,
@@ -35,53 +26,15 @@ const calculateUtc = (
   };
 
   const timeZoneOffset = findTimeZone(coordinates);
-  const offsetHours = Math.floor(timeZoneOffset);
-  const offsetMinutes = (timeZoneOffset - offsetHours) * 60;
+  return utcAtOffset(dateTime, timeZoneOffset);
+};
 
-  let utcMinute = dateTime.minute - offsetMinutes;
-  let utcHour = dateTime.hour - offsetHours;
-  let utcDay = dateTime.day;
-  let utcMonth = dateTime.month;
-
-  if (utcMinute < 0) {
-    utcMinute += 60;
-    utcHour -= 1;
-  } else if (utcMinute >= 60) {
-    utcMinute -= 60;
-    utcHour += 1;
-  }
-
-  if (utcHour < 0) {
-    utcHour += 24;
-    utcDay -= 1;
-  } else if (utcHour >= 24) {
-    utcHour -= 24;
-    utcDay += 1;
-  }
-
-  const currentYear = new Date().getFullYear();
-  if (utcDay < 1) {
-    utcMonth -= 1;
-    if (utcMonth < 1) {
-      utcMonth = 12;
-    }
-    utcDay = daysInMonth(utcMonth, currentYear);
-  } else if (utcDay > daysInMonth(utcMonth, currentYear)) {
-    utcDay = 1;
-    utcMonth += 1;
-    if (utcMonth > 12) {
-      utcMonth = 1;
-    }
-  }
-
-  const utcDateTime: DateTime = {
-    day: utcDay,
-    month: utcMonth,
-    hour: utcHour,
-    minute: utcMinute
-  };
-
-  return utcDateTime;
+/** Civil offset conversion, including month and year boundaries. */
+export const utcAtOffset = (dateTime: DateTime, offset: number): DateTime => {
+  const date = new Date(Date.UTC(dateTime.year ?? new Date().getFullYear(),
+    dateTime.month - 1, dateTime.day, dateTime.hour, dateTime.minute - offset * 60));
+  return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1,
+    day: date.getUTCDate(), hour: date.getUTCHours(), minute: date.getUTCMinutes() };
 };
 
 export { calculateUtc, type DateTime };

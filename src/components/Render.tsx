@@ -3,16 +3,21 @@ import ChainModel from "../ChainModel/ChainModel";
 import { Stitch } from "../types/Stitch";
 import { useNavigate } from "react-router-dom";
 import { OrientationParameters } from "../types/OrientationParameters";
+import { SkyMarks } from "../types/SkyMarks";
 
 interface RenderProps {
   stitches: Stitch[];
   setStitches: React.Dispatch<React.SetStateAction<Stitch[]>>;
+  sky: SkyMarks;
+  setSky: (sky: SkyMarks) => void;
   orientationParameters: OrientationParameters;
 }
 
 const Render: React.FC<RenderProps> = ({
   stitches,
   setStitches,
+  sky,
+  setSky,
   orientationParameters,
 }) => {
   const [anyStichRendered, setAnyStitchRendered] = React.useState(false);
@@ -67,6 +72,8 @@ const Render: React.FC<RenderProps> = ({
         <ChainModel
           stitches={stitches}
           setStitches={setStitches}
+          sky={sky}
+          setSky={setSky}
           orientationParameters={orientationParameters}
           simulationActive={simulationActive}
           setSimulationActive={setSimulationActive}

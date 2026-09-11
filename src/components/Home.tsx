@@ -1,6 +1,13 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SavedPattern } from "../types/SavedPattern";
+import {
+  deletePattern,
+  listPatterns,
+  patternsChangedEvent,
+  percentComplete,
+  renamePattern,
+} from "../helpers/pattern-storage";
 
 const buttonStyle = {
   backgroundColor: "#3f51b5",
@@ -85,13 +92,9 @@ const PreviousPatterns: React.FC<{ patterns: SavedPattern[] }> = ({
                     "Enter new name for the pattern:",
                     pattern.name ?? "Saved Pattern"
                   );
-                  if (newName !== pattern.name) {
-                    const updatedPattern = { ...pattern, name: newName };
-                    localStorage.setItem(
-                      pattern.id,
-                      JSON.stringify(updatedPattern)
-                    );
-                    window.dispatchEvent(new CustomEvent("storageUpdated"));
+                  // null is the prompt being cancelled, not a new name.
+                  if (newName !== null && newName !== pattern.name) {
+                    renamePattern(pattern.id, newName);
                   }
                 }}
               >
@@ -105,18 +108,14 @@ const PreviousPatterns: React.FC<{ patterns: SavedPattern[] }> = ({
                       "Are you sure you want to delete this pattern?"
                     )
                   ) {
-                    localStorage.removeItem(`pattern-${id}`);
-                    window.dispatchEvent(new CustomEvent("storageUpdated"));
+                    deletePattern(id);
                   }
                 }}
               >
                 Delete
               </button>
               <div style={{ marginTop: "5px", fontStyle: "italic" }}>
-                {((100 * pattern.progress) / pattern.stitches.length).toFixed(
-                  2
-                )}
-                % completed
+                {percentComplete(pattern).toFixed(2)}% completed
               </div>
             </li>
           );
@@ -126,17 +125,11 @@ const PreviousPatterns: React.FC<{ patterns: SavedPattern[] }> = ({
   );
 };
 
-const getSavedPatterns = (): SavedPattern[] => {
-  return Object.keys(localStorage)
-    .filter((key) => key.startsWith("pattern-"))
-    .map((key) => localStorage.getItem(key)!)
-    .map((item) => JSON.parse(item) as SavedPattern);
-};
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [savedPatterns, setSavedPatterns] = React.useState<SavedPattern[]>(
-    getSavedPatterns()
+    listPatterns
   );
 
   const handleBegin = () => {
@@ -145,13 +138,13 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     const handleStorageChange = () => {
-      setSavedPatterns(getSavedPatterns());
+      setSavedPatterns(listPatterns());
     };
 
-    window.addEventListener("storageUpdated", handleStorageChange);
+    window.addEventListener(patternsChangedEvent, handleStorageChange);
 
     return () => {
-      window.removeEventListener("storageUpdated", handleStorageChange);
+      window.removeEventListener(patternsChangedEvent, handleStorageChange);
     };
   }, []);
 

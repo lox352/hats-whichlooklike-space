@@ -1,10 +1,12 @@
 import React, { useMemo } from "react";
 import { Stitch } from "./types/Stitch";
-import { constructConnections } from "./helpers/connections";
+import { segmentsOf } from "./helpers/connections";
+import { SkyMarks } from "./types/SkyMarks";
 import "./KnittingPattern.css";
 
 interface KnittingPatternProps {
   stitches: Stitch[];
+  sky: SkyMarks;
   progress: number;
 }
 
@@ -53,7 +55,9 @@ const StitchBox: React.FC<{
   numRows: number;
   numCols: number;
   completed: boolean;
-}> = React.memo(({ stitch, position, numRows, numCols, completed }) => (
+  /** A constellation figure passes through this stitch. */
+  isVertex: boolean;
+}> = React.memo(({ stitch, position, numRows, numCols, completed, isVertex }) => (
   <div
     className="stitch-box"
     key={`stitch-${stitch.id}-row-${position.row}-col-${position.col}`}
@@ -75,14 +79,13 @@ const StitchBox: React.FC<{
         <div className="stitch-decoration k3tog-line-3" />
       </React.Fragment>
     )}
-    {stitch.starInfo?.connectedStars.size > 0 && (
-      <div className="star-dot" />
-    )}
+    {isVertex && <div className="star-dot" />}
   </div>
 ));
 
 const KnittingPattern: React.FC<KnittingPatternProps> = ({
   stitches,
+  sky,
   progress,
 }) => {
   const filteredStitches = useMemo(
@@ -90,9 +93,18 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
     [stitches]
   );
 
-  const connections = useMemo(
-    () => constructConnections(filteredStitches),
-    [filteredStitches]
+  const connections = useMemo(() => segmentsOf(sky), [sky]);
+
+  const vertices = useMemo(
+    () =>
+      new Set(
+        sky.constellations.flatMap((constellation) =>
+          constellation.strokes.flatMap((stroke) =>
+            stroke.points.filter((point) => !point.offHat).map((point) => point.stitch)
+          )
+        )
+      ),
+    [sky]
   );
 
   const stitchPositions = useMemo(() => {
@@ -160,6 +172,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
               numRows={numRows}
               numCols={numCols}
               completed={stitch.id <= progress}
+              isVertex={vertices.has(stitch.id)}
             />
           );
         })}
@@ -191,10 +204,13 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
           }
           return null;
         })}
-        {connections.map(([id1, id2]) => {
-          const isPhantom = id1 <= 0;
-          const pos1 = isPhantom ? stitchPositions[-id1] : stitchPositions[id1];
-          const pos2 = stitchPositions[id2];
+        {connections.map(({ abbreviation, strokeIndex, from, to }, i) => {
+          // A stroke only ever runs off the hat at one end. Draw that end as
+          // the line leaving the brim: mirrored below the bottom row.
+          const [start, end] = from.offHat ? [to, from] : [from, to];
+          const isPhantom = end.offHat;
+          const pos1 = stitchPositions[end.stitch];
+          const pos2 = stitchPositions[start.stitch];
           if (!pos1 || !pos2) return null;
 
           let x1 = (numCols + pos1.col - 1) * 10 + 5;
@@ -218,7 +234,7 @@ const KnittingPattern: React.FC<KnittingPatternProps> = ({
 
           return (
             <svg
-              key={`connection-${id1}-${id2}`}
+              key={`${abbreviation}-${strokeIndex}-${i}`}
               className="connection-svg"
               style={{
                 width: `${numCols * 10}px`,

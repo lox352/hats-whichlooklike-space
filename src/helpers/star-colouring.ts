@@ -1,260 +1,263 @@
-import { MultiLineString, Position } from "geojson";
-import constellations from "../assets/constellations.lines.json";
-import milkyway from "../assets/mw_simplified.json";
-import { GlobalCoordinates } from "../types/GlobalCoordinates";
-import { RGB } from "../types/RGB";
-import { point, polygon } from "@turf/helpers";
+import { Position } from "geojson";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
-import stars from "../assets/stars.6.json";
+import { constellations, milkyWay, stars } from "../data/sky-data";
+import { GlobalCoordinates } from "../types/GlobalCoordinates";
+import { OrientationParameters } from "../types/OrientationParameters";
+import { RGB } from "../types/RGB";
+import {
+  ConstellationMarks,
+  SkyMarks,
+  Stroke,
+  StrokePoint,
+} from "../types/SkyMarks";
+import { rotateFromDestination, rotateToDestination } from "./sky-geometry";
+import {
+  buildSkyIndex,
+  dot,
+  SkyIndex,
+  toUnitVector,
+  UnitVector,
+} from "./sky-index";
+import { SkyPalette } from "./sky-palette";
 
-export interface ConstellationData {
-  id: string;
-  points: Position[]; // Unique star coordinates
-  lines: Position[][]; // Line segments between stars
-}
+/*
+ * The projection: stars onto stitches.
+ *
+ * The earth branch asks, for each stitch, "what colour is the ground here?".
+ * This branch cannot, because a star is a point and a stitch is an area: ask
+ * a stitch what it looks at and the answer is almost always "nothing". So
+ * the catalogue is walked instead, and each star is put on the stitch nearest
+ * to it. The constellation figures are handled the same way, vertex by
+ * vertex, and then joined up.
+ */
 
-export interface StarInformation {
-  bvIndex: number | null;
-  magnitude: number | null;
-  connectedStars: Map<string, number[]>;
-}
-
-export interface ProcessedConstellationData {
-  id: string;
-  connections: [number, number][];
-}
-
-export type ParsedConstellations = Record<string, ConstellationData>;
+/** Stars fainter than this are not knitted. Strict: 4.0 itself is out. */
+export const starMagnitudeLimit = 4;
 
 /**
- * Parses a GeoJSON FeatureCollection containing constellation line data.
- * Extracts points and lines, grouping them by constellation ID.
- *
- * @param geojson - A valid GeoJSON FeatureCollection
- * @returns A record of constellation data, each with unique points and line segments.
+ * A star further than this from every stitch is dropped rather than smeared
+ * onto the nearest edge. Rows sit about 2.7° apart, so anything legitimately
+ * on the hat is well within it; this is a guard, not a tuning.
  */
-const parseConstellations = (): ParsedConstellations => {
-  if (constellations.type !== "FeatureCollection") {
-    throw new Error("Invalid GeoJSON: Expected FeatureCollection.");
+export const maxSnapDegrees = 3;
+
+const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+
+const coordinateKey = ([longitude, latitude]: Position) =>
+  `${longitude.toFixed(4)},${latitude.toFixed(4)}`;
+
+const toCoordinates = ([longitude, latitude]: Position): GlobalCoordinates => ({
+  latitude,
+  longitude,
+});
+
+interface CatalogueStar {
+  /** The Hipparcos number, which is the only identity the catalogue carries. */
+  hip: number;
+  magnitude: number;
+  coordinates: GlobalCoordinates;
+  vector: UnitVector;
+}
+
+/*
+ * The catalogue, prepared once. Every star's unit vector is computed here so
+ * the projection pays no trig per star per hat.
+ */
+const catalogue: CatalogueStar[] = stars.features.map((feature) => {
+  const coordinates = toCoordinates(feature.geometry.coordinates);
+  return {
+    hip: feature.id,
+    magnitude: feature.properties.mag,
+    coordinates,
+    vector: toUnitVector(coordinates),
+  };
+});
+
+/**
+ * The catalogue by exact coordinate.
+ *
+ * The constellation figures do not reference stars by id; each vertex is a
+ * bare coordinate. But the coordinates were written from the same catalogue,
+ * and 754 of the 757 distinct vertices match a star to four decimal places.
+ * So a vertex can be resolved to the star it is - and named - by lookup.
+ */
+const catalogueByKey = new Map(
+  stars.features.map((feature) => [
+    coordinateKey(feature.geometry.coordinates),
+    feature.id,
+  ])
+);
+
+/**
+ * The one Milky Way contour that is knitted: the outermost isophote, as one
+ * pale band. The file carries four more, nested inside it, for if the band
+ * ever wants to be tighter.
+ */
+const milkyWayBand = milkyWay.features.find(
+  (feature) => feature.properties.id === "ol1"
+);
+if (!milkyWayBand) throw new Error("mw_simplified.json has no ol1 contour");
+
+export interface ProjectionOptions {
+  magnitudeLimit?: number;
+}
+
+/**
+ * Which star, if any, a constellation vertex is.
+ * Exported for the tests that pin the vertex-to-star resolution.
+ */
+export const starAtVertex = (vertex: Position): number | undefined =>
+  catalogueByKey.get(coordinateKey(vertex));
+
+/** The catalogue, for tests that assert known stars by their HIP number. */
+export const catalogueStar = (hip: number): CatalogueStar | undefined =>
+  catalogue.find((star) => star.hip === hip);
+
+/**
+ * Colour every stitch, and work out where the stars and constellations land.
+ *
+ * `hatCoordinates` are in hat space, one per stitch: the direction each
+ * settled stitch faces. The orientation says which sky that hat is turned
+ * towards.
+ */
+export const colourSpace = (
+  hatCoordinates: GlobalCoordinates[],
+  orientationParameters: OrientationParameters,
+  options: ProjectionOptions = {}
+): { colours: RGB[]; sky: SkyMarks } => {
+  const magnitudeLimit = options.magnitudeLimit ?? starMagnitudeLimit;
+
+  const skyCoordinates = hatCoordinates.map((coordinate) =>
+    rotateToDestination(coordinate, orientationParameters)
+  );
+  const index = buildSkyIndex(skyCoordinates);
+
+  /*
+   * The brim, and the test for being above it.
+   *
+   * The hat covers the cap of sky within some angle of its crown: everything
+   * whose hat-space latitude is at least the lowest stitch's. Rather than
+   * rotate every star back into hat space to ask, the crown's direction in
+   * the sky is found once, and a star is on the hat iff it is within the
+   * cap's angular radius of it - one dot product against sin(brim latitude).
+   * The two are equivalent because the orientation is a rotation.
+   */
+  const brimLatitude = hatCoordinates.reduce(
+    (lowest, { latitude }) => Math.min(lowest, latitude),
+    90
+  );
+  const crown = toUnitVector(
+    rotateToDestination({ latitude: 90, longitude: 0 }, orientationParameters)
+  );
+  const onHatCosine = Math.sin(toRadians(brimLatitude));
+  const onHat = (vector: UnitVector) => dot(vector, crown) >= onHatCosine;
+  const snapCosine = Math.cos(toRadians(maxSnapDegrees));
+
+  const stitchNear = (vector: UnitVector): number => {
+    const { index: stitch, cosine } = index.nearest(vector);
+    return cosine >= snapCosine ? stitch : -1;
+  };
+
+  // 1. The ground: night, with the galaxy as one band across it.
+  const colours: RGB[] = skyCoordinates.map(({ latitude, longitude }) =>
+    booleanPointInPolygon([longitude, latitude], milkyWayBand)
+      ? SkyPalette.MilkyWay
+      : SkyPalette.Night
+  );
+
+  // 2. The stars.
+  const starStitches = new Set<number>();
+  for (const star of catalogue) {
+    if (star.magnitude >= magnitudeLimit) continue;
+    if (!onHat(star.vector)) continue;
+    const stitch = stitchNear(star.vector);
+    if (stitch >= 0) starStitches.add(stitch);
   }
 
-  const dataByConstellation: ParsedConstellations = {};
-
-  for (const feature of constellations.features) {
-    if (!feature.id || feature.geometry?.type !== "MultiLineString") continue;
-
-    const id = feature.id.toString();
-    const geometry = feature.geometry as MultiLineString;
-
-    if (!dataByConstellation[id]) {
-      dataByConstellation[id] = { id, points: [], lines: [] };
+  /*
+   * 3. The constellations.
+   *
+   * A vertex on the hat lands on its nearest stitch, and that stitch becomes
+   * a star whether or not the catalogue star there is bright enough on its
+   * own - 313 of the figures' 754 stars are fainter than the limit, and a
+   * line that ends on an unlit stitch ends on nothing.
+   *
+   * A vertex below the brim cannot be sewn, but the line running towards it
+   * can be shown leaving the hat. It is reflected about the brim, in hat
+   * space, so it lands on the stitch the line would pass through on its way
+   * off the edge, and flagged so nobody is asked to sew to it.
+   */
+  const placeVertex = (vertex: Position): StrokePoint | undefined => {
+    const coordinates = toCoordinates(vertex);
+    const vector = toUnitVector(coordinates);
+    if (onHat(vector)) {
+      const stitch = stitchNear(vector);
+      if (stitch < 0) return undefined;
+      starStitches.add(stitch);
+      return { stitch, offHat: false };
     }
-
-    const uniquePoints = new Set<string>();
-
-    for (const line of geometry.coordinates) {
-      for (let i = 0; i < line.length - 1; i++) {
-        const point1 = line[i];
-        const point2 = line[i + 1];
-        dataByConstellation[id].lines.push([point1, point2]);
-        uniquePoints.add(JSON.stringify(point1)); // Ensure unique points
-        uniquePoints.add(JSON.stringify(point2)); // Ensure unique points
-      }
-    }
-
-    // Convert Set back to an array of coordinates
-    dataByConstellation[id].points = Array.from(uniquePoints).map((s) =>
-      JSON.parse(s)
+    const inHatSpace = rotateFromDestination(coordinates, orientationParameters);
+    const reflected = rotateToDestination(
+      {
+        latitude: 2 * brimLatitude - inHatSpace.latitude,
+        longitude: inHatSpace.longitude,
+      },
+      orientationParameters
     );
-  }
+    const stitch = stitchNear(toUnitVector(reflected));
+    return stitch < 0 ? undefined : { stitch, offHat: true };
+  };
 
-  return dataByConstellation;
-};
-
-const findClosestIndex = (
-  targetPoint: Position,
-  allCoordinates: GlobalCoordinates[]
-): number | null => {
-  let closestIndex = null;
-  let closestDistance = Infinity;
-
-  for (let i = 0; i < allCoordinates.length; i++) {
-    const [x1, y1] = targetPoint;
-    const { latitude: y2, longitude: x2 } = allCoordinates[i];
-
-    const distance = Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
-
-    if (distance < closestDistance) {
-      closestDistance = distance;
-      closestIndex = i;
-    }
-  }
-
-  return closestIndex;
-};
-
-const colourSpace = (
-  allCoordinates: GlobalCoordinates[],
-  allCoordinatesUnrotated: GlobalCoordinates[],
-  unrotatePoint: (coordinate: GlobalCoordinates) => GlobalCoordinates,
-  rotatePoint: (coordinate: GlobalCoordinates) => GlobalCoordinates,
-  colourConstellation = false,
-  colourMilkyWay = 5, // Max value is 5
-  showStarsUpToMagnitude = 5 // Max value is 6
-): { colours: RGB[]; starInformation: StarInformation[] } => {
-  const colours = allCoordinates.map((coordinate) => {
-    const { latitude, longitude } = coordinate;
-    const pt = point([longitude, latitude]);
-
-    for (let i = colourMilkyWay; i >= 0; i--) {
-      const feature = milkyway.features.find(
-        (f) => f.properties.id === `ol${i}`
-      );
-      if (feature) {
-        let poly;
-        if (feature.geometry.type === "Polygon") {
-          poly = polygon(feature.geometry.coordinates as number[][][]);
-        } else if (feature.geometry.type === "MultiPolygon") {
-          poly = polygon(feature.geometry.coordinates.flat() as number[][][]);
-        }
-        if (poly && booleanPointInPolygon(pt, poly)) {
-          const brightness = (i / 5) * 200 + 50; // Scale brightness between 50 and 250
-          return [brightness, brightness, 250] as RGB;
-        }
+  /*
+   * A figure's line becomes strokes: runs of the needle. Only the first and
+   * last point of a stroke may be off the hat, and a segment with both ends
+   * off the hat is not drawn at all.
+   */
+  const strokesOf = (line: Position[]): Stroke[] => {
+    const strokes: Stroke[] = [];
+    let current: StrokePoint[] = [];
+    const flush = () => {
+      // A stroke is a line: two points at least, one of them on the hat.
+      if (current.length >= 2 && current.some((point) => !point.offHat)) {
+        strokes.push({ points: current });
+      }
+    };
+    for (const vertex of line) {
+      const point = placeVertex(vertex);
+      if (!point) {
+        flush();
+        current = [];
+      } else if (point.offHat) {
+        current.push(point);
+        flush();
+        current = [point];
+      } else {
+        current.push(point);
       }
     }
-    return [0, 0, 50] as RGB;
+    flush();
+    return strokes;
+  };
+
+  const marks: ConstellationMarks[] = [];
+  for (const feature of constellations.features) {
+    const strokes = feature.geometry.coordinates.flatMap(strokesOf);
+    if (strokes.length > 0) {
+      marks.push({ abbreviation: feature.id, strokes });
+    }
+  }
+
+  const starList = [...starStitches].sort((a, b) => a - b);
+  for (const stitch of starList) colours[stitch] = SkyPalette.Star;
+
+  return { colours, sky: { stars: starList, constellations: marks } };
+};
+
+/** For tests and diagnostics: which stitch each catalogue star lands on. */
+export const projectCatalogue = (
+  index: SkyIndex
+): { hip: number; stitch: number; cosine: number }[] =>
+  catalogue.map((star) => {
+    const { index: stitch, cosine } = index.nearest(star.vector);
+    return { hip: star.hip, stitch, cosine };
   });
-
-  const starInformation = allCoordinates.map(() => {
-    return { connectedStars: new Map<string, number[]>() } as StarInformation;
-  });
-
-  const starIndexMap = new Map<string, number>(); // Map from coordinates (stringified) to index
-
-  for (const star of stars.features) {
-    const point = star.geometry.coordinates as [number, number] as Position;
-    if (
-      unrotatePoint({ latitude: point[1], longitude: point[0] }).latitude <
-      allCoordinatesUnrotated[0].latitude
-    ) {
-      continue;
-    }
-
-    const closestIndex = findClosestIndex(point, allCoordinates);
-
-    if (!closestIndex) {
-      continue;
-    }
-
-    starInformation[closestIndex].bvIndex = parseFloat(star.properties.bv);
-    starInformation[closestIndex].magnitude = star.properties.mag;
-    if (star.properties.mag < showStarsUpToMagnitude) {
-      colours[closestIndex] = [255, 255, 255] as RGB;
-    }
-  }
-
-  const constellationData = parseConstellations();
-  for (const constellation of Object.values(constellationData)) {
-    const colour = [
-      Math.random() * 200 + 50,
-      Math.random() * 200 + 50,
-      Math.random() * 50 + 50,
-    ] as RGB;
-
-    for (const point of constellation.points) {
-      if (
-        unrotatePoint({ latitude: point[1], longitude: point[0] }).latitude <
-        allCoordinatesUnrotated[0].latitude
-      ) {
-        continue;
-      }
-
-      const closestIndex = findClosestIndex(point, allCoordinates);
-      if (!closestIndex) {
-        continue;
-      }
-      if (colourConstellation) {
-        colours[closestIndex] = colour;
-      }
-      starIndexMap.set(JSON.stringify(point), closestIndex);
-    }
-
-    for (const line of constellation.lines) {
-      const star1 = starIndexMap.get(JSON.stringify(line[0]));
-      const star2 = starIndexMap.get(JSON.stringify(line[1]));
-
-      if (star1 !== undefined && star2 !== undefined) {
-        if (!starInformation[star1].connectedStars.has(constellation.id)) {
-          starInformation[star1].connectedStars.set(constellation.id, [star2]);
-        } else {
-          starInformation[star1].connectedStars
-            .get(constellation.id)!
-            .push(star2);
-        }
-
-        if (!starInformation[star2].connectedStars.has(constellation.id)) {
-          starInformation[star2].connectedStars.set(constellation.id, [star1]);
-        } else {
-          starInformation[star2].connectedStars
-            .get(constellation.id)!
-            .push(star1);
-        }
-        continue;
-      }
-
-      if (star1 === 3172 || star2 === 3172) {
-        console.log(constellation);
-        console.log(line);
-      }
-
-      if (star1) {
-        const star2 = { latitude: line[1][1], longitude: line[1][0] };
-        const unrotatedStar2 = unrotatePoint(star2);
-        const reflectedUnrotatedStar2 = {
-          ...unrotatedStar2,
-          latitude: 2 * allCoordinatesUnrotated[0].latitude - unrotatedStar2.latitude,
-        };
-        const phantomStar2 = rotatePoint(reflectedUnrotatedStar2);
-        const phantomStar2Index = findClosestIndex(
-          [phantomStar2.longitude, phantomStar2.latitude],
-          allCoordinates
-        );
-
-        if (!starInformation[star1].connectedStars.has(constellation.id)) {
-          starInformation[star1].connectedStars.set(constellation.id, [-phantomStar2Index!]);
-        } else {
-          starInformation[star1].connectedStars
-            .get(constellation.id)!
-            .push(-phantomStar2Index!);
-        }
-      }
-
-      if (star2) {
-        const star1 = { latitude: line[0][1], longitude: line[0][0] };
-        const unrotatedStar1 = unrotatePoint(star1);
-        const reflectedUnrotatedStar1 = {
-          ...unrotatedStar1,
-          latitude: 2 * allCoordinatesUnrotated[0].latitude - unrotatedStar1.latitude,
-        };
-        const phantomStar1 = rotatePoint(reflectedUnrotatedStar1);
-        const phantomStar1Index = findClosestIndex(
-          [phantomStar1.longitude, phantomStar1.latitude],
-          allCoordinates
-        );
-
-        if (!starInformation[star2].connectedStars.has(constellation.id)) {
-          starInformation[star2].connectedStars.set(constellation.id, [-phantomStar1Index!]);
-        } else {
-          starInformation[star2].connectedStars
-            .get(constellation.id)!
-            .push(-phantomStar1Index!);
-        }
-      }
-    }
-  }
-
-  return { colours, starInformation };
-};
-
-export default colourSpace;
