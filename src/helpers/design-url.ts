@@ -28,7 +28,6 @@ const keys = {
   when: "when",
   where: "where",
   zone: "tz",
-  occurrence: "occ",
 } as const;
 
 const decreaseMethods: DecreaseMethod[] = ["Hemispherical", "Pyramidal"];
@@ -62,14 +61,13 @@ export const designToSearchParams = (design: HatDesign): URLSearchParams => {
   params.set(keys.destination, design.orientation.targetDestination);
   params.set(keys.magnitude, String(design.orientation.magnitudeLimit ?? 4));
   if (design.source) {
-    const { moment, place, zone, occurrence } = design.source;
+    const { moment, place, zone } = design.source;
     params.set(keys.when, formatMoment(moment));
     params.set(
       keys.where,
       `${place.latitude.toFixed(2)},${place.longitude.toFixed(2)}`,
     );
     if (zone) params.set(keys.zone, zone);
-    if (occurrence) params.set(keys.occurrence, String(occurrence));
   }
   return params;
 };
@@ -107,13 +105,7 @@ const sourceFrom = (params: URLSearchParams): SkySource | undefined => {
   const place = parsePlace(params.get(keys.where));
   if (!moment || !place) return undefined;
   const zone = params.get(keys.zone) ?? undefined;
-  const occurrence = Number(params.get(keys.occurrence));
-  return {
-    moment,
-    place,
-    ...(zone ? { zone } : {}),
-    ...(occurrence === 1 ? { occurrence } : {}),
-  };
+  return { moment, place, ...(zone ? { zone } : {}) };
 };
 
 export const designFromSearchParams = (

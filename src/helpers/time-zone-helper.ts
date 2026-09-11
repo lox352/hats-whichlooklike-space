@@ -6,10 +6,11 @@ import { DateTime, daysInMonth } from "./celestial-coordinates";
  *
  * The place gives its time zone (see time-zone-location), and the zone's
  * rules - as the browser's own Intl implementation knows them, daylight
- * saving included - turn the clock reading into a moment in UT. Two things
- * are refused rather than guessed: a time the clocks skipped going forward,
- * which never happened, and a time they repeated going back, which happened
- * twice and needs to be asked which.
+ * saving included - turn the clock reading into a moment in UT. Twice a
+ * year that is not one-to-one: a time the clocks skipped going forward
+ * never happened, and a time they repeated going back happened twice.
+ * instantsForLocalTime reports those honestly; resolveLocalTime settles
+ * them the way a person setting a camera clock would, and says what it did.
  */
 const zoneCache = new Map<string, string[]>();
 /** The zones a place is in, usually one; more than one on a boundary. */
@@ -154,6 +155,59 @@ export function instantsForLocalTime(
       utc: fromTimestamp(candidate.timestamp),
     }));
 }
+export interface ResolvedLocalTime {
+  instant: LocalInstant;
+  /**
+   * Set when the clock reading was not one instant and a choice was made
+   * for the user: what was chosen and why, in a sentence for the page.
+   */
+  note?: string;
+}
+
+/**
+ * One instant for a clock reading, whatever the clocks did that night.
+ *
+ * Nobody remembers whether the sky they stood under was before or after a
+ * daylight-saving change, so the page never asks. A repeated hour is taken
+ * the first time round, which is the time still on daylight saving, since
+ * that is what every clock in the house read until the change. A skipped
+ * time is carried forward across the gap - 02:30 on a night the clocks
+ * jumped from 02:00 to 03:00 becomes 03:30 - which is what a phone does
+ * when you type it. Either way the note says so.
+ */
+export function resolveLocalTime(
+  value: DateTime,
+  zone: string,
+): ResolvedLocalTime {
+  const instants = instantsForLocalTime(value, zone);
+  if (instants.length === 1) return { instant: instants[0] };
+  if (instants.length > 1) {
+    const [first] = instants;
+    return {
+      instant: first,
+      note: `The clocks went back that night, so ${clock(value)} came round twice; this is the first, on ${formatOffset(first.offset)}.`,
+    };
+  }
+  /*
+   * The gap. The offset in force just before the reading is the one the
+   * clocks were on when they jumped; applying it puts the instant in the
+   * new offset, the same clock distance past the change.
+   */
+  const wall = wallTime(value);
+  const before = offsetAt(wall - 24 * 3600000, zone);
+  const timestamp = wall - before * 3600000;
+  const after = offsetAt(timestamp, zone);
+  const instant = { timestamp, offset: after, utc: fromTimestamp(timestamp) };
+  const shown = fromTimestamp(timestamp + after * 3600000);
+  return {
+    instant,
+    note: `The clocks went forward over ${clock(value)} that night, so it never happened; this is ${clock(shown)}, on ${formatOffset(after)}.`,
+  };
+}
+
+const clock = (value: DateTime) =>
+  `${String(value.hour).padStart(2, "0")}:${String(value.minute).padStart(2, "0")}`;
+
 /**
  * The one UT instant for a clock reading at a place, or a reason there is
  * not exactly one. The design page handles those cases itself; this is for

@@ -23,7 +23,7 @@ import {
 import {
   findTimeZones,
   formatOffset,
-  instantsForLocalTime,
+  resolveLocalTime,
   LocalInstant,
   validLocalTime,
 } from "../helpers/time-zone-helper";
@@ -206,23 +206,24 @@ const Design: React.FC = () => {
   const zone = source?.zone && zones.includes(source.zone) ? source.zone : zones[0];
   const momentValid = source ? validLocalTime(source.moment) : false;
 
-  const instants = useMemo<{ list: LocalInstant[]; error: string }>(() => {
-    if (!source || !momentValid || !zone) return { list: [], error: "" };
+  /*
+   * Daylight saving is the zone's business, not the user's. The one night a
+   * year a clock time is repeated or skipped is settled here, and the
+   * readout says what was done; nobody is asked which 01:30 they meant.
+   */
+  const resolved = useMemo<{
+    instant?: LocalInstant;
+    note?: string;
+    error: string;
+  }>(() => {
+    if (!source || !momentValid || !zone) return { error: "" };
     try {
-      const list = instantsForLocalTime(source.moment, zone);
-      return {
-        list,
-        error: list.length
-          ? ""
-          : "That clock time never happened: the clocks went forward over it. Choose a time before or after the change.",
-      };
+      return { ...resolveLocalTime(source.moment, zone), error: "" };
     } catch {
-      return { list: [], error: "This browser cannot work out the time zone. Try a newer one." };
+      return { error: "This browser cannot work out the time zone. Try a newer one." };
     }
   }, [source, momentValid, zone]);
-
-  const instant =
-    instants.list[Math.min(source?.occurrence ?? 0, instants.list.length - 1)];
+  const instant = resolved.instant;
 
   // The sky overhead, once known, is written to the design as its orientation.
   useEffect(() => {
@@ -376,7 +377,7 @@ const Design: React.FC = () => {
                   onChange={(e) => {
                     const month = Number(e.target.value);
                     const day = Math.min(source.moment.day, daysInMonth(month, source.moment.year));
-                    updateSource({ moment: { ...source.moment, month, day }, occurrence: undefined });
+                    updateSource({ moment: { ...source.moment, month, day } });
                   }}
                 >
                 {monthNames.map((name, i) => (
@@ -387,7 +388,7 @@ const Design: React.FC = () => {
             <NumberField
               label="Day"
               value={source.moment.day}
-              onChange={(day) => updateSource({ moment: { ...source.moment, day }, occurrence: undefined })}
+              onChange={(day) => updateSource({ moment: { ...source.moment, day } })}
               min={1}
               max={daysInMonth(source.moment.month, source.moment.year)}
               width="5rem"
@@ -395,7 +396,7 @@ const Design: React.FC = () => {
             <NumberField
               label="Year"
               value={source.moment.year}
-              onChange={(year) => updateSource({ moment: { ...source.moment, year }, occurrence: undefined })}
+              onChange={(year) => updateSource({ moment: { ...source.moment, year } })}
               min={1900}
               max={2200}
               width="6rem"
@@ -403,7 +404,7 @@ const Design: React.FC = () => {
             <NumberField
               label="Hour"
               value={source.moment.hour}
-              onChange={(hour) => updateSource({ moment: { ...source.moment, hour }, occurrence: undefined })}
+              onChange={(hour) => updateSource({ moment: { ...source.moment, hour } })}
               min={0}
               max={23}
               width="5rem"
@@ -411,7 +412,7 @@ const Design: React.FC = () => {
             <NumberField
               label="Minute"
               value={source.moment.minute}
-              onChange={(minute) => updateSource({ moment: { ...source.moment, minute }, occurrence: undefined })}
+              onChange={(minute) => updateSource({ moment: { ...source.moment, minute } })}
               min={0}
               max={59}
               width="5rem"
@@ -430,7 +431,7 @@ const Design: React.FC = () => {
                 <span className="design-field-label">Whose clock</span>
                 <select
                   value={zone}
-                  onChange={(e) => updateSource({ zone: e.target.value, occurrence: undefined })}
+                  onChange={(e) => updateSource({ zone: e.target.value })}
                 >
                   {zones.map((name) => (
                     <option key={name} value={name}>{name.replace(/_/g, " ")}</option>
@@ -439,27 +440,6 @@ const Design: React.FC = () => {
               </label>
               <div className="design-hint">
                 This place sits on a boundary between time zones. Choose the one the clock was set to.
-              </div>
-            </div>
-          )}
-
-          {instants.list.length > 1 && (
-            <div className="design-field">
-              <label>
-                <span className="design-field-label">Which of the two</span>
-                <select
-                  value={source.occurrence ?? 0}
-                  onChange={(e) => updateSource({ occurrence: Number(e.target.value) || undefined })}
-                >
-                  {instants.list.map((candidate, i) => (
-                    <option key={candidate.timestamp} value={i}>
-                      {i === 0 ? "Before the clocks went back" : "After the clocks went back"} ({formatOffset(candidate.offset)})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="design-hint">
-                The clocks went back that night, so this time came round twice.
               </div>
             </div>
           )}
@@ -626,7 +606,10 @@ const Design: React.FC = () => {
           {mode === "moment"
             ? !zonesReady
               ? "Working out the local time…"
-              : zoneLookup?.error || instants.error || (instant && zone ? "Ready to expose." : "")
+              : zoneLookup?.error ||
+                resolved.error ||
+                resolved.note ||
+                (instant && zone ? "Ready to expose." : "")
             : "Ready to expose."}
         </p>
         <div className="design-actions">

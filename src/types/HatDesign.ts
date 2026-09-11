@@ -37,8 +37,6 @@ export interface SkySource {
   place: GlobalCoordinates;
   /** The IANA zone the clock was read in, when the place has more than one. */
   zone?: string;
-  /** Which of two clock readings, on a night the clocks went back. */
-  occurrence?: number;
 }
 
 export interface HatDesign {

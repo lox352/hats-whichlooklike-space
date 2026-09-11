@@ -149,18 +149,9 @@ describe("design URL is defensive", () => {
     expect(params.get("when")).toBe("2026-09-10T23:05");
     expect(params.get("where")).toBe("51.51,-0.13");
     expect(params.get("tz")).toBe("Europe/London");
-    expect(params.get("occ")).toBeNull();
     expect(designFromSearchParams(params).source).toEqual(aNightInLondon.source);
   });
 
-  it("keeps the second reading of a repeated clock time", () => {
-    const twice = {
-      ...aNightInLondon,
-      source: { ...aNightInLondon.source!, occurrence: 1 },
-    };
-    const back = designFromSearchParams(designToSearchParams(twice));
-    expect(back.source?.occurrence).toBe(1);
-  });
 });
 
 describe("designKey", () => {

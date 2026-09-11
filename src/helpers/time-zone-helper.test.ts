@@ -18,7 +18,8 @@ describe("civil time conversion", () => {
     ).toEqual({ year: 2024, month: 2, day: 29, hour: 23, minute: 0 }));
 });
 
-import { instantsForLocalTime, validLocalTime } from "./time-zone-helper";
+import { instantsForLocalTime, resolveLocalTime, validLocalTime } from "./time-zone-helper";
+import type { DateTime } from "./time-zone-helper";
 const local = (
   year: number,
   month: number,
@@ -85,5 +86,44 @@ describe("date-aware IANA time", () => {
   it("does not silently normalise invalid calendar input", () => {
     expect(validLocalTime(local(2025, 2, 29))).toBe(false);
     expect(() => instantsForLocalTime(local(2025, 2, 29), "UTC")).toThrow();
+  });
+});
+
+describe("resolveLocalTime", () => {
+  const local = (
+    year: number,
+    month: number,
+    day: number,
+    hour = 12,
+    minute = 0,
+  ): DateTime => ({ year, month, day, hour, minute });
+
+  it("passes an ordinary time through without a note", () => {
+    const resolved = resolveLocalTime(local(2026, 3, 12, 21, 40), "Australia/Sydney");
+    expect(resolved.note).toBeUndefined();
+    expect(resolved.instant.offset).toBe(11);
+  });
+
+  it("takes a repeated hour the first time round, still on daylight time", () => {
+    const resolved = resolveLocalTime(local(2026, 11, 1, 1, 30), "America/New_York");
+    expect(resolved.instant.offset).toBe(-4);
+    expect(resolved.instant.utc.hour).toBe(5);
+    expect(resolved.note).toMatch(/came round twice/);
+  });
+
+  it("carries a skipped time forward across the gap", () => {
+    // 02:30 never happened: the clocks jumped from 02:00 to 03:00.
+    const resolved = resolveLocalTime(local(2026, 3, 8, 2, 30), "America/New_York");
+    expect(resolved.instant.offset).toBe(-4);
+    // 03:30 EDT is 07:30 UT.
+    expect(resolved.instant.utc.hour).toBe(7);
+    expect(resolved.instant.utc.minute).toBe(30);
+    expect(resolved.note).toMatch(/never happened; this is 03:30/);
+  });
+
+  it("carries a skipped half hour forward on Lord Howe", () => {
+    const resolved = resolveLocalTime(local(2026, 10, 4, 2, 15), "Australia/Lord_Howe");
+    expect(resolved.instant.offset).toBe(11);
+    expect(resolved.note).toMatch(/this is 02:45/);
   });
 });
