@@ -24,3 +24,11 @@ Validation: 240 tests, build and lint pass. Browser journey: Polaris design → 
 Deep indigo / parchment palettes, self-hosted Cormorant Garamond 600 and license, engraved celestial frontispiece, responsive home/design/saved pages, star dots and gold constellation joins, closed stitch-cell grid and decrease symbols. Native in-page dialogs replace prompts/alerts; explicit appearance selector supplements device preference. Static page styles moved into CSS; runtime chart geometry, progress widths and yarn colours remain data-driven styles.
 
 Verified desktop and 320px screenshots, both themes, saved knitting chart, 320px document width with no horizontal page overflow, all form fields at 16px. 240 tests and build/lint pass. Next: rendering/motion, then embroidery.
+
+## Checkpoint 4 (plan milestone 5) — hat and motion
+
+Instanced unlit yarn geometry and one curved gold line layer; fixed-step settling with rest measured after every physics step; scoped lazy canvas; reduced-motion-aware sky arrival; initial camera placement; static cached previews skip rigid bodies and per-frame matrix work.
+
+Measured a legacy 160×35 hat in the browser: 71 steps, 16.165s settling, 70.4673 world-unit height. Cached/settled rendering: 2 draw calls and 16.67ms average frame interval over 120 frames (60Hz). Earlier baseline frame timing was not instrumented, so no before/after FPS claim. Initial application JS is 247.8KB / 83.08KB gzip; the 3D and time-zone chunks load separately.
+
+Real Rapier tests prove identical positions for different step batching and compare all catalogue stars against brute force on a genuinely settled hat. Four space hats (80×20, 130×25, 160×35, 200×45) were measured in Node; stored in space-hat-measurements.json. Refit the framing coefficient to 0.869, under 1.7% height error on those samples. Browser legacy-hat height exactly matched the independent measurement. Next: guided embroidery.

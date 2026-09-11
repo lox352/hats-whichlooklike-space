@@ -1,0 +1,42 @@
+[
+  {
+    "count": 80,
+    "rows": 20,
+    "steps": 75,
+    "height": 39.549293518066406,
+    "wallMs": 6149.449417000001,
+    "totalRows": 32,
+    "radius": 25.464790894703256,
+    "predictionBeforeRefit": 41.308519446916776
+  },
+  {
+    "count": 130,
+    "rows": 25,
+    "steps": 73,
+    "height": 50.02054214477539,
+    "wallMs": 15212.344125,
+    "totalRows": 44,
+    "radius": 41.38028520389279,
+    "predictionBeforeRefit": 51.40386121055608
+  },
+  {
+    "count": 160,
+    "rows": 35,
+    "steps": 71,
+    "height": 70.46725463867188,
+    "wallMs": 29954.271208,
+    "totalRows": 59,
+    "radius": 50.92958178940651,
+    "predictionBeforeRefit": 72.94051676619232
+  },
+  {
+    "count": 200,
+    "rows": 45,
+    "steps": 77,
+    "height": 90.43213653564453,
+    "wallMs": 31657.313709000002,
+    "totalRows": 75,
+    "radius": 63.66197723675813,
+    "predictionBeforeRefit": 93.6227185251114
+  }
+]

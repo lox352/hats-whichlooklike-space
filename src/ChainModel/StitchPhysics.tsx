@@ -1,254 +1,30 @@
-import React, { MutableRefObject, useEffect, useRef, useState } from "react";
-import PointMass from "./PointMass";
-import Link from "./Link";
+import { createRef,useEffect,useMemo,useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import { RapierRigidBody } from "@react-three/rapier";
 import { Stitch } from "../types/Stitch";
-import { colourNodes } from "../helpers/node-colouring";
-import * as THREE from "three";
-import { adjacentStitchDistance, verticalStitchDistance } from "../constants";
-import { useFrame } from "@react-three/fiber";
-import { OrientationParameters } from "../types/OrientationParameters";
-import { Line } from "@react-three/drei";
-import { Segment, segmentsOf } from "../helpers/connections";
 import { SkyMarks } from "../types/SkyMarks";
-
-function createChevronTexture() {
-  const size = 256; // Texture resolution
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-
-  if (ctx) {
-    // Background (optional)
-    ctx.clearRect(0, 0, size, size);
-
-    ctx.fillStyle = "white";
-
-    // Draw downward-facing chevron
-    ctx.beginPath();
-    ctx.moveTo(size / 2, size * 1); // Bottom center (tip of the V)
-    ctx.lineTo(size * 0, size * 0); // Left top
-    ctx.lineTo(size * 0.25, size * 0); // Left top
-    ctx.lineTo(size * 0.5, size * 0.5); // Center bottom left
-    ctx.lineTo(size * 0.75, size * 0); // Right top
-    ctx.lineTo(size * 1, size * 0); // Right top
-    ctx.lineTo(size / 2, size * 1); // Back to bottom center
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  return new THREE.CanvasTexture(canvas);
+import { OrientationParameters } from "../types/OrientationParameters";
+import { colourNodes } from "../helpers/node-colouring";
+import { dyeOrderFromHeights } from "../helpers/dye-sweep";
+import { adjacentStitchDistance,verticalStitchDistance,dyeSweepSeconds,maxDyeStepSeconds } from "../constants";
+import { SettleMetrics } from "../helpers/settling";
+import StitchBody from "./StitchBody";
+import StitchInstances from "./StitchInstances";
+import ConstellationLines from "./ConstellationLines";
+import Settler from "./Settler";
+import Link from "./Link";
+export interface StitchPhysicsProps{stitches:Stitch[];sky:SkyMarks;setStitches?:(stitches:Stitch[])=>void;setSky?:(sky:SkyMarks)=>void;orientationParameters:OrientationParameters;simulationActive:boolean;setSimulationActive?:(active:boolean)=>void;onReady?:()=>void;onMetrics?:(metrics:SettleMetrics)=>void;reducedMotion:boolean}
+export default function StitchPhysics({stitches,sky,setStitches,setSky,orientationParameters,simulationActive,setSimulationActive,onReady,onMetrics,reducedMotion}:StitchPhysicsProps){
+ const stitchRefs=useRef<React.RefObject<RapierRigidBody>[]>([]);if(!stitchRefs.current.length)stitchRefs.current=stitches.map(()=>createRef<RapierRigidBody>());
+ const drawn=useMemo(()=>stitches.filter(s=>s.id>0),[stitches]);
+ const targetColours=useRef<Float32Array|null>(null),order=useRef<Float32Array|null>(null),progress=useRef(0),sweeping=useRef(false),ready=useRef(false);
+ const initialised=useRef(false);
+ const pack=(source:Stitch[])=>new Float32Array(source.filter(s=>s.id>0).flatMap(s=>s.colour.map(c=>c/255)));
+ useEffect(()=>{if(initialised.current)return;initialised.current=true;if(setStitches){setSimulationActive?.(true);}else{targetColours.current=pack(stitches);order.current=new Float32Array(drawn.length);progress.current=1;ready.current=true;onReady?.();}},[drawn.length,onReady,setSimulationActive,setStitches,stitches]);
+ useFrame((_,delta)=>{if(!sweeping.current||ready.current)return;progress.current=reducedMotion?1:Math.min(1,progress.current+Math.min(delta,maxDyeStepSeconds)/dyeSweepSeconds);if(progress.current===1){ready.current=true;onReady?.();}});
+ return <>{setStitches && <Settler active={simulationActive} stitchRefs={stitchRefs} onSettled={(positions,metrics)=>{const {colours,sky:chartedSky}=colourNodes(positions,orientationParameters);const charted=stitches.map((s,i)=>({...s,position:positions[i],colour:colours[i]}));targetColours.current=pack(charted);order.current=dyeOrderFromHeights(drawn.map(s=>positions[s.id].y));sweeping.current=true;setStitches?.(charted);setSky?.(chartedSky);setSimulationActive?.(false);onMetrics?.(metrics);}}/>}
+ {setStitches && stitches.map(s=><StitchBody key={s.id} rigidBodyRef={stitchRefs.current[s.id]} position={s.position} fixed={s.links.length<=1}/>)}
+ <StitchInstances moving={simulationActive} stitches={stitches} stitchRefs={stitchRefs} dyeProgress={progress} colours={targetColours} dyeOrder={order}/>
+ {setStitches && stitches.flatMap(s=>s.links.map(link=><Link key={`${s.id}-${link}`} bodyA={stitchRefs.current[s.id]} bodyB={stitchRefs.current[link]} maxLength={s.id-link===1?adjacentStitchDistance:verticalStitchDistance}/>))}
+ <ConstellationLines stitches={stitches} sky={sky}/></>;
 }
-
-const geometry = new THREE.PlaneGeometry(1, 1);
-const chevronTexture = createChevronTexture();
-
-interface StitchPhysicsProps {
-  stitchesRef: React.MutableRefObject<Stitch[]>;
-  setStitches?: React.Dispatch<React.SetStateAction<Stitch[]>>;
-  /** Where the stars and constellations are, once the sky has been charted. */
-  sky: SkyMarks;
-  setSky?: (sky: SkyMarks) => void;
-  orientationParameters: OrientationParameters;
-  simulationActive: boolean;
-  setSimulationActive?: React.Dispatch<React.SetStateAction<boolean>>;
-  onAnyStitchRendered?: () => void;
-}
-
-const StitchPhysics: React.FC<StitchPhysicsProps> = ({
-  stitchesRef,
-  setStitches,
-  sky,
-  setSky,
-  orientationParameters,
-  simulationActive,
-  setSimulationActive,
-  onAnyStitchRendered,
-}) => {
-  const setRefsVersion = useState(0)[1];
-  const frameNumber = useRef(0);
-  const stitches = stitchesRef.current;
-
-  const stitchRefs = useRef<React.RefObject<RapierRigidBody>[]>([]);
-  if (stitchRefs.current.length === 0) {
-    stitchRefs.current = stitches.map(() => React.createRef());
-  }
-
-  const [connections, setConnections] = useState<Segment[]>(() =>
-    segmentsOf(sky)
-  );
-
-  const colourRefs = useRef<React.MutableRefObject<Float32Array>[]>([]);
-  if (colourRefs.current.length === 0) {
-    colourRefs.current = stitches.map((stitch) => {
-      const ref = React.createRef() as MutableRefObject<Float32Array>;
-      if (!ref.current) {
-        ref.current = new Float32Array([
-          stitch.colour[0] / 255,
-          stitch.colour[1] / 255,
-          stitch.colour[2] / 255,
-        ]);
-      }
-      return ref;
-    });
-  }
-
-  useFrame(() => {
-    if (onAnyStitchRendered && frameNumber.current === 0) {
-      onAnyStitchRendered();
-    }
-    if (!setSimulationActive || !setStitches) return;
-    if (frameNumber.current === 0) {
-      setSimulationActive(true);
-    }
-    if (!simulationActive) return;
-    frameNumber.current++;
-
-    // Check velocities of all rigid bodies
-    let totalMotion = 0;
-    stitchRefs.current.forEach((stitchRef) => {
-      const velocity = stitchRef.current?.linvel();
-      const motionChange = velocity
-        ? Math.abs(velocity.x) + Math.abs(velocity.y) + Math.abs(velocity.z)
-        : 0;
-      totalMotion += motionChange;
-    });
-
-    // Stop simulation if total motion is below a threshold
-    const threshold = 0.6 * stitchRefs.current.length;
-    if (totalMotion > threshold || frameNumber.current < 10) {
-      return;
-    }
-
-    setSimulationActive(false);
-    (async () => {
-      const positions = stitchRefs.current.map((stitchRef) =>
-        stitchRef.current!.translation()
-      );
-
-      const { colours, sky: chartedSky } = colourNodes(
-        positions,
-        orientationParameters
-      );
-
-      colourRefs.current.forEach((colourRef, i) => {
-        colourRef.current.set(colours[i]!.map((c) => c / 255));
-      });
-
-      setConnections(segmentsOf(chartedSky));
-      setSky?.(chartedSky);
-
-      setStitches((stitches) =>
-        stitches.map((stitch, i) => ({
-          ...stitch,
-          colour: colours[i]!,
-          position: positions[i]!,
-        }))
-      );
-    })();
-  });
-
-  useEffect(() => {
-    for (let i = stitchRefs.current.length; i < stitches.length; i++) {
-      stitchRefs.current.push(React.createRef<RapierRigidBody>());
-    }
-
-    if (stitchRefs.current.length > stitches.length) {
-      stitchRefs.current.splice(stitches.length);
-    }
-
-    stitches.forEach((stitch) => {
-      const ref = stitchRefs.current[stitch.id];
-      if (stitch.links.length <= 1) {
-        if (ref && ref.current) {
-          ref.current.setTranslation(stitch.position, false); // Update position
-          ref.current.setBodyType(1, false);
-        }
-      } else {
-        if (ref && ref.current) {
-          ref.current.setBodyType(0, false);
-        }
-      }
-    });
-
-    setRefsVersion((v) => v + (1 % 1000));
-  }, [stitches, setRefsVersion]);
-
-  useEffect(() => {
-    return () => {
-      chevronTexture.dispose();
-      geometry.dispose();
-    };
-  }, []);
-
-  return (
-    <React.Fragment>
-      {stitches.map((stitch) => {
-        const stitchRef = stitchRefs.current[stitch.id];
-
-        if (!stitchRef) return null;
-        return (
-          <PointMass
-            key={stitch.id}
-            rigidBodyRef={stitchRef}
-            position={stitch.position}
-            fixed={stitch.links.length <= 1}
-            visible={stitch.id > 0}
-            colourRef={colourRefs.current[stitch.id]}
-            chevronTexture={chevronTexture}
-            geometry={geometry}
-          />
-        );
-      })}
-      {stitches.flatMap((stitch) =>
-        stitch.links.map((link) => {
-          const stitchRef = stitchRefs.current[stitch.id];
-          const linkedStitchRef = stitchRefs.current[link];
-          if (!stitchRef || !linkedStitchRef) return null;
-          const stitchLength =
-            stitch.id - link === 1
-              ? adjacentStitchDistance
-              : verticalStitchDistance;
-          return (
-            <Link
-              key={`${stitch.id}-${link}`}
-              bodyA={stitchRef}
-              bodyB={linkedStitchRef}
-              maxLength={stitchLength}
-            />
-          );
-        })
-      )}
-      {connections.map(({ abbreviation, strokeIndex, from, to }, i) => {
-          // A line running off the brim has nowhere to go in three dimensions.
-          if (from.offHat || to.offHat) return null;
-          const source = from.stitch;
-          const target = to.stitch;
-          if (source === target) return null;
-          const stitchRef = stitchRefs.current[source];
-          const linkedStitchRef = stitchRefs.current[target];
-          if (!stitchRef?.current || !linkedStitchRef?.current) return null;
-          const { x: x1, y: y1, z: z1 } = stitchRef.current!.translation();
-          const {
-            x: x2,
-            y: y2,
-            z: z2,
-          } = linkedStitchRef.current!.translation();
-          return (
-            <Line
-              key={`${abbreviation}-${strokeIndex}-${i}`}
-              points={[
-                [x1, y1, z1],
-                [x2, y2, z2],
-              ]}
-              color="lightblue"
-              lineWidth={1}
-            />
-          );
-        })}
-    </React.Fragment>
-  );
-};
-
-export default StitchPhysics;

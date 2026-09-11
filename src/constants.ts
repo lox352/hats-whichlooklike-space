@@ -1,19 +1,13 @@
-import { GlobalCoordinates } from "./types/GlobalCoordinates";
-
-const adjacentStitchDistance = 2;
-const verticalStitchDistance = 1.6;
-
-const defaultStitchesPerRow = 160;
-const defaultNumberOfRows = 35;
-
-const northPole: GlobalCoordinates = { latitude: 90, longitude: 0 };
-const southPole: GlobalCoordinates = { latitude: -90, longitude: 180 };
-
-export {
-  adjacentStitchDistance,
-  verticalStitchDistance,
-  defaultStitchesPerRow,
-  defaultNumberOfRows,
-  northPole,
-  southPole
-};
+export const adjacentStitchDistance = 2;
+export const verticalStitchDistance = 1.6;
+export const settleDamping = 3;
+export const settleTimeStep = 0.15;
+export const solverIterations = 20;
+export const settleSubsteps = 2;
+/** Check the budget between indivisible physics steps. */
+export const settleStepBudgetMs = 16;
+export const restMotionThreshold = 0.15;
+export const minimumSettleFrames = 10;
+export const settleRestSeconds = 2;
+export const dyeSweepSeconds = 1.5;
+export const maxDyeStepSeconds = 1 / 30;
