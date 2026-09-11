@@ -78,10 +78,16 @@ a {
   color: var(--accent);
   text-underline-offset: 4px;
 }
+/*
+ * No double-tap-to-zoom on anything you tap on purpose. Labels are in the
+ * list because tapping one focuses its field, so a quick second tap on a
+ * label zoomed the page just as it did on the field itself.
+ */
 button,
 input,
 select,
 summary,
+label,
 a {
   touch-action: manipulation;
 }

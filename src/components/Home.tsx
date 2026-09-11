@@ -32,7 +32,7 @@ export default function Home() {
   return (
     <main className="page home">
       <header className="masthead">
-        <span className="eyebrow">Which look like space</span>
+        <span className="eyebrow">Hats which look like space</span>
         <span className="edition">A celestial knitting atlas</span>
       </header>
       <section className="hero">

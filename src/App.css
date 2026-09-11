@@ -56,7 +56,12 @@
   margin-top: 24px !important;
 }
 .share-link input {
-  font-size: 13px;
+  /*
+   * Not smaller than 16px: mobile Safari zooms the page in to focus any
+   * field under that, and does not zoom back out. The link is long and dim
+   * anyway; it does not need to be small as well.
+   */
+  font-size: 16px;
 }
 .chart-extras {
   display: grid;
