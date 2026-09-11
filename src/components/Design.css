@@ -15,7 +15,9 @@
 
 @media (max-width: 860px) {
   .design-layout {
-    grid-template-columns: 1fr;
+    /* minmax(0, ...) so a wide row of fields cannot push the column wider
+       than a narrow phone. */
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
