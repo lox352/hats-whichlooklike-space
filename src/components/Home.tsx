@@ -91,7 +91,7 @@ const PatternCard: React.FC<{
       ref={ref}
       className={`frame reveal${shown ? " reveal-shown" : ""}`}
     >
-      {/* The print itself: the hat as it settled, turned to its constellations. */}
+      {/* The print itself: the sky the hat is a picture of, its figures joined up. */}
       <Link to={patternPath(id)} className="frame-print" aria-label={`Open ${pattern.name ?? "this sky"}`}>
         <SkyThumb hat={pattern.stitches} sky={pattern.sky} reading={reading} />
         <span className="frame-status">
