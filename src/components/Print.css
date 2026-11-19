@@ -32,6 +32,9 @@
   .print-sheet h1 {
     font-size: 16pt;
     margin: 0 0 2mm;
+    /* Ink on paper: the title is not the sky's light type. */
+    color: inherit;
+    font-weight: 600;
   }
 
   .print-sheet .print-meta {

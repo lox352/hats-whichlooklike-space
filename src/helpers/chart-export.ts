@@ -2,7 +2,7 @@ import { yarnFor } from "./sky-palette";
 import { SkyMarks } from "../types/SkyMarks";
 import { segmentsOf } from "./connections";
 import { Stitch } from "../types/Stitch";
-import { layOutStitches } from "./pattern-layout";
+import { printLayout } from "../knitting/print-layout";
 import { displayYarn, YarnChoices } from "./yarn-preference";
 import { markStrokeFraction, stitchMarkPath } from "./stitch-marks";
 
@@ -94,7 +94,7 @@ export const chartToSvg = (
   const yarns = options.yarns;
 
   const charted = stitches.filter((stitch) => stitch.id !== 0);
-  const { positions, numRows, numCols } = layOutStitches(charted);
+  const { positions, numRows, numCols } = printLayout(stitches);
 
   const gutter = labels ? cell * 2.6 : 0;
   const width = numCols * cell + gutter;
