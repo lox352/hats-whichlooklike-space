@@ -121,7 +121,7 @@ const EmbroideryPanel: React.FC<EmbroideryPanelProps> = ({
         <span className="knitting-figure">
           <em className="embroidery-name">{group.name}</em>
           <span className="quiet">
-            {groupSewn} of {group.segments.length} lines sewn
+            {groupSewn} of {group.segments.length} lines sewn · figure {groups.indexOf(group) + 1} of {groups.length}
           </span>
         </span>
         <span className="knitting-figure">

@@ -20,7 +20,7 @@ export const PlaceNote: React.FC<{ hat: HatStitch[]; sky: SkyMarks; regionKey: s
         <span className="quiet">
           {" "}
           · {count.stitches.toLocaleString()} {count.stitches === 1 ? "stitch" : "stitches"} of this hat
-          {count.stars > 0 && `, ${count.stars} of them ${count.stars === 1 ? "a star" : "stars"}`}, lit on the chart
+          {count.stars > 0 && `, ${count.stars} of them ${count.stars === 1 ? "a star" : "stars"}`}, drawn round on the chart
         </span>
       )}
     </span>

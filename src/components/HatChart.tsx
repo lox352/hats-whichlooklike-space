@@ -4,7 +4,7 @@ import type { SkyMarks } from "../types/SkyMarks";
 import type { HatReading } from "../knitting/useHatKnitting";
 import { hatPiece } from "../knitting/hat-knitting";
 import { hatStitchNotes } from "../knitting/notes";
-import { placeTint, regionAt, skyLines } from "../knitting/places";
+import { nextStitch, placeOutline, regionAt, skyLines } from "../knitting/places";
 import Chart from "../ui/chart/Chart";
 import type { ChartOverlay } from "../ui/chart/chart-painter";
 import { PlaceNote } from "./Places";
@@ -16,8 +16,9 @@ const token = (name: string, fallback: string) =>
 /**
  * A hat's chart: Sweat Shop's chart of the knitting, every stitch over the
  * stitches it was knitted into, with the constellation figures drawn over it
- * from star to star - and a stitch tapped says which constellation's sky it
- * is, lighting up every stitch of it.
+ * from star to star, and the constellation you are knitting through drawn
+ * round, as it always was here - and a stitch tapped says which
+ * constellation's sky it is, and draws round that one instead.
  *
  * While sewing, the line in hand is picked out and the chart goes to it.
  * Given an overlay of its own - your time, painted over it - that takes the
@@ -40,10 +41,15 @@ const HatChart: React.FC<{
 }> = ({ hat, sky, reading, progress, follow, followAt, onJump, overlay, pickerNote, sewing, showHatStitch }) => {
   const { knitting, stitches, rounds, layout, palette, names, whats } = reading;
   const [picked, setPicked] = useState<number>();
-  const place = picked === undefined ? undefined : regionAt(sky, knitting, picked);
+  /*
+   * Which constellation to draw round: the one a stitch tapped is in, and
+   * while knitting, when nothing is tapped, the one the next stitch is in.
+   */
+  const next = follow ? nextStitch(knitting, progress) : undefined;
+  const place =
+    picked !== undefined ? regionAt(sky, knitting, picked) : next !== undefined ? regionAt(sky, knitting, next) : undefined;
   const colours = useMemo(
     () => ({
-      ground: token("--paper", "#090d1a"),
       figure: token("--figure", "#f4f7ff"),
       active: token("--warm", "#ffd9a0"),
       halo: token("--sky-deep", "#05070f"),
@@ -56,8 +62,11 @@ const HatChart: React.FC<{
     return [...all.filter((line) => !line.halo), ...all.filter((line) => line.halo)];
   }, [sky, knitting, colours, sewing]);
   const lit = useMemo<ChartOverlay>(
-    () => ({ lines, ...(place ? { tint: placeTint(sky, knitting, place, colours.ground) } : {}) }),
-    [lines, place, sky, knitting, colours.ground],
+    () => ({
+      lines,
+      ...(place ? { outline: placeOutline(sky, knitting, place, { ink: colours.active, halo: colours.halo }) } : {}),
+    }),
+    [lines, place, sky, knitting, colours.active, colours.halo],
   );
   const placeNote = useCallback(
     (id: number) => <PlaceNote hat={hat} sky={sky} regionKey={regionAt(sky, knitting, id)} />,
@@ -82,6 +91,8 @@ const HatChart: React.FC<{
       roundPieces={knitting.roundPieces}
       overlay={overlay ?? lit}
       onPicked={overlay ? undefined : setPicked}
+      // Small enough for the sky to be seen as a sky, as the hat's chart always drew it.
+      startZoom={12}
       pickerNote={pickerNote ?? placeNote}
     />
   );

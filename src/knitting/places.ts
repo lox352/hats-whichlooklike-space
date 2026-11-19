@@ -25,11 +25,16 @@ export const nextStitch = (knitting: HatKnitting, progress: number): number | un
 };
 
 /**
- * One constellation lit on the chart, the rest of the sky faded back: the
- * stitches a tapped stitch's constellation has, wherever they fall.
+ * One constellation's sky drawn round on the chart, as the hat's chart
+ * always has: the one you are knitting through, or the one a stitch tapped
+ * is in, wherever its stitches fall.
  */
-export const placeTint = (sky: SkyMarks, knitting: HatKnitting, key: string, ground: string): ChartOverlay["tint"] =>
-  (id) => (regionAt(sky, knitting, id) === key ? undefined : { fill: ground, alpha: 0.6 });
+export const placeOutline = (
+  sky: SkyMarks,
+  knitting: HatKnitting,
+  key: string,
+  colours: { ink: string; halo: string },
+): ChartOverlay["outline"] => ({ has: (id) => regionAt(sky, knitting, id) === key, ...colours });
 
 export interface LineColours {
   figure: string;
