@@ -236,3 +236,15 @@
 .chart-preview {
   margin-bottom: 20px;
 }
+
+/*
+ * The key draws a stitch as a white cell, as on paper, so its mark is drawn
+ * in ink there, and not in the sky's light type, which would vanish on it.
+ */
+.key-mark {
+  stroke: var(--on-accent-fill);
+}
+
+.key-dot {
+  fill: var(--on-accent-fill);
+}
