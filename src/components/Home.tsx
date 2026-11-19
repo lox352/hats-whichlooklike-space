@@ -21,6 +21,7 @@ import Button from "./ui/Button";
 import Dialog from "./ui/Dialog";
 import NameDialog from "./ui/NameDialog";
 import { useReveal } from "../useReveal";
+import { hatRoundOf } from "../helpers/brim";
 import "./Home.css";
 
 const formatSavedAt = (savedAt: string) =>
@@ -109,7 +110,13 @@ const PatternCard: React.FC<{
           <Link to={patternPath(id)}>{pattern.name ?? "Saved sky"}</Link>
         </h3>
         <div className="readout">
-          {frameCaption(pattern, reading.index.rounds[0]?.length ?? 0, reading.index.totalRounds)} ·{" "}
+          {frameCaption(
+            pattern,
+            // The sky's width: a brim casts on fewer.
+            hatRoundOf(pattern.stitches) ?? reading.index.rounds[0]?.length ?? 0,
+            reading.index.totalRounds,
+          )}{" "}
+          ·{" "}
           {formatSavedAt(pattern.savedAt)}
         </div>
         {time && <TimeLine time={time} finished={knittingDone} className="frame-time" />}

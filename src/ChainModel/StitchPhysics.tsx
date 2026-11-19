@@ -4,7 +4,7 @@ import { RapierRigidBody } from "@react-three/rapier";
 import { Stitch } from "../types/Stitch";
 import { SkyMarks } from "../types/SkyMarks";
 import { OrientationParameters } from "../types/OrientationParameters";
-import { colourNodes } from "../helpers/node-colouring";
+import { colourHat } from "../helpers/node-colouring";
 import { dyeOrderFromHeights } from "../helpers/dye-sweep";
 import { displayYarn, readYarns } from "../helpers/yarn-preference";
 import {
@@ -119,7 +119,9 @@ export default function StitchPhysics({
           active={simulationActive}
           stitchRefs={stitchRefs}
           onSettled={(positions, metrics) => {
-            const { colours, sky: chartedSky } = colourNodes(
+            // Only the hat above the brim is a picture of anything: see helpers/brim.
+            const { colours, sky: chartedSky } = colourHat(
+              stitches,
               positions,
               orientationParameters,
             );
