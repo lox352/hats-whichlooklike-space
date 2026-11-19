@@ -58,7 +58,6 @@ const Pattern: React.FC = () => {
       <PatternContents
         stitches={hat.stitches}
         sky={hat.sky}
-        progress={0}
         name="Sky chart"
       >
         <div className="render-actions screen-only">

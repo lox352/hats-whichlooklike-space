@@ -17,8 +17,14 @@ import { EmbroideryProgress, SkyMarks } from "./SkyMarks";
  * 3 - `sky.regions` labels every stitch with its IAU constellation. Older
  *     entries are read as they are; they have no way of saying which sky
  *     they were pointed at, so they stay unlabelled.
+ * 4 - `progress` counts the knitting as the chart and the knitting panel read
+ *     it (see knitting/hat-knitting), where joining the round is a step of
+ *     its own after the cast-on, and so every stitch after it is one further
+ *     on than the hat's own id. Older entries are moved on as they are read:
+ *     a hat knitted as far as its join has joined the round. Everything else
+ *     - the stars, the figures, the regions - keeps the hat's own ids.
  */
-export const currentPatternVersion = 3;
+export const currentPatternVersion = 4;
 
 export interface SavedPattern {
   version: number;
@@ -29,7 +35,10 @@ export interface SavedPattern {
   savedAt: string;
   stitches: Stitch[];
   sky: SkyMarks;
-  /** Id of the last stitch knitted. 0 means nothing knitted yet. */
+  /**
+   * Id of the last stitch or step worked, in the knitting as it is read (see
+   * knitting/hat-knitting), not the hat's own ids. 0 means nothing knitted yet.
+   */
   progress: number;
   embroidery: EmbroideryProgress;
 }

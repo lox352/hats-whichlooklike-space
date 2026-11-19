@@ -1,23 +1,25 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { SavedPattern } from "../types/SavedPattern";
 import {
-  knittingParam,
   embroideryParam,
   bareIdFor,
   deletePattern,
   listPatterns,
   patternsChangedEvent,
-  percentComplete,
   renamePattern,
 } from "../helpers/pattern-storage";
 import { embroideryPercent } from "../helpers/embroidery";
-import { indexRows } from "../helpers/knitting-progress";
+import { useHatKnitting } from "../knitting/useHatKnitting";
+import { chartPath, patternPath, percentKnitted } from "../knitting/paths";
+import { positionOf, totals, whereYouAre } from "../reading/progress";
+import { useKnittingTime } from "../ui/useKnittingTime";
+import { TimeLine } from "../ui/components/KnittingTime";
+import ChartThumb from "./ChartThumb";
 import PageLayout from "./ui/PageLayout";
 import Button from "./ui/Button";
 import Dialog from "./ui/Dialog";
 import NameDialog from "./ui/NameDialog";
-import ProgressRing from "./ProgressRing";
 import { useReveal } from "../useReveal";
 import "./Home.css";
 
@@ -29,18 +31,19 @@ const formatSavedAt = (savedAt: string) =>
   });
 
 /**
- * The caption under a print: what was in the frame. Stitches by rows, how
+ * The caption under a print: what was in the frame. Stitches by rounds, how
  * many stars landed on the hat, how many figures are drawn on it.
  */
-const frameCaption = (pattern: SavedPattern) => {
-  const { rows } = indexRows(pattern.stitches);
-  const across = rows[0]?.length ?? 0;
-  return [
-    `${across} × ${rows.length}`,
+const frameCaption = (pattern: SavedPattern, across: number, rounds: number) =>
+  [
+    `${across} × ${rounds}`,
     `${pattern.sky.stars.length} stars`,
     `${pattern.sky.constellations.length} figures`,
   ].join(" · ");
-};
+
+/** A colour from the stylesheet, as a canvas needs it. */
+const token = (name: string, fallback: string) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
 /** A section that rises into view the first time it is scrolled to. */
 const RevealSection: React.FC<{ children: React.ReactNode }> = ({
@@ -62,11 +65,15 @@ const PatternCard: React.FC<{
   const navigate = useNavigate();
   const { ref, shown } = useReveal<HTMLLIElement>();
   const id = bareIdFor(pattern.id);
-  const knitted = percentComplete(pattern);
+  const reading = useHatKnitting(pattern.stitches);
+  const position = positionOf(reading.stitches, pattern.progress, reading.index);
+  const counts = totals(reading.index, pattern.progress);
+  const time = useKnittingTime(pattern.id, reading.stitches, pattern.progress);
+  const ground = useMemo(() => token("--sky-deep", "#05070f"), []);
   const sewn = embroideryPercent(pattern);
-  const started = knitted > 0;
-  const knittingDone = knitted >= 100;
-  const sewingDone = sewn >= 100;
+  const started = counts.worked > 0;
+  const knittingDone = position.finished;
+  const sewingDone = sewn >= 100 || pattern.sky.constellations.length === 0;
 
   /*
    * One primary action, for whatever comes next: knit until the knitting is
@@ -74,14 +81,14 @@ const PatternCard: React.FC<{
    */
   const next = knittingDone
     ? sewingDone
-      ? { label: "See it", to: `/pattern/${id}` }
+      ? { label: "See it", to: patternPath(id) }
       : {
           label: sewn > 0 ? "Keep tracing" : "Trace the figures",
-          to: `/pattern/${id}?${embroideryParam}=1`,
+          to: `${patternPath(id)}/chart?${embroideryParam}=1`,
         }
     : {
         label: started ? "Keep knitting" : "Start knitting",
-        to: `/pattern/${id}?${knittingParam}=1`,
+        to: chartPath(id, true),
       };
 
   return (
@@ -89,35 +96,28 @@ const PatternCard: React.FC<{
       ref={ref}
       className={`frame reveal${shown ? " reveal-shown" : ""}`}
     >
-      {/* The print itself: a dark field with the progress as its exposure. */}
-      <div className="frame-print" aria-hidden="true">
+      {/* The print itself: the hat's chart, the stitches knitted so far exposed. */}
+      <Link to={patternPath(id)} className="frame-print" aria-label={`Open ${pattern.name ?? "this sky"}`}>
+        <ChartThumb reading={reading} progress={pattern.progress} paper={ground} />
         <span className="frame-status">
-          {sewingDone
-            ? "Finished"
-            : knittingDone
-              ? "Knitted · tracing the figures"
-              : started
-                ? `${knitted.toFixed(0)}% knitted`
-                : "Not yet started"}
+          {knittingDone
+            ? sewingDone
+              ? "Finished"
+              : `Knitted · ${Math.floor(sewn)}% traced`
+            : started
+              ? `${whereYouAre(position)} · ${percentKnitted(counts.worked, counts.percent)}`
+              : "Not yet started"}
         </span>
-        <div className="pattern-rings">
-          <ProgressRing
-            percent={knitted}
-            label={`${knitted.toFixed(0)}% knitted`}
-          />
-          {knittingDone && (
-            <ProgressRing
-              percent={sewn}
-              label={`${sewn.toFixed(0)}% embroidered`}
-            />
-          )}
-        </div>
-      </div>
+      </Link>
       <div className="frame-caption">
-        <h3 className="pattern-name">{pattern.name ?? "Saved sky"}</h3>
+        <h3 className="pattern-name">
+          <Link to={patternPath(id)}>{pattern.name ?? "Saved sky"}</Link>
+        </h3>
         <div className="readout">
-          {frameCaption(pattern)} · {formatSavedAt(pattern.savedAt)}
+          {frameCaption(pattern, reading.index.rounds[0]?.length ?? 0, reading.index.totalRounds)} ·{" "}
+          {formatSavedAt(pattern.savedAt)}
         </div>
+        {time && <TimeLine time={time} finished={knittingDone} className="frame-time" />}
       </div>
       <div className="pattern-card-actions">
         <Button variant="primary" onClick={() => navigate(next.to)}>
@@ -129,9 +129,6 @@ const PatternCard: React.FC<{
       </div>
       {/* Housekeeping, on its own line under the two things you came for. */}
       <div className="pattern-card-admin">
-        <Button variant="quiet" onClick={() => navigate(`/pattern/${id}`)}>
-          Chart
-        </Button>
         <Button variant="quiet" onClick={onRename}>
           Rename
         </Button>

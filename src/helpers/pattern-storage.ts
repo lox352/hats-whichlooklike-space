@@ -9,6 +9,8 @@ import {
   Stroke,
 } from "../types/SkyMarks";
 import { SkyPalette, yarnFor } from "./sky-palette";
+import { joinOf, progressFromHat } from "../knitting/hat-knitting";
+import { deleteLog } from "../projects/timing/log";
 
 /**
  * Every read and write of a saved pattern goes through this module.
@@ -220,10 +222,16 @@ const migrate = (
       ? candidate.name
       : undefined;
 
+  // Before version 4 progress was counted in the hat's own ids, which have no step for the join.
   const progress =
     typeof candidate.progress === "number" &&
     Number.isFinite(candidate.progress)
-      ? clampProgress(candidate.progress, stitches.length)
+      ? clampProgress(
+          version < 4
+            ? progressFromHat(candidate.progress, joinOf(stitches))
+            : candidate.progress,
+          positionsIn(stitches),
+        )
       : 0;
 
   return {
@@ -239,6 +247,14 @@ const migrate = (
       : noEmbroidery(),
   };
 };
+
+/**
+ * How many places progress can be at: every stitch, the phantom stitch 0 that
+ * stands for nothing knitted, and joining the round, which is a step of its
+ * own (see knitting/hat-knitting).
+ */
+export const positionsIn = (stitches: Stitch[]): number =>
+  stitches.length + (joinOf(stitches) === undefined ? 0 : 1);
 
 /**
  * Progress is a stitch id, so it is only meaningful within the pattern: the
@@ -262,10 +278,17 @@ export const clampProgress = (
 export const knittableStitchCount = (pattern: SavedPattern): number =>
   Math.max(pattern.stitches.length - 1, 0);
 
+/** How many stitches are knitted: progress, less the join once it is done, which is no stitch. */
+export const stitchesKnitted = (pattern: SavedPattern): number => {
+  const join = joinOf(pattern.stitches);
+  const steps = join !== undefined && pattern.progress > join ? 1 : 0;
+  return Math.min(Math.max(pattern.progress - steps, 0), knittableStitchCount(pattern));
+};
+
 export const percentComplete = (pattern: SavedPattern): number => {
   const knittable = knittableStitchCount(pattern);
   if (knittable === 0) return 0;
-  return Math.min((100 * pattern.progress) / knittable, 100);
+  return Math.min((100 * stitchesKnitted(pattern)) / knittable, 100);
 };
 
 export const readPattern = (
@@ -286,7 +309,16 @@ export const readPattern = (
   const cached = patternCache.get(storageKey);
   if (cached?.raw === stored) return cached.pattern;
   try {
-    const pattern = migrate(JSON.parse(stored), storageKey);
+    let pattern = migrate(JSON.parse(stored), storageKey);
+    /*
+     * A saved hat's stitches and sky are written once and never change, so
+     * the same hat read again - written by another tab - keeps them, and
+     * nothing worked out from them is worked out again.
+     */
+    const before = cached?.pattern;
+    if (pattern && before && before.savedAt === pattern.savedAt && before.stitches.length === pattern.stitches.length) {
+      pattern = { ...pattern, stitches: before.stitches, sky: before.sky };
+    }
     if (pattern) patternCache.set(storageKey, { raw: stored, pattern });
     return pattern;
   } catch {
@@ -363,8 +395,32 @@ export const setProgress = (
   if (!pattern) return undefined;
   return write({
     ...pattern,
-    progress: clampProgress(progress, pattern.stitches.length),
+    progress: clampProgress(progress, positionsIn(pattern.stitches)),
   });
+};
+
+/**
+ * Move a pattern's progress on (or back), from the pattern as it is held -
+ * without reading it again.
+ */
+export const saveProgress = (
+  pattern: SavedPattern,
+  progress: number,
+): { result: WriteResult; pattern: SavedPattern } => {
+  const next = {
+    ...pattern,
+    progress: clampProgress(progress, positionsIn(pattern.stitches)),
+  };
+  return { result: write(next), pattern: next };
+};
+
+/** Record what is sewn, from the pattern as it is held, without reading it again. */
+export const saveEmbroidery = (
+  pattern: SavedPattern,
+  embroidery: EmbroideryProgress,
+): { result: WriteResult; pattern: SavedPattern } => {
+  const next = { ...pattern, embroidery };
+  return { result: write(next), pattern: next };
 };
 
 export const setEmbroidery = (
@@ -383,7 +439,24 @@ export const deletePattern = (patternId: string): void => {
   } catch {
     return;
   }
+  // And the time it took, which means nothing without it.
+  deleteLog(storageKeyFor(patternId));
   notifyPatternsChanged();
+};
+
+/**
+ * A pattern from a backup, saved as a new one beside those already here -
+ * under a key of its own, so nothing is ever overwritten - and read in as any
+ * stored pattern is, migrated forward and checked. Undefined if it could not
+ * be read or saved.
+ */
+export const restorePattern = (
+  raw: unknown,
+  at: number,
+): SavedPattern | undefined => {
+  const pattern = migrate(raw, storageKeyFor(String(at)));
+  if (!pattern) return undefined;
+  return write(pattern).ok ? pattern : undefined;
 };
 
 /** Re-persist every readable entry in the current shape. */

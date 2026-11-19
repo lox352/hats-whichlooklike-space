@@ -1,6 +1,6 @@
 .masthead {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
@@ -122,4 +122,33 @@
   border-top: 1px solid var(--rule);
   font-size: var(--text-xs);
   color: var(--ink-faint);
+}
+
+/* The steps, and the settings at the far right of every page. */
+.masthead-end {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+
+/*
+ * On a phone, the title and the settings share the top line, and the steps,
+ * which need the room, have the line under it to themselves.
+ */
+@media (max-width: 560px) {
+  .masthead {
+    row-gap: 6px;
+  }
+  .masthead-end {
+    display: contents;
+  }
+  .masthead .settings-button {
+    order: 2;
+    margin-left: auto;
+  }
+  .masthead .steps {
+    order: 3;
+    width: 100%;
+  }
 }

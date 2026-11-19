@@ -1,0 +1,36 @@
+/* What the embroidery panel adds to the knitting panel it is built as. */
+.embroidery-name {
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+.embroidery-line {
+  margin: 0.6rem 0 0;
+  font-size: var(--text-md);
+  max-width: none;
+}
+
+.embroidery-line strong {
+  color: var(--warm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.embroidery-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 1rem;
+  margin-top: 0.6rem;
+}
+
+.embroidery-picker select {
+  min-height: 40px;
+  max-width: 100%;
+}
+
+.embroidery-hint {
+  flex: 1 1 18rem;
+  margin: 0;
+  font-size: var(--text-sm);
+}

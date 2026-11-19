@@ -98,6 +98,20 @@ html {
 
   --page-max: 68rem;
 
+  /*
+   * The words the knitting machinery is written in - the chart, the
+   * knitting panel, the key, the settings - which it shares with its sister
+   * sites, where it is laid out on paper. Here the paper is the sky.
+   */
+  --paper: var(--sky);
+  --paper-raised: var(--sky-raised);
+  --paper-sunken: var(--sky-deep);
+  --paper-edge: var(--sky-edge);
+  /* A swatch's corner, and the top of a card that comes up from the foot. */
+  --radius-small: 3px;
+  --radius-sheet: 16px;
+  --measure: 62ch;
+
   color-scheme: dark;
   font-family: var(--font-ui);
   font-size: 16px;
@@ -385,6 +399,24 @@ details[open] > summary::before {
   display: none;
 }
 
+/* Said aside: a figure's unit, a caption, what a button is for. */
+.quiet {
+  color: var(--ink-faint);
+}
+
+/* For a screen reader, and nobody else. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -415,13 +447,16 @@ details[open] > summary::before {
  * one continuous thing rather than four unrelated documents.
  */
 @keyframes page-in {
+  /*
+   * A fade alone: a page that moved as it came in would hold its fixed
+   * parts - the knitting bar along the foot - to itself rather than to the
+   * screen, for as long as the animation is kept.
+   */
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
