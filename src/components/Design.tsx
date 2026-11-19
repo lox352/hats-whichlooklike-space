@@ -29,12 +29,16 @@ import {
 } from "../helpers/time-zone-helper";
 import SizeCalculator from "./SizeCalculator";
 import InputField from "./InputField";
+import NeedlesField from "./NeedlesField";
+import { brimNeedlesFor, brimStitchesFor } from "../helpers/brim";
+import { RGB } from "../types/RGB";
 import PlaceSearch from "./PlaceSearch";
 import ToggleAdvancedOptions from "./ToggleAdvancedOptions";
 import ShareDesignLink from "./ShareDesignLink";
 import PageLayout from "./ui/PageLayout";
 import Button from "./ui/Button";
 import NumberField from "./ui/NumberField";
+import { freshDesign } from "../helpers/home-sky";
 import "./Design.css";
 
 /*
@@ -70,6 +74,14 @@ const now = (): SkyMoment => {
   };
 };
 
+const hexOf = (colour: RGB) =>
+  `#${colour.map((channel) => Math.round(channel).toString(16).padStart(2, "0")).join("")}`;
+
+const rgbOf = (hex: string): RGB => {
+  const value = parseInt(hex.replace("#", ""), 16);
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+};
+
 const problemFor = (
   problems: DesignProblem[],
   field: DesignProblem["field"]
@@ -95,9 +107,16 @@ const Design: React.FC = () => {
    * state. Keeping a copy meant an incoming link was overwritten by whatever
    * had been typed earlier, because the copy was only ever seeded once.
    */
+  // A design begun from nothing is a night and a place: now, where the browser's clock says it is.
+  const [fresh] = useState(() =>
+    searchParams.toString() === "" ? freshDesign() : undefined
+  );
   const design = useMemo(
-    () => designFromSearchParams(searchParams),
-    [searchParams]
+    () =>
+      searchParams.toString() === "" && fresh
+        ? fresh.design
+        : designFromSearchParams(searchParams),
+    [searchParams, fresh]
   );
   const params = useMemo(() => designToSearchParams(design), [design]);
 
@@ -105,7 +124,9 @@ const Design: React.FC = () => {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [showProblems, setShowProblems] = useState(false);
   const [gauge, setGauge] = useState<Gauge>(() => readGauge());
-  const [placeLabel, setPlaceLabel] = useState<string | null>(null);
+  const [placeLabel, setPlaceLabel] = useState<string | null>(
+    () => fresh?.label ?? null
+  );
   const [locating, setLocating] = useState<string | null>(null);
 
   // Fill in a bare /design URL so it is shareable without touching a field
@@ -120,10 +141,14 @@ const Design: React.FC = () => {
       validateDesign(
         design.stitchesPerRow,
         design.numberOfRows,
-        design.decreaseMethod
+        design.decreaseMethod,
+        design.brim.rounds
       ),
     [design]
   );
+
+  const updateBrim = (changes: Partial<HatDesign["brim"]>) =>
+    update({ brim: { ...design.brim, ...changes } });
 
   const update = (changes: Partial<HatDesign>) =>
     setSearchParams(designToSearchParams({ ...design, ...changes }), {
@@ -274,43 +299,12 @@ const Design: React.FC = () => {
     <PageLayout
       title="Frame your sky"
       step="design"
-      lede="Say where you stood and when, and how big the head is. The exposure is worked out from that."
+      lede="Say where you stood and when, then how big the head is. The exposure is worked out from that."
     >
       <div className="design-layout">
       <div className="design-form">
       <h2 className="design-section-heading">
-        <span className="design-section-number">01</span> The frame
-      </h2>
-
-      <SizeCalculator
-        gauge={gauge}
-        setGauge={setGauge}
-        stitchesPerRow={design.stitchesPerRow}
-        numberOfRows={design.numberOfRows}
-        decreaseMethod={design.decreaseMethod}
-        onSize={(stitchesPerRow, numberOfRows) => {
-          setShowProblems(false);
-          update({ stitchesPerRow, numberOfRows });
-        }}
-      />
-
-      <div className="design-row">
-        <InputField
-          label="Stitches per row"
-          value={design.stitchesPerRow}
-          valueSetter={(stitchesPerRow) => update({ stitchesPerRow })}
-          problem={showProblems ? problemFor(problems, "stitchesPerRow") : undefined}
-        />
-        <InputField
-          label="Rows before the crown"
-          value={design.numberOfRows}
-          valueSetter={(numberOfRows) => update({ numberOfRows })}
-          problem={showProblems ? problemFor(problems, "numberOfRows") : undefined}
-        />
-      </div>
-
-      <h2 className="design-section-heading" style={{ marginTop: "22px" }}>
-        <span className="design-section-number">02</span> The sky
+        <span className="design-section-number">01</span> The sky
       </h2>
 
       <div className="design-field">
@@ -481,6 +475,103 @@ const Design: React.FC = () => {
         </p>
       )}
 
+      <h2 className="design-section-heading" style={{ marginTop: "22px" }}>
+        <span className="design-section-number">02</span> The frame
+      </h2>
+
+      <SizeCalculator
+        gauge={gauge}
+        setGauge={setGauge}
+        stitchesPerRow={design.stitchesPerRow}
+        numberOfRows={design.numberOfRows}
+        decreaseMethod={design.decreaseMethod}
+        brimRounds={design.brim.rounds}
+        onSize={(stitchesPerRow, numberOfRows, brimRounds) => {
+          setShowProblems(false);
+          update({
+            stitchesPerRow,
+            numberOfRows,
+            brim: { ...design.brim, rounds: brimRounds },
+          });
+        }}
+      />
+
+      <div className="design-row">
+        <InputField
+          label="Stitches per row"
+          value={design.stitchesPerRow}
+          valueSetter={(stitchesPerRow) => update({ stitchesPerRow })}
+          problem={showProblems ? problemFor(problems, "stitchesPerRow") : undefined}
+        />
+        <InputField
+          label="Rows before the crown"
+          value={design.numberOfRows}
+          valueSetter={(numberOfRows) => update({ numberOfRows })}
+          problem={showProblems ? problemFor(problems, "numberOfRows") : undefined}
+        />
+      </div>
+
+      <h3 className="size-group-title design-brim-title">The brim</h3>
+
+      <div className="design-row">
+        <InputField
+          label="Rounds of brim"
+          value={design.brim.rounds}
+          valueSetter={(rounds) => updateBrim({ rounds })}
+          min={0}
+          problem={showProblems ? problemFor(problems, "brimRounds") : undefined}
+        />
+        {design.brim.rounds > 0 && (
+          <div className="design-field">
+            <label className="design-colour">
+              <span className="design-field-label">Brim colour</span>
+              <span className="design-colour-well">
+                <input
+                  type="color"
+                  value={hexOf(design.brim.colour)}
+                  onChange={(e) => updateBrim({ colour: rgbOf(e.target.value) })}
+                />
+                <span className="design-colour-name">
+                  {hexOf(design.brim.colour) === "#ffffff" ? "White" : hexOf(design.brim.colour)}
+                </span>
+              </span>
+            </label>
+          </div>
+        )}
+      </div>
+
+      <div className="design-row">
+        <NeedlesField
+          label="Needles for the hat"
+          value={design.needles}
+          onChange={(needles) =>
+            update({ needles, brim: { ...design.brim, needles: brimNeedlesFor(needles) } })
+          }
+        />
+        {design.brim.rounds > 0 && (
+          <NeedlesField
+            label="For the brim"
+            value={design.brim.needles}
+            onChange={(needles) => updateBrim({ needles })}
+          />
+        )}
+      </div>
+
+      <p className="design-hint design-brim-note">
+        {design.brim.rounds > 0 ? (
+          <>
+            Cast on {brimStitchesFor(design.stitchesPerRow)} stitches in the brim colour on{" "}
+            {design.brim.needles}mm needles and work {Math.max(design.brim.rounds - 2, 0)} rounds of
+            k2, p2 rib. Its last round is knitted, making{" "}
+            {design.stitchesPerRow - brimStitchesFor(design.stitchesPerRow)} stitches to bring it to{" "}
+            {design.stitchesPerRow}. Then change to {design.needles}mm needles and the hat&rsquo;s own
+            yarns, where the sky begins: the brim is no part of it.
+          </>
+        ) : (
+          <>No brim: the sky goes all the way to the cast-on edge.</>
+        )}
+      </p>
+
       <ToggleAdvancedOptions
         showAdvancedOptions={showAdvancedOptions}
         setShowAdvancedOptions={setShowAdvancedOptions}
@@ -558,6 +649,14 @@ const Design: React.FC = () => {
           <div>
             <dt>Frame</dt>
             <dd>{design.stitchesPerRow} × {design.numberOfRows}</dd>
+          </div>
+          <div>
+            <dt>Brim</dt>
+            <dd>
+              {design.brim.rounds > 0
+                ? `${design.brim.rounds} rounds · ${design.brim.needles}mm`
+                : "None"}
+            </dd>
           </div>
           {mode === "moment" && source ? (
             <>

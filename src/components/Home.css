@@ -101,7 +101,7 @@
   display: grid;
   place-items: center;
   aspect-ratio: 3 / 2;
-  padding: 12px 14px 34px;
+  padding: 10px 10px 34px;
   border-radius: 4px;
   overflow: hidden;
   text-decoration: none;
@@ -116,14 +116,13 @@
     var(--sky-deep);
 }
 
-/* The hat as it settled, side on, filling the print above the line that says how far it is knitted. */
+/* The sky unrolled, filling the print inside its mount, above the line that says how far it is knitted. */
 .sky-thumb {
   position: absolute;
-  top: 12px;
-  left: 14px;
-  width: calc(100% - 28px);
-  height: calc(100% - 46px);
-  object-fit: contain;
+  top: 10px;
+  left: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 44px);
 }
 
 .frame-print .frame-status {

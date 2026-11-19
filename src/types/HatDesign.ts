@@ -2,10 +2,17 @@ import { DecreaseMethod } from "./KnittingMachine";
 import { GlobalCoordinates } from "./GlobalCoordinates";
 import { OrientationParameters } from "./OrientationParameters";
 import {
+  defaultBrimRounds,
   defaultDecreaseMethod,
   defaultNumberOfRows,
   defaultStitchesPerRow,
 } from "../helpers/sizing";
+import {
+  Brim,
+  brimNeedlesFor,
+  defaultNeedles,
+  defaultTrim,
+} from "../helpers/brim";
 import { defaultOrientationParameters } from "./OrientationParameters";
 
 /**
@@ -45,6 +52,10 @@ export interface HatDesign {
   decreaseMethod: DecreaseMethod;
   orientation: OrientationParameters;
   source?: SkySource;
+  /** The hat's needles, in millimetres. */
+  needles: number;
+  /** Its brim: as many rounds as it has, 0 for none, and its needles and colour. See helpers/brim. */
+  brim: Brim;
 }
 
 export const defaultHatDesign: HatDesign = {
@@ -52,4 +63,14 @@ export const defaultHatDesign: HatDesign = {
   numberOfRows: defaultNumberOfRows,
   decreaseMethod: defaultDecreaseMethod,
   orientation: defaultOrientationParameters,
+  needles: defaultNeedles,
+  brim: {
+    rounds: defaultBrimRounds,
+    needles: brimNeedlesFor(defaultNeedles),
+    colour: defaultTrim,
+  },
 };
+
+/** The brim to knit a design with, or none. */
+export const brimOf = (design: HatDesign): Brim | undefined =>
+  design.brim.rounds > 0 ? design.brim : undefined;

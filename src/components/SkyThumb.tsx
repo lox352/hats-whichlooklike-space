@@ -2,86 +2,87 @@ import React, { useEffect, useMemo, useRef } from "react";
 import type { Stitch as HatStitch } from "../types/Stitch";
 import type { SkyMarks } from "../types/SkyMarks";
 import type { HatReading } from "../knitting/useHatKnitting";
-import { sideView } from "../knitting/side-view";
-import { slotOf } from "../knitting/yarns";
-import { SkyPalette } from "../helpers/sky-palette";
+import { unrolled } from "../knitting/unrolled";
 import { yarnFor } from "../reading/palette";
+import type { RGB } from "../types/RGB";
 
-/** The picture's size in pixels, drawn at twice what a card shows. */
-const width = 600;
-const height = 400;
-const margin = 14;
+/** The picture's size in pixels, drawn at twice what a card shows: the print's shape, inside its mount. */
+const width = 640;
+const height = 330;
+
+/** How tall a brim's strip is, in the picture's pixels. */
+const brimBand = 16;
+
+/** A brim along the foot of the picture: its colour, ribbed two and two. */
+const drawBrim = (context: CanvasRenderingContext2D, colour: RGB) => {
+  context.fillStyle = `rgb(${colour.join(",")})`;
+  context.fillRect(0, height - brimBand, width, brimBand);
+  context.fillStyle = "rgba(0, 0, 0, 0.16)";
+  for (let x = 4; x < width; x += 8) context.fillRect(x, height - brimBand, 4, brimBand);
+};
 
 /** A colour from the stylesheet, as a canvas needs it. */
 const token = (name: string, fallback: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
 /**
- * A sky's card picture: the hat as it settled, seen side on and turned to
- * its constellations, its stars on the night and its figures joined up from
- * star to star, as they will be sewn. See knitting/side-view.
+ * A sky's card picture: the sky the hat is a picture of, unrolled into a
+ * rectangle edge to edge - every round across the full width, the crown at
+ * the top - in the knitter's own yarns, with its constellations joined up
+ * from star to star over it, as they will be sewn. See knitting/unrolled. A
+ * brim is a ribbed strip along the foot, in its own colour.
  */
 const SkyThumb: React.FC<{ hat: HatStitch[]; sky: SkyMarks; reading: HatReading }> = ({ hat, sky, reading }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const { knitting, palette } = reading;
-  const view = useMemo(() => sideView(hat, sky), [hat, sky]);
+  const rounds = useMemo(() => unrolled(hat, knitting), [hat, knitting]);
+  const trim = useMemo(() => hat.find((stitch) => stitch.brim)?.colour, [hat]);
   useEffect(() => {
     const context = ref.current?.getContext("2d");
     if (!context) return;
     context.clearRect(0, 0, width, height);
-    const scale = Math.min((width - 2 * margin) / view.width, (height - 2 * margin) / view.height);
-    const left = width / 2;
-    const foot = height - margin;
-    const at = (dot: { x: number; y: number }) => [left + dot.x * scale, foot - dot.y * scale] as const;
-    const radius = view.spacing * scale * 0.66;
-    const stars = new Set(sky.stars);
-    const night = yarnFor(palette, slotOf(SkyPalette.Night)).hex;
-    const colourOf = (id: number) => yarnFor(palette, knitting.stitches[knitting.idOfHat(id)]?.slot ?? "").hex;
-
-    // A faint rim of starlight round the hat, so a dark dome shows on a dark card.
-    context.fillStyle = "rgba(196, 208, 255, 0.16)";
-    for (const dot of view.dots) {
-      const [x, y] = at(dot);
-      context.beginPath();
-      context.arc(x, y, radius + 2.5, 0, 2 * Math.PI);
-      context.fill();
-    }
-    // The fabric, far to near, a star's stitch drawn as the night round it, and shaded where it turns from the light.
-    for (const dot of view.dots) {
-      const [x, y] = at(dot);
-      context.beginPath();
-      context.arc(x, y, radius, 0, 2 * Math.PI);
-      context.fillStyle = stars.has(dot.id) ? night : colourOf(dot.id);
-      context.fill();
-      context.fillStyle = `rgba(0, 0, 0, ${(0.55 * (1 - dot.lit)).toFixed(3)})`;
-      context.fill();
-    }
-    // The figures, from star to star, where both face you.
-    const byId = new Map(view.dots.map((dot) => [dot.id, dot]));
+    const brim = trim ? brimBand : 0;
+    if (trim) drawBrim(context, trim);
+    const tall = (height - brim) / Math.max(rounds.length, 1);
+    // Where each stitch's middle is in the picture, for the figures to join.
+    const middles = new Map<number, [number, number]>();
+    rounds.forEach((row, at) => {
+      const top = height - brim - (at + 1) * tall;
+      for (const one of row) {
+        context.fillStyle = yarnFor(palette, one.slot).hex;
+        const x = one.from * width;
+        const span = (one.to - one.from) * width + 0.75;
+        for (const shift of [-width, 0, width]) {
+          if (x + shift < width && x + shift + span > 0) context.fillRect(x + shift, top, span, tall + 0.75);
+        }
+        middles.set(one.id, [((((one.from + one.to) / 2) % 1) + 1) % 1 * width, top + tall / 2]);
+      }
+    });
+    // The figures, from star to star; a line across the seam is drawn both ways round, off each edge.
     context.strokeStyle = token("--figure", "#f4f7ff");
-    context.globalAlpha = 0.72;
-    context.lineWidth = 2.2;
+    context.globalAlpha = 0.8;
+    context.lineWidth = 1.6;
     context.lineCap = "round";
     context.beginPath();
-    for (const [from, to] of view.lines) {
-      const a = byId.get(from);
-      const b = byId.get(to);
-      if (!a || !b) continue;
-      context.moveTo(...at(a));
-      context.lineTo(...at(b));
-    }
+    for (const figure of sky.constellations)
+      for (const stroke of figure.strokes)
+        stroke.points.slice(1).forEach((to, at) => {
+          const from = stroke.points[at];
+          if (from.offHat || to.offHat) return;
+          const a = middles.get(knitting.idOfHat(from.stitch));
+          const b = middles.get(knitting.idOfHat(to.stitch));
+          if (!a || !b) return;
+          const across = Math.abs(a[0] - b[0]) > width / 2;
+          const [near, far] = a[0] < b[0] ? [a, b] : [b, a];
+          const shifts = across ? [[0, -width], [width, 0]] : [[0, 0]];
+          for (const [nearShift, farShift] of shifts) {
+            context.moveTo(near[0] + nearShift, near[1]);
+            context.lineTo(far[0] + farShift, far[1]);
+          }
+        });
     context.stroke();
     context.globalAlpha = 1;
-    // And the stars over all of it, each a point of light about a stitch across.
-    for (const dot of view.dots) {
-      if (!dot.front || !stars.has(dot.id)) continue;
-      const [x, y] = at(dot);
-      context.beginPath();
-      context.arc(x, y, view.spacing * scale * 0.45, 0, 2 * Math.PI);
-      context.fillStyle = colourOf(dot.id);
-      context.fill();
-    }
-  }, [view, sky.stars, palette, knitting]);
+  }, [rounds, palette, sky, knitting, trim]);
   return <canvas ref={ref} className="sky-thumb" width={width} height={height} aria-hidden="true" />;
 };
 

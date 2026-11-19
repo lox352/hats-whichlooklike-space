@@ -15,7 +15,11 @@ const wellington: HatDesign = {
     targetDestination: "front",
     magnitudeLimit: 4,
   },
+  needles: 4.5,
+  brim: { rounds: 16, needles: 3.75, colour: [178, 34, 52] },
 };
+
+const bare: HatDesign = { ...wellington, brim: { ...wellington.brim, rounds: 0 } };
 
 const aNightInLondon: HatDesign = {
   ...defaultHatDesign,
@@ -32,7 +36,7 @@ const aNightInLondon: HatDesign = {
 };
 
 describe("design URL round trip", () => {
-  it.each([defaultHatDesign, wellington, aNightInLondon])(
+  it.each([defaultHatDesign, wellington, aNightInLondon, bare])(
     "survives a round trip",
     (design) => {
       const back = designFromSearchParams(designToSearchParams(design));
@@ -49,6 +53,24 @@ describe("design URL round trip", () => {
     expect(params.get("lon")).toBe("174.78");
     expect(params.get("to")).toBe("front");
     expect(params.get("mag")).toBe("4");
+    expect(params.get("ndl")).toBe("4.5");
+    expect(params.get("brim")).toBe("16");
+    expect(params.get("bndl")).toBe("3.75");
+    expect(params.get("trim")).toBe("b22234");
+  });
+
+  it("makes a link from before there were brims into the hat it always was", () => {
+    const old = designFromSearchParams(new URLSearchParams("sts=180&rows=40&dec=Hemispherical"));
+    expect(old.brim.rounds).toBe(0);
+    expect(old.stitchesPerRow).toBe(180);
+  });
+
+  it("gives a new design the brim it starts with", () => {
+    expect(designFromSearchParams(new URLSearchParams()).brim).toEqual(defaultHatDesign.brim);
+  });
+
+  it("takes the brim's needles two sizes under the hat's, if the link does not say", () => {
+    expect(designFromSearchParams(new URLSearchParams("ndl=5&brim=12")).brim.needles).toBe(4);
   });
 
   it("keeps coordinates to a precision finer than a stitch", () => {

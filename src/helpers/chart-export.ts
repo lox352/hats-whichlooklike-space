@@ -114,13 +114,16 @@ export const chartToSvg = (
     const x = col * cell;
     const y = row * cell;
     const yarn = yarnFor(stitch.colour);
-    const isStar = options.sky?.stars.includes(stitch.id) ?? yarn === "Star";
+    const isStar = !stitch.brim && (options.sky?.stars.includes(stitch.id) ?? yarn === "Star");
+    // A brim is in its own colour, whichever of the sky's it happens to be; on paper, a light grey.
     const fill = options.paper
-      ? yarn === "MilkyWay"
-        ? "#e4dcef"
-        : "#ffffff"
+      ? stitch.brim
+        ? "#ececec"
+        : yarn === "MilkyWay"
+          ? "#e4dcef"
+          : "#ffffff"
       : safeColour(
-          yarns ? displayYarn(stitch.colour, yarns).colour : stitch.colour,
+          yarns && !stitch.brim ? displayYarn(stitch.colour, yarns).colour : stitch.colour,
         );
     cells.push(
       `<rect x="${x}" y="${y}" width="${cell}" height="${cell}" fill="${fill}"/>`,
