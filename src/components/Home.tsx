@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SavedPattern } from "../types/SavedPattern";
 import {
@@ -15,7 +15,7 @@ import { chartPath, patternPath, percentKnitted } from "../knitting/paths";
 import { positionOf, totals, whereYouAre } from "../reading/progress";
 import { useKnittingTime } from "../ui/useKnittingTime";
 import { TimeLine } from "../ui/components/KnittingTime";
-import ChartThumb from "./ChartThumb";
+import SkyThumb from "./SkyThumb";
 import PageLayout from "./ui/PageLayout";
 import Button from "./ui/Button";
 import Dialog from "./ui/Dialog";
@@ -41,10 +41,6 @@ const frameCaption = (pattern: SavedPattern, across: number, rounds: number) =>
     `${pattern.sky.constellations.length} figures`,
   ].join(" · ");
 
-/** A colour from the stylesheet, as a canvas needs it. */
-const token = (name: string, fallback: string) =>
-  getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
-
 /** A section that rises into view the first time it is scrolled to. */
 const RevealSection: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -69,7 +65,6 @@ const PatternCard: React.FC<{
   const position = positionOf(reading.stitches, pattern.progress, reading.index);
   const counts = totals(reading.index, pattern.progress);
   const time = useKnittingTime(pattern.id, reading.stitches, pattern.progress);
-  const ground = useMemo(() => token("--sky-deep", "#05070f"), []);
   const sewn = embroideryPercent(pattern);
   const started = counts.worked > 0;
   const knittingDone = position.finished;
@@ -96,9 +91,9 @@ const PatternCard: React.FC<{
       ref={ref}
       className={`frame reveal${shown ? " reveal-shown" : ""}`}
     >
-      {/* The print itself: the hat's chart, the stitches knitted so far exposed. */}
+      {/* The print itself: the hat as it settled, turned to its constellations. */}
       <Link to={patternPath(id)} className="frame-print" aria-label={`Open ${pattern.name ?? "this sky"}`}>
-        <ChartThumb reading={reading} progress={pattern.progress} paper={ground} />
+        <SkyThumb hat={pattern.stitches} sky={pattern.sky} reading={reading} />
         <span className="frame-status">
           {knittingDone
             ? sewingDone
