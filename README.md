@@ -49,6 +49,49 @@ The hat is treated as a sphere all the way down, so the brim is a horizon
 rather than a south pole; that is what the sky wants and what every charted
 hat has had.
 
+## The knitting machinery
+
+Everything that reads a pattern while it is knitted is
+[Sweat Shop](https://github.com/lox352/sweat-shop)'s, which grew out of
+these sites and took them a long way further for jumpers. It is copied in,
+file for file, as it is on `earth`, so it can be copied in again as it
+moves on:
+
+| Folder | What it is |
+| --- | --- |
+| `src/pattern/` | A stitch and the table of the kinds of stitch and step, which everything reads. |
+| `src/reading/` | What is read off the knitting: the chart's layout, the rounds as counted, runs, the key, yardage. |
+| `src/ui/chart/` | The chart: painted on canvas tiles, columns no stitch in view needs closed up, pinch to zoom, gliding after the stitch, a tapped stitch's bubble, and lines from star to star over it. |
+| `src/ui/components/` | The knitting panel, the key, the time a hat has taken and has left. |
+| `src/projects/` | Settings, and the knitting-time log kept from every tap. |
+
+The hat is still framed, settled and charted as it always was.
+`src/knitting/` is where the two meet: `hat-knitting.ts` reads a hat's
+stitches as Sweat Shop reads a jumper's - the cast-on cast on and the join a
+step of its own after it, the double decrease the s2kp it always was, rounds
+counted from the cast-on, each yarn a slot letter - and the rest of
+`src/knitting/` is the hat's own: its yarns, what it says of its stitches,
+the constellations (`places.ts`: a stitch's region, and the figures as
+lines on the chart), its wool, the chart as printed. The sky keeps the
+hat's own stitch ids; the knitting's run one past them after the join.
+
+Tracing the figures is `components/EmbroideryPanel.tsx`, built as the
+knitting panel is, under the same chart with the line in hand picked out.
+
+Saved patterns are on version 4, which counts progress in the knitting's
+ids, with the join a step; older ones are moved on as they are read.
+
+The machinery's stylesheets are written for paper; `index.css` names this
+site's sky as its paper (`--paper`, `--paper-raised`...). What changed in
+the copied files is as on `earth`: see its README.
+
+The pages:
+
+| Address | What it is |
+| --- | --- |
+| `/pattern/:id` | A saved sky: its knitting and tracing, the chart at the needle, its time and its wool. |
+| `/pattern/:id/chart` | The chart, filling the screen. With `?knitting=1` the knitting panel is open, with `?embroidery=1` the embroidery panel; with `?stats=1`, your time is painted over it. |
+
 ## Running it
 
 ```bash
